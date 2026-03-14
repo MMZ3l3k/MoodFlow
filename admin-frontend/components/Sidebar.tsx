@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { clearTokens } from '../lib/auth';
+import { clearTokens, getRole } from '../lib/auth';
 import axiosClient from '../lib/axiosClient';
 
 const adminItems = [
@@ -30,15 +30,6 @@ const adminItems = [
     icon: (
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
         <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-      </svg>
-    ),
-  },
-  {
-    href: '/dashboard/assessments',
-    label: 'Zaplanuj test',
-    icon: (
-      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
       </svg>
     ),
   },
@@ -101,11 +92,31 @@ const hrItems = [
       </svg>
     ),
   },
+  {
+    href: '/dashboard/assessments',
+    label: 'Zaplanuj test',
+    icon: (
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+      </svg>
+    ),
+  },
+  {
+    href: '/dashboard/analytics',
+    label: 'Analityka',
+    icon: (
+      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+      </svg>
+    ),
+  },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const role = getRole();
+  const isHr = role === 'hr';
 
   const handleLogout = async () => {
     try { await axiosClient.post('/auth/logout'); } catch {}
@@ -115,6 +126,11 @@ export default function Sidebar() {
 
   const isActive = (href: string, exact?: boolean) =>
     exact ? pathname === href : pathname === href || pathname.startsWith(href + '/');
+
+  const items = isHr ? hrItems : adminItems;
+  const sectionLabel = isHr ? 'Panel HR' : 'Administracja';
+  const accentColor = isHr ? '#7A9E9D' : '#C06226';
+  const itemClass = isHr ? 'sidebar-item sidebar-item-hr' : 'sidebar-item';
 
   return (
     <aside
@@ -137,57 +153,33 @@ export default function Sidebar() {
           </div>
           <div>
             <h1 className="text-sm font-bold" style={{ color: '#2E211C' }}>MoodFlow</h1>
-            <p className="text-xs" style={{ color: 'rgba(46,33,28,0.4)' }}>Panel administracyjny</p>
+            <p className="text-xs" style={{ color: 'rgba(46,33,28,0.4)' }}>
+              {isHr ? 'Panel HR' : 'Panel administracyjny'}
+            </p>
           </div>
         </div>
       </div>
 
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-0.5">
-
-        {/* Admin section */}
         <p
           className="text-xs font-semibold uppercase tracking-wider px-3 mb-2"
           style={{ color: 'rgba(46,33,28,0.35)', letterSpacing: '0.07em' }}
         >
-          Administracja
+          {sectionLabel}
         </p>
-        {adminItems.map((item) => (
+        {items.map((item) => (
           <Link
             key={item.href}
             href={item.href}
-            className={`sidebar-item ${isActive(item.href, item.exact) ? 'active' : ''}`}
+            className={`${itemClass} ${isActive(item.href, item.exact) ? 'active' : ''}`}
           >
             {item.icon}
             {item.label}
             {isActive(item.href, item.exact) && (
               <div
                 className="ml-auto w-1.5 h-1.5 rounded-full"
-                style={{ background: '#C06226' }}
-              />
-            )}
-          </Link>
-        ))}
-
-        {/* HR section */}
-        <p
-          className="text-xs font-semibold uppercase tracking-wider px-3 mt-5 mb-2"
-          style={{ color: 'rgba(46,33,28,0.35)', letterSpacing: '0.07em' }}
-        >
-          Panel HR
-        </p>
-        {hrItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`sidebar-item sidebar-item-hr ${isActive(item.href, item.exact) ? 'active' : ''}`}
-          >
-            {item.icon}
-            {item.label}
-            {isActive(item.href, item.exact) && (
-              <div
-                className="ml-auto w-1.5 h-1.5 rounded-full"
-                style={{ background: '#7A9E9D' }}
+                style={{ background: accentColor }}
               />
             )}
           </Link>

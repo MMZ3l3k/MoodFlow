@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { MailerModule } from '@nestjs-modules/mailer';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { OrganizationsModule } from './modules/organizations/organizations.module';
@@ -9,6 +11,7 @@ import { ResponsesModule } from './modules/responses/responses.module';
 import { ResultsModule } from './modules/results/results.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AdminModule } from './modules/admin/admin.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 import { User } from './modules/users/entities/user.entity';
 import { Organization } from './modules/organizations/entities/organization.entity';
 import { Assessment } from './modules/assessments/entities/assessment.entity';
@@ -21,6 +24,25 @@ import { AssessmentAssignment } from './modules/assessments/entities/assessment-
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    ThrottlerModule.forRoot([{ ttl: 15 * 60 * 1000, limit: 10 }]),
+    MailerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        transport: {
+          host: config.get<string>('MAIL_HOST', 'smtp.gmail.com'),
+          port: config.get<number>('MAIL_PORT', 587),
+          secure: false,
+          auth: {
+            user: config.get<string>('MAIL_USER'),
+            pass: config.get<string>('MAIL_PASS'),
+          },
+        },
+        defaults: {
+          from: config.get<string>('MAIL_FROM', '"MoodFlow" <noreply@moodflow.pl>'),
+        },
+      }),
+    }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -43,6 +65,7 @@ import { AssessmentAssignment } from './modules/assessments/entities/assessment-
     ResultsModule,
     AnalyticsModule,
     AdminModule,
+    NotificationsModule,
   ],
 })
 export class AppModule {}
