@@ -1,0 +1,223 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --raisin: #2E211C;
+  --cambridge: #9CB8B7;
+  --pearl: #EAE0C7;
+  --ruddy: #C06226;
+  --saddle: #984619;
+  --pearl-light: #F5EEE3;
+  --pearl-mid: #DDD3BA;
+  --cambridge-light: #C5DADA;
+  --cambridge-dark: #7A9E9D;
+  --background: #F5EEE3;
+  --foreground: #2E211C;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--pearl-light);
+  color: var(--raisin);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbar ─────────────────────────────── */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--pearl-mid);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--cambridge);
+}
+
+/* ── Selection ─────────────────────────────── */
+::selection {
+  background: rgba(156, 184, 183, 0.3);
+  color: var(--raisin);
+}
+
+/* ── Focus ─────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--ruddy);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ── Admin card ────────────────────────────── */
+.admin-card {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(221, 211, 186, 0.6);
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(46, 33, 28, 0.06);
+}
+
+.admin-card:hover {
+  box-shadow: 0 4px 20px rgba(46, 33, 28, 0.10);
+}
+
+/* ── Input ─────────────────────────────────── */
+.admin-input {
+  width: 100%;
+  border: 1px solid var(--pearl-mid);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 14px;
+  color: var(--raisin);
+  background: white;
+  transition: all 0.2s;
+  outline: none;
+  font-family: inherit;
+}
+.admin-input::placeholder {
+  color: rgba(46, 33, 28, 0.35);
+}
+.admin-input:focus {
+  border-color: var(--ruddy);
+  box-shadow: 0 0 0 3px rgba(192, 98, 38, 0.12);
+}
+
+/* ── Button primary ────────────────────────── */
+.btn-admin-primary {
+  background: linear-gradient(135deg, var(--ruddy) 0%, var(--saddle) 100%);
+  color: white;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(192, 98, 38, 0.25);
+  font-family: inherit;
+  font-size: 14px;
+}
+.btn-admin-primary:hover {
+  box-shadow: 0 6px 24px rgba(192, 98, 38, 0.35);
+  transform: translateY(-1px);
+}
+.btn-admin-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(192, 98, 38, 0.2);
+}
+.btn-admin-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ── Sidebar item animation ────────────────── */
+.sidebar-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(46, 33, 28, 0.55);
+  text-decoration: none;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: hidden;
+  cursor: pointer;
+}
+.sidebar-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 10px;
+  background: rgba(192, 98, 38, 0.08);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.sidebar-item:hover::before {
+  opacity: 1;
+}
+.sidebar-item:hover {
+  color: var(--raisin);
+  transform: translateX(3px);
+}
+.sidebar-item.active {
+  background: linear-gradient(135deg, rgba(192,98,38,0.12) 0%, rgba(152,70,25,0.08) 100%);
+  color: var(--ruddy);
+  font-weight: 600;
+  border: 1px solid rgba(192,98,38,0.18);
+}
+.sidebar-item.active::before {
+  opacity: 0;
+}
+
+.sidebar-item-hr.active {
+  background: linear-gradient(135deg, rgba(156,184,183,0.18) 0%, rgba(122,158,157,0.12) 100%);
+  color: var(--cambridge-dark);
+  border-color: rgba(156,184,183,0.3);
+}
+
+/* ── Fade-in animation ─────────────────────── */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-in {
+  animation: fadeInUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ── Shimmer skeleton ──────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.shimmer {
+  background: linear-gradient(90deg,
+    rgba(234,224,199,0.6) 25%,
+    rgba(221,211,186,0.9) 50%,
+    rgba(234,224,199,0.6) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s linear infinite;
+}
+
+/* ── Table ─────────────────────────────────── */
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.admin-table th {
+  text-align: left;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(46, 33, 28, 0.45);
+  padding: 10px 14px;
+  background: rgba(245, 238, 227, 0.7);
+}
+.admin-table th:first-child { border-radius: 10px 0 0 0; }
+.admin-table th:last-child  { border-radius: 0 10px 0 0; }
+.admin-table td {
+  padding: 12px 14px;
+  font-size: 14px;
+  color: var(--raisin);
+  border-top: 1px solid rgba(221, 211, 186, 0.4);
+}
+.admin-table tr:hover td {
+  background: rgba(245, 238, 227, 0.5);
+}
