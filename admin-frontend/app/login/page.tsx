@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axiosClient from '../../lib/axiosClient';
-import { saveTokens } from '../../lib/auth';
+import { saveTokens, saveRole } from '../../lib/auth';
 import { AuthTokens } from '../../types';
 
 function clearTokens() {
@@ -33,6 +33,7 @@ export default function LoginPage() {
         return;
       }
 
+      saveRole(me.data.role);
       router.push('/dashboard');
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { message?: string } } };

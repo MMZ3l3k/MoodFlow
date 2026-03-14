@@ -3,9 +3,19 @@ export const saveTokens = (accessToken: string, refreshToken: string) => {
   localStorage.setItem('admin_refresh_token', refreshToken);
 };
 
+export const saveRole = (role: string) => {
+  localStorage.setItem('admin_role', role);
+};
+
+export const getRole = (): string | null => {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('admin_role');
+};
+
 export const clearTokens = () => {
   localStorage.removeItem('admin_access_token');
   localStorage.removeItem('admin_refresh_token');
+  localStorage.removeItem('admin_role');
 };
 
 export const getAccessToken = (): string | null => {

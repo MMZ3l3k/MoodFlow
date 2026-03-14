@@ -6,6 +6,8 @@ import { AssessmentAssignment, AssignmentTargetType } from './entities/assessmen
 import { AssessmentResult } from '../results/entities/assessment-result.entity';
 import { CreateAssignmentDto } from './dto/create-assignment.dto';
 import { User } from '../users/entities/user.entity';
+import { UserStatus } from '../../common/enums/user-status.enum';
+import { MailService } from '../notifications/mail.service';
 
 @Injectable()
 export class AssessmentsService {
@@ -16,6 +18,9 @@ export class AssessmentsService {
     private assignmentRepo: Repository<AssessmentAssignment>,
     @InjectRepository(AssessmentResult)
     private resultRepo: Repository<AssessmentResult>,
+    @InjectRepository(User)
+    private userRepo: Repository<User>,
+    private readonly mailService: MailService,
   ) {}
 
   findAll(): Promise<Assessment[]> {
@@ -105,7 +110,49 @@ export class AssessmentsService {
       availableTo: new Date(Date.now() + 24 * 60 * 60 * 1000),
       assignedByUserId,
     });
-    return this.assignmentRepo.save(assignment);
+    const saved = await this.assignmentRepo.save(assignment);
+
+    // Wyślij powiadomienia e-mail asynchronicznie (nie blokuje odpowiedzi API)
+    this.sendAssignmentEmails(saved, assessment.name).catch(() => {
+      // błędy logowane wewnątrz mailService
+    });
+
+    return saved;
+  }
+
+  private async sendAssignmentEmails(assignment: AssessmentAssignment, assessmentName: string): Promise<void> {
+    const targetUsers = await this.resolveTargetUsers(assignment);
+
+    await Promise.all(
+      targetUsers.map((user) =>
+        this.mailService.sendAssignmentNotification({
+          toEmail: user.email,
+          toName: `${user.firstName} ${user.lastName}`,
+          assessmentName,
+          availableTo: assignment.availableTo,
+        }),
+      ),
+    );
+  }
+
+  private async resolveTargetUsers(assignment: AssessmentAssignment): Promise<User[]> {
+    switch (assignment.targetType) {
+      case AssignmentTargetType.USER: {
+        if (!assignment.targetUserId) return [];
+        const user = await this.userRepo.findOne({ where: { id: assignment.targetUserId } });
+        return user ? [user] : [];
+      }
+      case AssignmentTargetType.DEPARTMENT: {
+        if (!assignment.targetDepartment) return [];
+        return this.userRepo.find({
+          where: { department: assignment.targetDepartment, status: UserStatus.ACTIVE },
+        });
+      }
+      case AssignmentTargetType.ALL:
+      default: {
+        return this.userRepo.find({ where: { status: UserStatus.ACTIVE } });
+      }
+    }
   }
 
   async findAllAssignments(): Promise<AssessmentAssignment[]> {
