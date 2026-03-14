@@ -15,7 +15,7 @@ export default {
         'cambridge-light': '#C5DADA',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Montserrat', 'system-ui', 'sans-serif'],
       },
       animation: {
         'fade-in': 'fadeIn 0.35s ease-out',
