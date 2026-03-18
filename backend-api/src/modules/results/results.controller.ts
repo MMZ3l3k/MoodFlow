@@ -12,6 +12,16 @@ export class ResultsController {
     return this.resultsService.findMyResults(req.user.id);
   }
 
+  @Get('wellbeing-index')
+  getWellbeingIndex(@Request() req: any) {
+    return this.resultsService.getWellbeingIndex(req.user.id);
+  }
+
+  @Get('wellbeing-history')
+  getWellbeingHistory(@Request() req: any) {
+    return this.resultsService.getWellbeingHistory(req.user.id);
+  }
+
   @Get(':id')
   async findOne(@Request() req: any, @Param('id', ParseIntPipe) id: number) {
     const result = await this.resultsService.findMyResultById(req.user.id, id);

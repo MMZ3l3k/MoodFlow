@@ -45,4 +45,14 @@ export class AnalyticsController {
   getHrDashboard() {
     return this.analyticsService.getHrDashboard();
   }
+
+  @Get('department-wellbeing-load')
+  getDepartmentWellbeingLoad() {
+    return this.analyticsService.getDepartmentWellbeingLoad();
+  }
+
+  @Get('org-wellbeing-history')
+  getOrgWellbeingHistory() {
+    return this.analyticsService.getOrgWellbeingHistory();
+  }
 }
