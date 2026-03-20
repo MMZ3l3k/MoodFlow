@@ -6,10 +6,12 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { UsersModule } from '../users/users.module';
+import { OrganizationsModule } from '../organizations/organizations.module';
 
 @Module({
   imports: [
     UsersModule,
+    OrganizationsModule,
     PassportModule,
     JwtModule.register({}),
   ],

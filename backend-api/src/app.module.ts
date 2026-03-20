@@ -12,6 +12,8 @@ import { ResultsModule } from './modules/results/results.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { DepartmentsModule } from './modules/departments/departments.module';
+import { Department } from './modules/departments/entities/department.entity';
 import { User } from './modules/users/entities/user.entity';
 import { Organization } from './modules/organizations/entities/organization.entity';
 import { Assessment } from './modules/assessments/entities/assessment.entity';
@@ -53,7 +55,7 @@ import { AssessmentAssignment } from './modules/assessments/entities/assessment-
         username: config.get<string>('DB_USER', 'moodflow'),
         password: config.get<string>('DB_PASSWORD', 'moodflow_secret'),
         database: config.get<string>('DB_NAME', 'moodflow'),
-        entities: [User, Organization, Assessment, Question, AnswerOption, AssessmentResult, UserResponse, AssessmentAssignment],
+        entities: [User, Organization, Department, Assessment, Question, AnswerOption, AssessmentResult, UserResponse, AssessmentAssignment],
         synchronize: config.get<string>('NODE_ENV') !== 'production',
       }),
     }),
@@ -66,6 +68,7 @@ import { AssessmentAssignment } from './modules/assessments/entities/assessment-
     AnalyticsModule,
     AdminModule,
     NotificationsModule,
+    DepartmentsModule,
   ],
 })
 export class AppModule {}

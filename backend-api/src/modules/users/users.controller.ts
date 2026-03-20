@@ -27,13 +27,11 @@ import { CreateUserAdminDto } from './dto/create-user-admin.dto';
 export class UsersController {
   constructor(private usersService: UsersService) {}
 
-  // Static /me routes before :id
   @Get('me')
   getProfile(@Request() req: any) {
     return this.usersService.getProfile(req.user);
   }
 
-  // POST for backward compat + PATCH alias (frontend sends PATCH /users/me/password)
   @Post('me/change-password')
   @HttpCode(HttpStatus.OK)
   changePasswordPost(@Request() req: any, @Body() body: { currentPassword: string; newPassword: string }) {
@@ -52,53 +50,61 @@ export class UsersController {
     return this.usersService.deleteAccount(req.user.id);
   }
 
+  // ADMIN widzi tylko swoją org, SUPER_ADMIN widzi wszystkich
   @Get()
   @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN, Role.HR)
-  findAll() {
-    return this.usersService.findAll();
+  @Roles(Role.ADMIN, Role.HR, Role.SUPER_ADMIN)
+  findAll(@Request() req: any) {
+    const isSuperAdmin = req.user.role === Role.SUPER_ADMIN;
+    return this.usersService.findAll(isSuperAdmin ? undefined : req.user.organizationId);
   }
 
+  // Działy z danej organizacji (string — backward compat)
   @Get('departments')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN, Role.HR)
-  getDepartments() {
-    return this.usersService.getDepartments();
+  getDepartments(@Request() req: any) {
+    return this.usersService.getDepartments(req.user.organizationId);
   }
 
+  // Admin tworzy użytkownika w swojej organizacji
   @Post()
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
-  createByAdmin(@Body() dto: CreateUserAdminDto) {
-    return this.usersService.createByAdmin(dto);
+  createByAdmin(@Body() dto: CreateUserAdminDto, @Request() req: any) {
+    return this.usersService.createByAdmin(dto, req.user.organizationId);
   }
 
   @Patch('departments/rename')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN)
-  renameDepartment(@Body() body: { oldName: string; newName: string }) {
-    return this.usersService.renameDepartment(body.oldName, body.newName);
+  renameDepartment(@Body() body: { oldName: string; newName: string }, @Request() req: any) {
+    return this.usersService.renameDepartment(body.oldName, body.newName, req.user.organizationId);
   }
 
+  // ADMIN widzi oczekujących ze swojej org
   @Get('pending')
   @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN)
-  findPending() {
-    return this.usersService.findPending();
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  findPending(@Request() req: any) {
+    const isSuperAdmin = req.user.role === Role.SUPER_ADMIN;
+    return this.usersService.findPending(isSuperAdmin ? undefined : req.user.organizationId);
   }
 
   @Patch(':id/status')
   @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN)
-  updateStatus(@Param('id', ParseIntPipe) id: number, @Body() dto: ApproveUserDto) {
-    return this.usersService.updateStatus(id, dto);
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  updateStatus(@Param('id', ParseIntPipe) id: number, @Body() dto: ApproveUserDto, @Request() req: any) {
+    const isSuperAdmin = req.user.role === Role.SUPER_ADMIN;
+    return this.usersService.updateStatus(id, dto, isSuperAdmin ? undefined : req.user.organizationId);
   }
 
   @Patch(':id')
   @UseGuards(RolesGuard)
-  @Roles(Role.ADMIN)
-  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto) {
-    return this.usersService.update(id, dto);
+  @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+  update(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateUserDto, @Request() req: any) {
+    const isSuperAdmin = req.user.role === Role.SUPER_ADMIN;
+    return this.usersService.update(id, dto, isSuperAdmin ? undefined : req.user.organizationId);
   }
 
   @Patch(':id/profile')

@@ -3,6 +3,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
+import { RegisterCompanyDto } from './dto/register-company.dto';
+import { RegisterEmployeeDto } from './dto/register-employee.dto';
 import { LoginDto } from './dto/login.dto';
 import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -14,6 +16,16 @@ export class AuthController {
   @Post('register')
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
+  }
+
+  @Post('register-company')
+  registerCompany(@Body() dto: RegisterCompanyDto) {
+    return this.authService.registerCompany(dto);
+  }
+
+  @Post('register-employee')
+  registerEmployee(@Body() dto: RegisterEmployeeDto) {
+    return this.authService.registerEmployee(dto);
   }
 
   @Post('login')
