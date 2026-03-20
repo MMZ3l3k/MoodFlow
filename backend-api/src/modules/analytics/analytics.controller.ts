@@ -1,4 +1,4 @@
-import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards, Request } from '@nestjs/common';
 import { AnalyticsService } from './analytics.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -12,60 +12,61 @@ export class AnalyticsController {
   constructor(private analyticsService: AnalyticsService) {}
 
   @Get('summary')
-  getSummary() {
-    return this.analyticsService.getSummary();
+  getSummary(@Request() req: any) {
+    return this.analyticsService.getSummary(req.user.organizationId);
   }
 
   @Get('trends')
   getTrends(
+    @Request() req: any,
     @Query('assessmentCode') assessmentCode?: string,
     @Query('days') days?: string,
   ) {
-    return this.analyticsService.getTrends(assessmentCode, days ? Number(days) : undefined);
+    return this.analyticsService.getTrends(req.user.organizationId, assessmentCode, days ? Number(days) : undefined);
   }
 
   @Get('severity-distribution')
-  getSeverityDistribution(@Query('assessmentCode') assessmentCode?: string) {
-    return this.analyticsService.getSeverityDistribution(assessmentCode);
+  getSeverityDistribution(@Request() req: any, @Query('assessmentCode') assessmentCode?: string) {
+    return this.analyticsService.getSeverityDistribution(req.user.organizationId, assessmentCode);
   }
 
   @Get('participation')
-  getParticipation() {
-    return this.analyticsService.getParticipation();
+  getParticipation(@Request() req: any) {
+    return this.analyticsService.getParticipation(req.user.organizationId);
   }
 
   @Get('departments')
-  getDepartmentStats() {
-    return this.analyticsService.getDepartmentStats();
+  getDepartmentStats(@Request() req: any) {
+    return this.analyticsService.getDepartmentStats(req.user.organizationId);
   }
 
   @Get('assessments')
-  getAvailableAssessments() {
-    return this.analyticsService.getAvailableAssessments();
+  getAvailableAssessments(@Request() req: any) {
+    return this.analyticsService.getAvailableAssessments(req.user.organizationId);
   }
 
   @Get('hr-dashboard')
-  getHrDashboard() {
-    return this.analyticsService.getHrDashboard();
+  getHrDashboard(@Request() req: any) {
+    return this.analyticsService.getHrDashboard(req.user.organizationId);
   }
 
   @Get('department-wellbeing-load')
-  getDepartmentWellbeingLoad() {
-    return this.analyticsService.getDepartmentWellbeingLoad();
+  getDepartmentWellbeingLoad(@Request() req: any) {
+    return this.analyticsService.getDepartmentWellbeingLoad(req.user.organizationId);
   }
 
   @Get('org-wellbeing-history')
-  getOrgWellbeingHistory() {
-    return this.analyticsService.getOrgWellbeingHistory();
+  getOrgWellbeingHistory(@Request() req: any) {
+    return this.analyticsService.getOrgWellbeingHistory(req.user.organizationId);
   }
 
   @Get('risk-report')
-  getRiskReport() {
-    return this.analyticsService.getRiskReport();
+  getRiskReport(@Request() req: any) {
+    return this.analyticsService.getRiskReport(req.user.organizationId);
   }
 
   @Get('critical-changes')
-  getCriticalChanges() {
-    return this.analyticsService.getCriticalChanges();
+  getCriticalChanges(@Request() req: any) {
+    return this.analyticsService.getCriticalChanges(req.user.organizationId);
   }
 }

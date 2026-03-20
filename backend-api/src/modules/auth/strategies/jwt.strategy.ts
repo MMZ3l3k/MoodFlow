@@ -18,7 +18,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validate(payload: { sub: number; email: string }) {
+  async validate(payload: { sub: number; email: string; role?: string; organizationId?: number }) {
     const user = await this.usersService.findById(payload.sub);
     if (!user || user.status !== UserStatus.ACTIVE) {
       throw new UnauthorizedException('Konto nieaktywne lub nie istnieje');

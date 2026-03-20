@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException, ConflictException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException, ConflictException, ForbiddenException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -22,7 +22,8 @@ export class UsersService {
     return this.usersRepository.save(user);
   }
 
-  async createByAdmin(dto: CreateUserAdminDto): Promise<User> {
+  // Admin firmy tworzy użytkownika w swojej organizacji
+  async createByAdmin(dto: CreateUserAdminDto, organizationId: number): Promise<User> {
     const existing = await this.usersRepository.findOne({ where: { email: dto.email } });
     if (existing) throw new ConflictException('Użytkownik z tym adresem email już istnieje');
     const passwordHash = await bcrypt.hash(dto.password, 12);
@@ -34,27 +35,30 @@ export class UsersService {
       department: dto.department ?? null,
       role: dto.role ?? Role.EMPLOYEE,
       status: UserStatus.ACTIVE,
+      organizationId,
     };
     const user = this.usersRepository.create(data);
     return this.usersRepository.save(user);
   }
 
-  async getDepartments(): Promise<string[]> {
+  // Zwraca działy tylko z danej organizacji (string department — backward compat)
+  async getDepartments(organizationId: number): Promise<string[]> {
     const rows = await this.usersRepository
       .createQueryBuilder('user')
       .select('user.department', 'department')
       .where('user.department IS NOT NULL')
+      .andWhere('user.organizationId = :organizationId', { organizationId })
       .distinct(true)
       .getRawMany<{ department: string }>();
     return rows.map((r) => r.department).sort();
   }
 
-  async renameDepartment(oldName: string, newName: string): Promise<{ updated: number }> {
+  async renameDepartment(oldName: string, newName: string, organizationId: number): Promise<{ updated: number }> {
     const result = await this.usersRepository
       .createQueryBuilder()
       .update(User)
       .set({ department: newName })
-      .where('department = :oldName', { oldName })
+      .where('department = :oldName AND organizationId = :organizationId', { oldName, organizationId })
       .execute();
     return { updated: result.affected ?? 0 };
   }
@@ -67,27 +71,48 @@ export class UsersService {
     return this.usersRepository.findOne({ where: { id }, relations: ['organization'] });
   }
 
-  async findAll(): Promise<User[]> {
+  // ADMIN widzi tylko swoją org, SUPER_ADMIN widzi wszystkich
+  async findAll(callerOrganizationId?: number): Promise<User[]> {
+    if (callerOrganizationId) {
+      return this.usersRepository.find({
+        where: { organizationId: callerOrganizationId },
+        relations: ['organization'],
+      });
+    }
     return this.usersRepository.find({ relations: ['organization'] });
   }
 
-  async findPending(): Promise<User[]> {
+  // ADMIN widzi tylko oczekujących ze swojej org
+  async findPending(callerOrganizationId?: number): Promise<User[]> {
+    if (callerOrganizationId) {
+      return this.usersRepository.find({
+        where: { status: UserStatus.PENDING, organizationId: callerOrganizationId },
+        relations: ['organization'],
+      });
+    }
     return this.usersRepository.find({
       where: { status: UserStatus.PENDING },
       relations: ['organization'],
     });
   }
 
-  async updateStatus(id: number, dto: ApproveUserDto): Promise<User> {
+  // ADMIN może zmieniać status tylko użytkownika ze swojej org
+  async updateStatus(id: number, dto: ApproveUserDto, callerOrganizationId?: number): Promise<User> {
     const user = await this.findById(id);
     if (!user) throw new NotFoundException('Użytkownik nie znaleziony');
+    if (callerOrganizationId && user.organizationId !== callerOrganizationId) {
+      throw new ForbiddenException('Brak dostępu do tego użytkownika');
+    }
     user.status = dto.status;
     return this.usersRepository.save(user);
   }
 
-  async update(id: number, dto: UpdateUserDto): Promise<User> {
+  async update(id: number, dto: UpdateUserDto, callerOrganizationId?: number): Promise<User> {
     const user = await this.findById(id);
     if (!user) throw new NotFoundException('Użytkownik nie znaleziony');
+    if (callerOrganizationId && user.organizationId !== callerOrganizationId) {
+      throw new ForbiddenException('Brak dostępu do tego użytkownika');
+    }
     Object.assign(user, dto);
     return this.usersRepository.save(user);
   }

@@ -55,20 +55,31 @@ export class AnalyticsService {
     private assignmentRepo: Repository<AssessmentAssignment>,
   ) {}
 
-  async getSummary() {
-    const totalActive = await this.userRepo.count({ where: { status: UserStatus.ACTIVE } });
-    const totalResults = await this.resultRepo.count();
+  async getSummary(organizationId: number) {
+    const totalActive = await this.userRepo.count({
+      where: { status: UserStatus.ACTIVE, organizationId },
+    });
+
+    const totalResults = await this.resultRepo
+      .createQueryBuilder('r')
+      .leftJoin('r.user', 'u')
+      .where('u.organizationId = :organizationId', { organizationId })
+      .getCount();
 
     const avgData = await this.resultRepo
       .createQueryBuilder('r')
+      .leftJoin('r.user', 'u')
       .select('AVG(r.normalizedScore)', 'avg')
+      .where('u.organizationId = :organizationId', { organizationId })
       .getRawOne();
 
     const avgNormalizedScore = avgData?.avg ? Math.round(Number(avgData.avg) * 10) / 10 : 0;
 
     const participantsData = await this.resultRepo
       .createQueryBuilder('r')
+      .leftJoin('r.user', 'u')
       .select('COUNT(DISTINCT r.userId)', 'count')
+      .where('u.organizationId = :organizationId', { organizationId })
       .getRawOne();
 
     const participantsCount = Number(participantsData?.count ?? 0);
@@ -84,10 +95,11 @@ export class AnalyticsService {
     };
   }
 
-  async getTrends(assessmentCode?: string, days?: number) {
+  async getTrends(organizationId: number, assessmentCode?: string, days?: number) {
     const qb = this.resultRepo
       .createQueryBuilder('r')
       .leftJoin('r.assessment', 'a')
+      .leftJoin('r.user', 'u')
       .select([
         `TO_CHAR(DATE_TRUNC('week', r."submittedAt"), 'YYYY-MM-DD') AS week`,
         'ROUND(AVG(r.normalizedScore)::numeric, 1) AS "avgScore"',
@@ -95,18 +107,17 @@ export class AnalyticsService {
         'a.code AS "assessmentCode"',
         'a.name AS "assessmentName"',
       ])
+      .where('u.organizationId = :organizationId', { organizationId })
       .groupBy(`DATE_TRUNC('week', r."submittedAt"), a.code, a.name`)
       .orderBy(`DATE_TRUNC('week', r."submittedAt")`, 'ASC');
 
     if (assessmentCode) {
-      qb.where('a.code = :code', { code: assessmentCode });
+      qb.andWhere('a.code = :code', { code: assessmentCode });
     }
 
     if (days) {
       const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
-      assessmentCode
-        ? qb.andWhere('r."submittedAt" >= :cutoff', { cutoff })
-        : qb.where('r."submittedAt" >= :cutoff', { cutoff });
+      qb.andWhere('r."submittedAt" >= :cutoff', { cutoff });
     }
 
     const raw = await qb.getRawMany();
@@ -119,10 +130,11 @@ export class AnalyticsService {
     }));
   }
 
-  async getSeverityDistribution(assessmentCode?: string) {
+  async getSeverityDistribution(organizationId: number, assessmentCode?: string) {
     const qb = this.resultRepo
       .createQueryBuilder('r')
       .leftJoin('r.assessment', 'a')
+      .leftJoin('r.user', 'u')
       .select([
         'r.severity AS severity',
         'a.code AS "assessmentCode"',
@@ -130,6 +142,7 @@ export class AnalyticsService {
         'COUNT(r.id) AS count',
       ])
       .where('r.severity IS NOT NULL')
+      .andWhere('u.organizationId = :organizationId', { organizationId })
       .groupBy('r.severity, a.code, a.name')
       .orderBy('count', 'DESC');
 
@@ -146,18 +159,22 @@ export class AnalyticsService {
     }));
   }
 
-  async getParticipation() {
-    const totalActive = await this.userRepo.count({ where: { status: UserStatus.ACTIVE } });
+  async getParticipation(organizationId: number) {
+    const totalActive = await this.userRepo.count({
+      where: { status: UserStatus.ACTIVE, organizationId },
+    });
 
     const raw = await this.resultRepo
       .createQueryBuilder('r')
       .leftJoin('r.assessment', 'a')
+      .leftJoin('r.user', 'u')
       .select([
         'a.code AS "assessmentCode"',
         'a.name AS "assessmentName"',
         'COUNT(DISTINCT r.userId) AS participants',
         'COUNT(r.id) AS submissions',
       ])
+      .where('u.organizationId = :organizationId', { organizationId })
       .groupBy('a.code, a.name')
       .orderBy('participants', 'DESC')
       .getRawMany();
@@ -174,7 +191,7 @@ export class AnalyticsService {
     }));
   }
 
-  async getDepartmentStats() {
+  async getDepartmentStats(organizationId: number) {
     const raw = await this.userRepo
       .createQueryBuilder('u')
       .leftJoin('assessment_results', 'r', 'r."userId" = u.id')
@@ -186,6 +203,7 @@ export class AnalyticsService {
         'ROUND(AVG(r."normalizedScore")::numeric, 1) AS "avgScore"',
       ])
       .where('u.status = :status', { status: UserStatus.ACTIVE })
+      .andWhere('u.organizationId = :organizationId', { organizationId })
       .groupBy('u.department')
       .orderBy('department', 'ASC')
       .getRawMany();
@@ -206,11 +224,13 @@ export class AnalyticsService {
     });
   }
 
-  async getAvailableAssessments() {
+  async getAvailableAssessments(organizationId: number) {
     const raw = await this.resultRepo
       .createQueryBuilder('r')
       .leftJoin('r.assessment', 'a')
+      .leftJoin('r.user', 'u')
       .select(['a.code AS code', 'a.name AS name'])
+      .where('u.organizationId = :organizationId', { organizationId })
       .groupBy('a.code, a.name')
       .orderBy('a.code', 'ASC')
       .getRawMany();
@@ -218,54 +238,59 @@ export class AnalyticsService {
     return raw.map((row) => ({ code: row.code, name: row.name }));
   }
 
-  async getHrDashboard() {
+  async getHrDashboard(organizationId: number) {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const startOfLastWeek = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
     const startOfThisWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    // Active employees
-    const activeEmployees = await this.userRepo.count({ where: { status: UserStatus.ACTIVE } });
+    const activeEmployees = await this.userRepo.count({
+      where: { status: UserStatus.ACTIVE, organizationId },
+    });
 
-    // New this month
     const newThisMonth = await this.userRepo
       .createQueryBuilder('u')
       .where('u.status = :status', { status: UserStatus.ACTIVE })
+      .andWhere('u.organizationId = :organizationId', { organizationId })
       .andWhere('u."createdAt" >= :start', { start: startOfMonth })
       .getCount();
 
-    // Assignments created today
     const assignedToday = await this.assignmentRepo
       .createQueryBuilder('a')
+      .leftJoin('a.assignedBy', 'u')
       .where('a."createdAt" >= :start', { start: startOfToday })
+      .andWhere('u.organizationId = :organizationId', { organizationId })
       .getCount();
 
-    // Completion % for today's assignments
     const completedToday = await this.resultRepo
       .createQueryBuilder('r')
+      .leftJoin('r.user', 'u')
       .where('r."submittedAt" >= :start', { start: startOfToday })
+      .andWhere('u.organizationId = :organizationId', { organizationId })
       .getCount();
 
     const completionRate = assignedToday > 0
       ? Math.round((completedToday / assignedToday) * 100)
       : 0;
 
-    // Avg stress score this week
     const thisWeekAvg = await this.resultRepo
       .createQueryBuilder('r')
+      .leftJoin('r.user', 'u')
       .select('AVG(r."normalizedScore")', 'avg')
       .where('r."submittedAt" >= :start', { start: startOfThisWeek })
+      .andWhere('u.organizationId = :organizationId', { organizationId })
       .getRawOne();
 
-    // Avg stress score previous week
     const lastWeekAvg = await this.resultRepo
       .createQueryBuilder('r')
+      .leftJoin('r.user', 'u')
       .select('AVG(r."normalizedScore")', 'avg')
       .where('r."submittedAt" >= :start AND r."submittedAt" < :end', {
         start: startOfLastWeek,
         end: startOfThisWeek,
       })
+      .andWhere('u.organizationId = :organizationId', { organizationId })
       .getRawOne();
 
     const avgStressThisWeek = thisWeekAvg?.avg ? Math.round(Number(thisWeekAvg.avg) * 10) / 10 : null;
@@ -274,12 +299,13 @@ export class AnalyticsService {
       ? Math.round((avgStressThisWeek - avgStressLastWeek) * 10) / 10
       : null;
 
-    // Hourly activity today
     const hourlyRaw = await this.resultRepo
       .createQueryBuilder('r')
+      .leftJoin('r.user', 'u')
       .select(`EXTRACT(HOUR FROM r."submittedAt")::int`, 'hour')
       .addSelect('COUNT(r.id)', 'count')
       .where('r."submittedAt" >= :start', { start: startOfToday })
+      .andWhere('u.organizationId = :organizationId', { organizationId })
       .groupBy(`EXTRACT(HOUR FROM r."submittedAt")`)
       .orderBy(`EXTRACT(HOUR FROM r."submittedAt")`, 'ASC')
       .getRawMany();
@@ -303,17 +329,12 @@ export class AnalyticsService {
     };
   }
 
-  /**
-   * Indeks dobrostanu per dział — ostatnie 30 dni.
-   * Zwraca poziom obciążenia (stable / moderate / high) i trend vs poprzednie 14 dni.
-   */
-  async getDepartmentWellbeingLoad() {
+  async getDepartmentWellbeingLoad(organizationId: number) {
     const now = new Date();
     const d30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const d14 = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
     const d28 = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000);
 
-    // Wyniki ostatnich 30 dni z działem użytkownika i kodem testu
     const raw30 = await this.resultRepo
       .createQueryBuilder('r')
       .leftJoin('r.assessment', 'a')
@@ -326,11 +347,11 @@ export class AnalyticsService {
       ])
       .where('r."submittedAt" >= :d30', { d30 })
       .andWhere('u.status = :status', { status: UserStatus.ACTIVE })
+      .andWhere('u.organizationId = :organizationId', { organizationId })
       .andWhere('a.code IN (:...codes)', { codes: Object.keys(WB_CONFIG) })
       .groupBy('u.department, a.code')
       .getRawMany();
 
-    // Wyniki z poprzednich 14 dni (14–28 dni temu)
     const rawPrev = await this.resultRepo
       .createQueryBuilder('r')
       .leftJoin('r.assessment', 'a')
@@ -342,11 +363,11 @@ export class AnalyticsService {
       ])
       .where('r."submittedAt" >= :d28 AND r."submittedAt" < :d14', { d28, d14 })
       .andWhere('u.status = :status', { status: UserStatus.ACTIVE })
+      .andWhere('u.organizationId = :organizationId', { organizationId })
       .andWhere('a.code IN (:...codes)', { codes: Object.keys(WB_CONFIG) })
       .groupBy('u.department, a.code')
       .getRawMany();
 
-    // Liczba aktywnych użytkowników per dział
     const sizeRaw = await this.userRepo
       .createQueryBuilder('u')
       .select([
@@ -354,13 +375,14 @@ export class AnalyticsService {
         'COUNT(u.id) AS "deptSize"',
       ])
       .where('u.status = :status', { status: UserStatus.ACTIVE })
+      .andWhere('u.organizationId = :organizationId', { organizationId })
       .groupBy('u.department')
       .getRawMany();
+
     const sizeMap = new Map<string, number>(
       sizeRaw.map((r) => [r.department, Number(r.deptSize)]),
     );
 
-    // Zbuduj mapy: department → code → avgRaw
     type DeptMap = Map<string, Map<string, number>>;
     const buildMap = (rows: any[]): DeptMap => {
       const m: DeptMap = new Map();
@@ -374,7 +396,6 @@ export class AnalyticsService {
     const map30 = buildMap(raw30);
     const mapPrev = buildMap(rawPrev);
 
-    // Zlicz uczestników per dział (ostatnie 30 dni)
     const participantsMap = new Map<string, number>();
     for (const row of raw30) {
       const cur = participantsMap.get(row.department) ?? 0;
@@ -409,56 +430,32 @@ export class AnalyticsService {
     });
   }
 
-  /**
-   * Raport ryzyk — % pracowników z wysokim stresem, objawami depresyjnymi,
-   * wysokim lękiem i ryzykiem wypalenia. Porównanie vs poprzednie 30 dni.
-   */
-  async getRiskReport() {
+  async getRiskReport(organizationId: number) {
     const now = new Date();
     const d30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     const d60 = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
 
-    const totalActive = await this.userRepo.count({ where: { status: UserStatus.ACTIVE } });
+    const totalActive = await this.userRepo.count({
+      where: { status: UserStatus.ACTIVE, organizationId },
+    });
 
     const risks = [
-      {
-        key: 'high_stress',
-        label: 'Wysoki stres',
-        icon: 'stress',
-        assessmentCode: 'PSS10',
-        severities: ['high'],
-      },
-      {
-        key: 'depressive_symptoms',
-        label: 'Objawy depresyjne',
-        icon: 'depression',
-        assessmentCode: 'PHQ9',
-        severities: ['moderate', 'moderately_severe', 'severe'],
-      },
-      {
-        key: 'high_anxiety',
-        label: 'Wysoki lęk',
-        icon: 'anxiety',
-        assessmentCode: 'GAD7',
-        severities: ['moderate', 'severe'],
-      },
-      {
-        key: 'burnout_risk',
-        label: 'Ryzyko wypalenia',
-        icon: 'burnout',
-        assessmentCode: 'MOOD10',
-        severities: ['low', 'very_low'],
-      },
+      { key: 'high_stress',          label: 'Wysoki stres',        icon: 'stress',     assessmentCode: 'PSS10',  severities: ['high'] },
+      { key: 'depressive_symptoms',  label: 'Objawy depresyjne',   icon: 'depression', assessmentCode: 'PHQ9',   severities: ['moderate', 'moderately_severe', 'severe'] },
+      { key: 'high_anxiety',         label: 'Wysoki lęk',          icon: 'anxiety',    assessmentCode: 'GAD7',   severities: ['moderate', 'severe'] },
+      { key: 'burnout_risk',         label: 'Ryzyko wypalenia',    icon: 'burnout',    assessmentCode: 'MOOD10', severities: ['low', 'very_low'] },
     ];
 
     const getCount = async (code: string, severities: string[], from: Date, to: Date) => {
       const raw = await this.resultRepo
         .createQueryBuilder('r')
         .leftJoin('r.assessment', 'a')
+        .leftJoin('r.user', 'u')
         .select('COUNT(DISTINCT r."userId")', 'count')
         .where('a.code = :code', { code })
         .andWhere('r."submittedAt" >= :from AND r."submittedAt" < :to', { from, to })
         .andWhere('r.severity IN (:...severities)', { severities })
+        .andWhere('u.organizationId = :organizationId', { organizationId })
         .getRawOne();
       return Number(raw?.count ?? 0);
     };
@@ -488,11 +485,7 @@ export class AnalyticsService {
     return { totalActive, risks: result };
   }
 
-  /**
-   * Raport zmian krytycznych — działy z nagłym spadkiem indeksu dobrostanu.
-   * Porównuje ostatnie 14 dni vs poprzednie 14 dni.
-   */
-  async getCriticalChanges() {
+  async getCriticalChanges(organizationId: number) {
     const now = new Date();
     const d14 = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
     const d28 = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000);
@@ -509,6 +502,7 @@ export class AnalyticsService {
         ])
         .where('r."submittedAt" >= :from AND r."submittedAt" < :to', { from, to })
         .andWhere('u.status = :status', { status: UserStatus.ACTIVE })
+        .andWhere('u.organizationId = :organizationId', { organizationId })
         .andWhere('a.code IN (:...codes)', { codes: Object.keys(WB_CONFIG) })
         .groupBy('u.department, a.code')
         .getRawMany();
@@ -562,16 +556,14 @@ export class AnalyticsService {
     });
   }
 
-  /**
-   * Tygodniowy indeks dobrostanu organizacji — ostatnie 12 tygodni.
-   */
-  async getOrgWellbeingHistory() {
+  async getOrgWellbeingHistory(organizationId: number) {
     const twelveWeeks = new Date();
     twelveWeeks.setDate(twelveWeeks.getDate() - 84);
 
     const raw = await this.resultRepo
       .createQueryBuilder('r')
       .leftJoin('r.assessment', 'a')
+      .leftJoin('r.user', 'u')
       .select([
         `TO_CHAR(DATE_TRUNC('week', r."submittedAt"), 'YYYY-MM-DD') AS week`,
         'a.code AS code',
@@ -579,12 +571,12 @@ export class AnalyticsService {
         'COUNT(DISTINCT r."userId") AS "userCount"',
       ])
       .where('r."submittedAt" >= :start', { start: twelveWeeks })
+      .andWhere('u.organizationId = :organizationId', { organizationId })
       .andWhere('a.code IN (:...codes)', { codes: Object.keys(WB_CONFIG) })
       .groupBy(`DATE_TRUNC('week', r."submittedAt"), a.code`)
       .orderBy(`DATE_TRUNC('week', r."submittedAt")`, 'ASC')
       .getRawMany();
 
-    // Grupuj per tydzień → code → avgRaw
     const weekMap = new Map<string, Map<string, number>>();
     const userCounts = new Map<string, number>();
     for (const row of raw) {
