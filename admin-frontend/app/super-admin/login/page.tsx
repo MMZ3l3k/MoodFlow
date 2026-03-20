@@ -1,16 +1,16 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import axiosClient from '../../lib/axiosClient';
-import { saveTokens, saveRole } from '../../lib/auth';
-import { AuthTokens } from '../../types';
+import axiosClient from '../../../lib/axiosClient';
+import { saveTokens, saveRole } from '../../../lib/auth';
+import { AuthTokens } from '../../../types';
 
 function clearTokens() {
   localStorage.removeItem('admin_access_token');
   localStorage.removeItem('admin_refresh_token');
 }
 
-export default function LoginPage() {
+export default function SuperAdminLoginPage() {
   const router = useRouter();
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
@@ -26,15 +26,15 @@ export default function LoginPage() {
       saveTokens(data.accessToken, data.refreshToken);
 
       const me = await axiosClient.get('/users/me');
-      if (me.data.role !== 'admin' && me.data.role !== 'hr') {
+      if (me.data.role !== 'super_admin') {
         clearTokens();
-        setError('Brak dostępu do panelu administracyjnego');
+        setError('Ten panel jest przeznaczony wyłącznie dla właściciela platformy');
         setLoading(false);
         return;
       }
 
       saveRole(me.data.role);
-      router.push(me.data.role === 'hr' ? '/dashboard/hr' : '/dashboard');
+      router.push('/super-admin/dashboard');
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { message?: string } } };
       setError(axiosError.response?.data?.message ?? 'Błąd logowania');
@@ -48,19 +48,18 @@ export default function LoginPage() {
       className="min-h-screen flex items-center justify-center p-4"
       style={{
         background: `
-          radial-gradient(ellipse at 20% 50%, rgba(156,184,183,0.2) 0%, transparent 50%),
-          radial-gradient(ellipse at 80% 20%, rgba(192,98,38,0.08) 0%, transparent 50%),
-          #F5EEE3
+          radial-gradient(ellipse at 20% 50%, rgba(99,102,241,0.12) 0%, transparent 50%),
+          radial-gradient(ellipse at 80% 20%, rgba(79,70,229,0.08) 0%, transparent 50%),
+          #F0EFF8
         `,
       }}
     >
-
       {/* Decorative blobs */}
       <div
         style={{
           position: 'fixed', top: -80, right: -60,
           width: 280, height: 280, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(156,184,183,0.22) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(99,102,241,0.18) 0%, transparent 70%)',
           pointerEvents: 'none',
         }}
       />
@@ -68,7 +67,7 @@ export default function LoginPage() {
         style={{
           position: 'fixed', bottom: -60, left: -60,
           width: 220, height: 220, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(192,98,38,0.1) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(79,70,229,0.1) 0%, transparent 70%)',
           pointerEvents: 'none',
         }}
       />
@@ -80,8 +79,8 @@ export default function LoginPage() {
           <div
             style={{
               width: 60, height: 60, borderRadius: 16,
-              background: 'linear-gradient(135deg, #C06226 0%, #984619 100%)',
-              boxShadow: '0 8px 32px rgba(192, 98, 38, 0.35)',
+              background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+              boxShadow: '0 8px 32px rgba(99, 102, 241, 0.35)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               margin: '0 auto 16px',
               fontSize: 24, fontWeight: 700, color: 'white',
@@ -89,32 +88,47 @@ export default function LoginPage() {
           >
             M
           </div>
-          <h1 style={{ fontSize: 26, fontWeight: 700, color: '#2E211C', margin: 0 }}>MoodFlow</h1>
-          <p style={{ fontSize: 13, color: 'rgba(46,33,28,0.45)', marginTop: 4 }}>
-            Panel administracyjny
+          <h1 style={{ fontSize: 26, fontWeight: 700, color: '#1e1b4b', margin: 0 }}>MoodFlow</h1>
+          <p style={{ fontSize: 13, color: 'rgba(30,27,75,0.45)', marginTop: 4 }}>
+            Panel właściciela platformy
           </p>
+        </div>
+
+        {/* Badge */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 20 }}>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            padding: '4px 12px', borderRadius: 99,
+            background: 'rgba(99,102,241,0.1)', color: '#6366f1',
+            fontSize: 11, fontWeight: 600, letterSpacing: '0.05em',
+            border: '1px solid rgba(99,102,241,0.2)',
+          }}>
+            <svg width="10" height="10" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/>
+            </svg>
+            DOSTĘP ZASTRZEŻONY
+          </span>
         </div>
 
         {/* Card */}
         <div
           style={{
-            background: 'rgba(255,255,255,0.88)',
+            background: 'rgba(255,255,255,0.90)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
-            border: '1px solid rgba(221, 211, 186, 0.7)',
+            border: '1px solid rgba(99,102,241,0.15)',
             borderRadius: 24,
             padding: 28,
-            boxShadow: '0 16px 48px rgba(46, 33, 28, 0.10)',
+            boxShadow: '0 16px 48px rgba(79, 70, 229, 0.10)',
           }}
         >
-
           {/* Error */}
           {error && (
             <div
               style={{
                 marginBottom: 20, padding: '12px 14px', borderRadius: 12,
-                background: 'rgba(192,98,38,0.08)', color: '#C06226',
-                border: '1px solid rgba(192,98,38,0.2)',
+                background: 'rgba(99,102,241,0.08)', color: '#6366f1',
+                border: '1px solid rgba(99,102,241,0.2)',
                 fontSize: 13, display: 'flex', alignItems: 'center', gap: 8,
               }}
             >
@@ -126,10 +140,8 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-
-            {/* Email */}
             <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'rgba(46,33,28,0.65)', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'rgba(30,27,75,0.65)', marginBottom: 6 }}>
                 Adres email
               </label>
               <input
@@ -138,13 +150,12 @@ export default function LoginPage() {
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 className="admin-input"
-                placeholder="admin@firma.pl"
+                placeholder="owner@moodflow.pl"
               />
             </div>
 
-            {/* Password */}
             <div>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'rgba(46,33,28,0.65)', marginBottom: 6 }}>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'rgba(30,27,75,0.65)', marginBottom: 6 }}>
                 Hasło
               </label>
               <div style={{ position: 'relative' }}>
@@ -163,7 +174,7 @@ export default function LoginPage() {
                   style={{
                     position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
                     background: 'none', border: 'none', cursor: 'pointer',
-                    color: 'rgba(46,33,28,0.35)', padding: 2,
+                    color: 'rgba(30,27,75,0.35)', padding: 2,
                   }}
                 >
                   <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -183,8 +194,17 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="btn-admin-primary"
-              style={{ marginTop: 4, width: '100%' }}
+              style={{
+                marginTop: 4, width: '100%',
+                padding: '12px 20px', borderRadius: 12, border: 'none',
+                background: loading
+                  ? 'rgba(99,102,241,0.5)'
+                  : 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+                color: 'white', fontSize: 14, fontWeight: 600,
+                cursor: loading ? 'not-allowed' : 'pointer',
+                boxShadow: loading ? 'none' : '0 4px 14px rgba(99,102,241,0.4)',
+                transition: 'all 0.2s',
+              }}
             >
               {loading ? (
                 <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
@@ -199,11 +219,11 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p style={{ textAlign: 'center', fontSize: 12, color: 'rgba(46,33,28,0.3)', marginTop: 20 }}>
-          Jesteś pracownikiem firmy?{' '}
+        <p style={{ textAlign: 'center', fontSize: 12, color: 'rgba(30,27,75,0.3)', marginTop: 20 }}>
+          Jesteś użytkownikiem firmy?{' '}
           <a
             href="http://localhost:3000/login"
-            style={{ color: 'rgba(46,33,28,0.45)', textDecoration: 'underline' }}
+            style={{ color: 'rgba(30,27,75,0.45)', textDecoration: 'underline' }}
           >
             Zaloguj się tutaj
           </a>
@@ -211,7 +231,27 @@ export default function LoginPage() {
       </div>
 
       <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
         @keyframes spin { to { transform: rotate(360deg); } }
+        .admin-input {
+          width: 100%;
+          padding: 10px 14px;
+          border: 1.5px solid rgba(99,102,241,0.2);
+          border-radius: 10px;
+          font-size: 14px;
+          color: #1e1b4b;
+          background: rgba(255,255,255,0.8);
+          outline: none;
+          transition: border-color 0.2s, box-shadow 0.2s;
+          box-sizing: border-box;
+        }
+        .admin-input:focus {
+          border-color: rgba(99,102,241,0.5);
+          box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+        }
       `}</style>
     </div>
   );

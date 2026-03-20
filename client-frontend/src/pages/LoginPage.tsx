@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import type { AppDispatch } from '../store/store';
-import { login, fetchMe, clearError } from '../store/slices/authSlice';
+import { login, fetchMe, clearError, logout } from '../store/slices/authSlice';
 import { useAuth } from '../hooks/useAuth';
+
+const ADMIN_FRONTEND_URL = import.meta.env.VITE_ADMIN_URL ?? 'http://localhost:3001';
 
 export default function LoginPage() {
   const dispatch = useDispatch<AppDispatch>();
@@ -12,6 +14,7 @@ export default function LoginPage() {
 
   const [form, setForm] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
+  const [localError, setLocalError] = useState('');
 
   useEffect(() => {
     if (isAuthenticated) navigate('/app/home');
@@ -19,11 +22,32 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLocalError('');
     dispatch(clearError());
     const result = await dispatch(login(form));
     if (login.fulfilled.match(result)) {
-      await dispatch(fetchMe());
-      navigate('/app/home');
+      const meResult = await dispatch(fetchMe());
+      if (fetchMe.fulfilled.match(meResult)) {
+        const user = meResult.payload as { role: string };
+
+        if (user.role === 'super_admin') {
+          dispatch(logout());
+          setLocalError('To konto należy do właściciela platformy. Zaloguj się przez dedykowany panel.');
+          return;
+        }
+
+        if (user.role === 'admin' || user.role === 'hr') {
+          const accessToken = localStorage.getItem('accessToken') ?? '';
+          const refreshToken = localStorage.getItem('refreshToken') ?? '';
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+          window.location.href =
+            `${ADMIN_FRONTEND_URL}/auth/callback#access=${encodeURIComponent(accessToken)}&refresh=${encodeURIComponent(refreshToken)}&role=${user.role}`;
+          return;
+        }
+
+        navigate('/app/home');
+      }
     }
   };
 
@@ -70,7 +94,7 @@ export default function LoginPage() {
         >
 
           {/* Error alert */}
-          {error && (
+          {(error || localError) && (
             <div
               className="mb-5 p-3.5 rounded-xl text-sm flex items-center gap-2 animate-fade-in"
               style={{ background: 'rgba(192,98,38,0.08)', color: '#C06226', border: '1px solid rgba(192,98,38,0.2)' }}
@@ -78,7 +102,7 @@ export default function LoginPage() {
               <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd"/>
               </svg>
-              {error}
+              {localError || error}
             </div>
           )}
 
@@ -166,6 +190,17 @@ export default function LoginPage() {
         {/* Footer note */}
         <p className="text-center text-xs text-raisin/30 mt-6">
           Twoje dane są bezpieczne i szyfrowane
+        </p>
+
+        {/* Super admin link */}
+        <p className="text-center text-xs text-raisin/25 mt-3">
+          Właściciel platformy?{' '}
+          <a
+            href={`${ADMIN_FRONTEND_URL}/super-admin/login`}
+            className="underline hover:text-raisin/50 transition-colors"
+          >
+            Panel administratora platformy
+          </a>
         </p>
       </div>
     </div>
