@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import axiosClient from '../../lib/axiosClient';
-import { getAccessToken } from '../../lib/auth';
+import { getAccessToken, getRole } from '../../lib/auth';
 
 interface Overview {
   totalUsers: number;
@@ -65,6 +65,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!getAccessToken()) { router.push('/login'); return; }
+    if (getRole() === 'hr') { router.push('/dashboard/hr'); return; }
     Promise.all([
       axiosClient.get<Overview>('/admin/overview'),
       axiosClient.get<HourActivity[]>('/admin/activity-today'),
@@ -102,7 +103,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div>
         <h2 className="text-2xl font-bold" style={{ color: '#2E211C' }}>Przegląd systemu</h2>
-        <p className="text-sm mt-0.5" style={{ color: 'rgba(46,33,28,0.45)' }}>
+        <p className="text-sm mt-0.5" style={{ color: 'rgba(46,33,28,0.45)' }} suppressHydrationWarning>
           {new Date().toLocaleDateString('pl-PL', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
         </p>
       </div>

@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, UnauthorizedException } from '@nestjs/common';
+import { Injectable, NotFoundException, UnauthorizedException, ConflictException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -8,6 +8,7 @@ import { UserStatus } from '../../common/enums/user-status.enum';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ApproveUserDto } from './dto/approve-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { CreateUserAdminDto } from './dto/create-user-admin.dto';
 
 @Injectable()
 export class UsersService {
@@ -19,6 +20,43 @@ export class UsersService {
   async create(data: Partial<User>): Promise<User> {
     const user = this.usersRepository.create(data);
     return this.usersRepository.save(user);
+  }
+
+  async createByAdmin(dto: CreateUserAdminDto): Promise<User> {
+    const existing = await this.usersRepository.findOne({ where: { email: dto.email } });
+    if (existing) throw new ConflictException('Użytkownik z tym adresem email już istnieje');
+    const passwordHash = await bcrypt.hash(dto.password, 12);
+    const data: Partial<User> = {
+      email: dto.email,
+      passwordHash,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      department: dto.department ?? null,
+      role: dto.role ?? Role.EMPLOYEE,
+      status: UserStatus.ACTIVE,
+    };
+    const user = this.usersRepository.create(data);
+    return this.usersRepository.save(user);
+  }
+
+  async getDepartments(): Promise<string[]> {
+    const rows = await this.usersRepository
+      .createQueryBuilder('user')
+      .select('user.department', 'department')
+      .where('user.department IS NOT NULL')
+      .distinct(true)
+      .getRawMany<{ department: string }>();
+    return rows.map((r) => r.department).sort();
+  }
+
+  async renameDepartment(oldName: string, newName: string): Promise<{ updated: number }> {
+    const result = await this.usersRepository
+      .createQueryBuilder()
+      .update(User)
+      .set({ department: newName })
+      .where('department = :oldName', { oldName })
+      .execute();
+    return { updated: result.affected ?? 0 };
   }
 
   async findByEmail(email: string): Promise<User | null> {

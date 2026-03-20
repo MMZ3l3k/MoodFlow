@@ -107,7 +107,7 @@ export class AssessmentsService {
       targetUserId: dto.targetUserId ?? null,
       targetDepartment: dto.targetDepartment ?? null,
       availableFrom: new Date(),
-      availableTo: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      availableTo: new Date(Date.now() + (dto.durationHours ?? 24) * 60 * 60 * 1000),
       assignedByUserId,
     });
     const saved = await this.assignmentRepo.save(assignment);

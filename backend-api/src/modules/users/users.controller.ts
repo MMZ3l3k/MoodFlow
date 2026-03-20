@@ -20,6 +20,7 @@ import { Role } from '../../common/enums/role.enum';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ApproveUserDto } from './dto/approve-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { CreateUserAdminDto } from './dto/create-user-admin.dto';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -56,6 +57,27 @@ export class UsersController {
   @Roles(Role.ADMIN, Role.HR)
   findAll() {
     return this.usersService.findAll();
+  }
+
+  @Get('departments')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN, Role.HR)
+  getDepartments() {
+    return this.usersService.getDepartments();
+  }
+
+  @Post()
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  createByAdmin(@Body() dto: CreateUserAdminDto) {
+    return this.usersService.createByAdmin(dto);
+  }
+
+  @Patch('departments/rename')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN)
+  renameDepartment(@Body() body: { oldName: string; newName: string }) {
+    return this.usersService.renameDepartment(body.oldName, body.newName);
   }
 
   @Get('pending')

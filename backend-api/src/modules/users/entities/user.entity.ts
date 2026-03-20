@@ -34,8 +34,8 @@ export class User {
   @Column({ type: 'enum', enum: UserStatus, default: UserStatus.PENDING })
   status: UserStatus;
 
-  @Column({ nullable: true })
-  department: string;
+  @Column({ type: 'varchar', nullable: true })
+  department: string | null;
 
   @Column({ nullable: true })
   organizationId: number;

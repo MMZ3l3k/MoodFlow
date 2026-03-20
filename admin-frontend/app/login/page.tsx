@@ -34,7 +34,7 @@ export default function LoginPage() {
       }
 
       saveRole(me.data.role);
-      router.push('/dashboard');
+      router.push(me.data.role === 'hr' ? '/dashboard/hr' : '/dashboard');
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { message?: string } } };
       setError(axiosError.response?.data?.message ?? 'Błąd logowania');

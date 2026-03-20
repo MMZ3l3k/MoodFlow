@@ -17,8 +17,11 @@ export class AnalyticsController {
   }
 
   @Get('trends')
-  getTrends(@Query('assessmentCode') assessmentCode?: string) {
-    return this.analyticsService.getTrends(assessmentCode);
+  getTrends(
+    @Query('assessmentCode') assessmentCode?: string,
+    @Query('days') days?: string,
+  ) {
+    return this.analyticsService.getTrends(assessmentCode, days ? Number(days) : undefined);
   }
 
   @Get('severity-distribution')
@@ -54,5 +57,15 @@ export class AnalyticsController {
   @Get('org-wellbeing-history')
   getOrgWellbeingHistory() {
     return this.analyticsService.getOrgWellbeingHistory();
+  }
+
+  @Get('risk-report')
+  getRiskReport() {
+    return this.analyticsService.getRiskReport();
+  }
+
+  @Get('critical-changes')
+  getCriticalChanges() {
+    return this.analyticsService.getCriticalChanges();
   }
 }

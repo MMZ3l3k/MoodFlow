@@ -1,4 +1,4 @@
-import { IsEnum, IsInt, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsInt, IsOptional, IsString, Min, Max } from 'class-validator';
 import { AssignmentTargetType } from '../entities/assessment-assignment.entity';
 
 export class CreateAssignmentDto {
@@ -16,4 +16,10 @@ export class CreateAssignmentDto {
   @IsString()
   @IsOptional()
   targetDepartment?: string;
+
+  @IsInt()
+  @Min(1)
+  @Max(168)
+  @IsOptional()
+  durationHours?: number;
 }
