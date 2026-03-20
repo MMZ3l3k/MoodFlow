@@ -84,7 +84,7 @@ export class AnalyticsService {
     };
   }
 
-  async getTrends(assessmentCode?: string) {
+  async getTrends(assessmentCode?: string, days?: number) {
     const qb = this.resultRepo
       .createQueryBuilder('r')
       .leftJoin('r.assessment', 'a')
@@ -100,6 +100,13 @@ export class AnalyticsService {
 
     if (assessmentCode) {
       qb.where('a.code = :code', { code: assessmentCode });
+    }
+
+    if (days) {
+      const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+      assessmentCode
+        ? qb.andWhere('r."submittedAt" >= :cutoff', { cutoff })
+        : qb.where('r."submittedAt" >= :cutoff', { cutoff });
     }
 
     const raw = await qb.getRawMany();
@@ -399,6 +406,159 @@ export class AnalyticsService {
         trend,
         color: wbColor(index),
       };
+    });
+  }
+
+  /**
+   * Raport ryzyk — % pracowników z wysokim stresem, objawami depresyjnymi,
+   * wysokim lękiem i ryzykiem wypalenia. Porównanie vs poprzednie 30 dni.
+   */
+  async getRiskReport() {
+    const now = new Date();
+    const d30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const d60 = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+
+    const totalActive = await this.userRepo.count({ where: { status: UserStatus.ACTIVE } });
+
+    const risks = [
+      {
+        key: 'high_stress',
+        label: 'Wysoki stres',
+        icon: 'stress',
+        assessmentCode: 'PSS10',
+        severities: ['high'],
+      },
+      {
+        key: 'depressive_symptoms',
+        label: 'Objawy depresyjne',
+        icon: 'depression',
+        assessmentCode: 'PHQ9',
+        severities: ['moderate', 'moderately_severe', 'severe'],
+      },
+      {
+        key: 'high_anxiety',
+        label: 'Wysoki lęk',
+        icon: 'anxiety',
+        assessmentCode: 'GAD7',
+        severities: ['moderate', 'severe'],
+      },
+      {
+        key: 'burnout_risk',
+        label: 'Ryzyko wypalenia',
+        icon: 'burnout',
+        assessmentCode: 'MOOD10',
+        severities: ['low', 'very_low'],
+      },
+    ];
+
+    const getCount = async (code: string, severities: string[], from: Date, to: Date) => {
+      const raw = await this.resultRepo
+        .createQueryBuilder('r')
+        .leftJoin('r.assessment', 'a')
+        .select('COUNT(DISTINCT r."userId")', 'count')
+        .where('a.code = :code', { code })
+        .andWhere('r."submittedAt" >= :from AND r."submittedAt" < :to', { from, to })
+        .andWhere('r.severity IN (:...severities)', { severities })
+        .getRawOne();
+      return Number(raw?.count ?? 0);
+    };
+
+    const result = await Promise.all(
+      risks.map(async (risk) => {
+        const [currentCount, previousCount] = await Promise.all([
+          getCount(risk.assessmentCode, risk.severities, d30, now),
+          getCount(risk.assessmentCode, risk.severities, d60, d30),
+        ]);
+        const currentPct = totalActive > 0 ? Math.round((currentCount / totalActive) * 100) : 0;
+        const previousPct = totalActive > 0 ? Math.round((previousCount / totalActive) * 100) : 0;
+        return {
+          key: risk.key,
+          label: risk.label,
+          icon: risk.icon,
+          assessmentCode: risk.assessmentCode,
+          currentCount,
+          previousCount,
+          currentPct,
+          previousPct,
+          delta: currentPct - previousPct,
+        };
+      }),
+    );
+
+    return { totalActive, risks: result };
+  }
+
+  /**
+   * Raport zmian krytycznych — działy z nagłym spadkiem indeksu dobrostanu.
+   * Porównuje ostatnie 14 dni vs poprzednie 14 dni.
+   */
+  async getCriticalChanges() {
+    const now = new Date();
+    const d14 = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+    const d28 = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000);
+
+    const fetchDeptAvg = async (from: Date, to: Date) => {
+      const raw = await this.resultRepo
+        .createQueryBuilder('r')
+        .leftJoin('r.assessment', 'a')
+        .leftJoin('r.user', 'u')
+        .select([
+          `COALESCE(u.department, 'Brak działu') AS department`,
+          'a.code AS code',
+          'AVG(r."rawScore") AS "avgRaw"',
+        ])
+        .where('r."submittedAt" >= :from AND r."submittedAt" < :to', { from, to })
+        .andWhere('u.status = :status', { status: UserStatus.ACTIVE })
+        .andWhere('a.code IN (:...codes)', { codes: Object.keys(WB_CONFIG) })
+        .groupBy('u.department, a.code')
+        .getRawMany();
+
+      const m = new Map<string, Map<string, number>>();
+      for (const row of raw) {
+        if (!m.has(row.department)) m.set(row.department, new Map());
+        m.get(row.department)!.set(row.code, Number(row.avgRaw));
+      }
+      return m;
+    };
+
+    const [mapRecent, mapPrev] = await Promise.all([
+      fetchDeptAvg(d14, now),
+      fetchDeptAvg(d28, d14),
+    ]);
+
+    const allDepts = new Set([...mapRecent.keys(), ...mapPrev.keys()]);
+    const changes: {
+      department: string;
+      recentIndex: number | null;
+      prevIndex: number | null;
+      drop: number;
+      direction: 'worsening' | 'improving';
+      severity: 'critical' | 'warning';
+    }[] = [];
+
+    for (const dept of allDepts) {
+      const recentIndex = calcWellbeingIndex(mapRecent.get(dept) ?? new Map());
+      const prevIndex = calcWellbeingIndex(mapPrev.get(dept) ?? new Map());
+
+      if (recentIndex === null || prevIndex === null) continue;
+
+      const diff = recentIndex - prevIndex;
+      if (Math.abs(diff) < 8) continue;
+
+      changes.push({
+        department: dept,
+        recentIndex,
+        prevIndex,
+        drop: Math.abs(diff),
+        direction: diff < 0 ? 'worsening' : 'improving',
+        severity: Math.abs(diff) >= 15 ? 'critical' : 'warning',
+      });
+    }
+
+    return changes.sort((a, b) => {
+      if (a.direction === 'worsening' && b.direction !== 'worsening') return -1;
+      if (b.direction === 'worsening' && a.direction !== 'worsening') return 1;
+      return b.drop - a.drop;
     });
   }
 
