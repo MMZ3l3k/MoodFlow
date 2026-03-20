@@ -40,14 +40,14 @@ export class User {
   department: string | null;
 
   // FK do encji Department
-  @Column({ nullable: true })
+  @Column({ nullable: true, type: 'int' })
   departmentId: number | null;
 
   @ManyToOne(() => Department, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'departmentId' })
   departmentEntity: Department | null;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, type: 'int' })
   organizationId: number;
 
   @ManyToOne(() => Organization, { nullable: true, onDelete: 'SET NULL' })

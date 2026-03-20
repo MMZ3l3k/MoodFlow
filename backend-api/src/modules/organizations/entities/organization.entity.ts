@@ -31,7 +31,7 @@ export class Organization {
   @Column({ unique: true, nullable: true, type: 'varchar' })
   inviteCode: string | null;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, type: 'int' })
   adminUserId: number | null;
 
   @CreateDateColumn()
