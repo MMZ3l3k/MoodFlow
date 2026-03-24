@@ -28,9 +28,9 @@ export class OrganizationsController {
     return this.organizationsService.findPending();
   }
 
-  // Admin firmy — dane swojej organizacji
+  // Admin / HR firmy — dane swojej organizacji
   @Get('my')
-  @Roles(Role.ADMIN)
+  @Roles(Role.ADMIN, Role.HR)
   findMy(@Request() req: any) {
     return this.organizationsService.findById(req.user.organizationId);
   }

@@ -6,6 +6,7 @@ export interface User {
   role: 'employee' | 'hr' | 'admin';
   status: 'pending' | 'active' | 'rejected';
   organizationId?: number;
+  organization?: { id: number; name: string } | null;
 }
 
 export interface AuthState {

@@ -110,7 +110,8 @@ export class UsersController {
   @Patch(':id/profile')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN, Role.HR)
-  updateProfile(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateProfileDto) {
-    return this.usersService.updateProfile(id, dto);
+  updateProfile(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateProfileDto, @Request() req: any) {
+    const isSuperAdmin = req.user.role === Role.SUPER_ADMIN;
+    return this.usersService.updateProfile(id, dto, isSuperAdmin ? undefined : req.user.organizationId);
   }
 }

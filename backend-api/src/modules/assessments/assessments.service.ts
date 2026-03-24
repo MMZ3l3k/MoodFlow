@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual } from 'typeorm';
 import { Assessment } from './entities/assessment.entity';
@@ -44,10 +44,11 @@ export class AssessmentsService {
   async findAssignedForUser(user: User) {
     // Only return assignments that have already started (availableFrom <= now)
     const now = new Date();
+    const orgId = user.organizationId ?? null;
 
-    // Fetch assignments for ALL users
+    // Fetch assignments for ALL users in this org
     const allAssignments = await this.assignmentRepo.find({
-      where: { targetType: AssignmentTargetType.ALL, availableFrom: LessThanOrEqual(now) },
+      where: { targetType: AssignmentTargetType.ALL, availableFrom: LessThanOrEqual(now), organizationId: orgId },
       relations: ['assessment'],
     });
 
@@ -61,7 +62,7 @@ export class AssessmentsService {
     let deptAssignments: AssessmentAssignment[] = [];
     if (user.department) {
       deptAssignments = await this.assignmentRepo.find({
-        where: { targetType: AssignmentTargetType.DEPARTMENT, targetDepartment: user.department, availableFrom: LessThanOrEqual(now) },
+        where: { targetType: AssignmentTargetType.DEPARTMENT, targetDepartment: user.department, availableFrom: LessThanOrEqual(now), organizationId: orgId },
         relations: ['assessment'],
       });
     }
@@ -97,7 +98,7 @@ export class AssessmentsService {
     }).sort((a, b) => new Date(a.availableTo).getTime() - new Date(b.availableTo).getTime());
   }
 
-  async createAssignment(dto: CreateAssignmentDto, assignedByUserId: number): Promise<AssessmentAssignment> {
+  async createAssignment(dto: CreateAssignmentDto, assignedByUserId: number, organizationId: number): Promise<AssessmentAssignment> {
     const assessment = await this.assessmentRepo.findOne({ where: { id: dto.assessmentId } });
     if (!assessment) throw new NotFoundException('Test nie znaleziony');
 
@@ -109,6 +110,7 @@ export class AssessmentsService {
       availableFrom: new Date(),
       availableTo: new Date(Date.now() + (dto.durationHours ?? 24) * 60 * 60 * 1000),
       assignedByUserId,
+      organizationId,
     });
     const saved = await this.assignmentRepo.save(assignment);
 
@@ -136,6 +138,7 @@ export class AssessmentsService {
   }
 
   private async resolveTargetUsers(assignment: AssessmentAssignment): Promise<User[]> {
+    const orgFilter = assignment.organizationId ? { organizationId: assignment.organizationId } : {};
     switch (assignment.targetType) {
       case AssignmentTargetType.USER: {
         if (!assignment.targetUserId) return [];
@@ -145,24 +148,30 @@ export class AssessmentsService {
       case AssignmentTargetType.DEPARTMENT: {
         if (!assignment.targetDepartment) return [];
         return this.userRepo.find({
-          where: { department: assignment.targetDepartment, status: UserStatus.ACTIVE },
+          where: { department: assignment.targetDepartment, status: UserStatus.ACTIVE, ...orgFilter },
         });
       }
       case AssignmentTargetType.ALL:
       default: {
-        return this.userRepo.find({ where: { status: UserStatus.ACTIVE } });
+        return this.userRepo.find({ where: { status: UserStatus.ACTIVE, ...orgFilter } });
       }
     }
   }
 
-  async findAllAssignments(): Promise<AssessmentAssignment[]> {
+  async findAllAssignments(organizationId: number): Promise<AssessmentAssignment[]> {
     return this.assignmentRepo.find({
+      where: { organizationId },
       relations: ['assessment', 'assignedBy'],
       order: { createdAt: 'DESC' },
     });
   }
 
-  async deleteAssignment(id: number): Promise<void> {
+  async deleteAssignment(id: number, organizationId: number): Promise<void> {
+    const assignment = await this.assignmentRepo.findOne({ where: { id } });
+    if (!assignment) throw new NotFoundException('Przypisanie nie znalezione');
+    if (assignment.organizationId !== organizationId) {
+      throw new ForbiddenException('Brak dostępu do tego przypisania');
+    }
     await this.assignmentRepo.delete(id);
   }
 }

@@ -20,11 +20,24 @@ export default function SettingsPage() {
   const [pwdError, setPwdError] = useState('');
   const [pwdLoading, setPwdLoading] = useState(false);
   const [sessionTimeout, setSessionTimeoutState] = useState(15);
+  const [inviteCode, setInviteCode] = useState('');
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!getAccessToken()) { router.push('/login'); return; }
     setSessionTimeoutState(getSessionTimeout());
+    axiosClient.get('/organizations/my')
+      .then((res) => setInviteCode(res.data?.inviteCode ?? ''))
+      .catch(() => {});
   }, [router]);
+
+  const handleCopy = () => {
+    if (!inviteCode) return;
+    navigator.clipboard.writeText(inviteCode).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,6 +77,54 @@ export default function SettingsPage() {
         <h2 className="text-2xl font-bold text-gray-800">Ustawienia</h2>
         <p className="text-sm text-gray-400 mt-0.5">Konfiguracja konta administratora</p>
       </div>
+
+      {/* Invite code */}
+      {inviteCode && (
+        <div className="bg-white rounded-2xl shadow-sm p-6 space-y-3">
+          <div>
+            <h3 className="text-base font-semibold" style={{ color: '#2E211C' }}>Kod zaproszeniowy firmy</h3>
+            <p className="text-xs mt-0.5" style={{ color: 'rgba(46,33,28,0.45)' }}>
+              Udostępnij ten kod pracownikom — wpiszą go podczas rejestracji, aby dołączyć do Twojej firmy
+            </p>
+          </div>
+          <div
+            className="flex items-center gap-3 rounded-xl px-4 py-3"
+            style={{ background: 'rgba(192,98,38,0.06)', border: '1px solid rgba(192,98,38,0.2)' }}
+          >
+            <code
+              className="flex-1 text-lg font-bold tracking-widest"
+              style={{ color: '#C06226', fontFamily: 'monospace' }}
+            >
+              {inviteCode}
+            </code>
+            <button
+              onClick={handleCopy}
+              className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
+              style={{
+                background: copied ? 'rgba(34,197,94,0.12)' : 'rgba(192,98,38,0.12)',
+                color: copied ? '#16a34a' : '#C06226',
+                border: copied ? '1px solid rgba(34,197,94,0.3)' : '1px solid rgba(192,98,38,0.25)',
+              }}
+            >
+              {copied ? (
+                <>
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                  Skopiowano
+                </>
+              ) : (
+                <>
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Kopiuj
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Password */}
       <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4">

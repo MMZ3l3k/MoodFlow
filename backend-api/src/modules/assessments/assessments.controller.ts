@@ -28,23 +28,23 @@ export class AssessmentsController {
   @Get('assignments')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN, Role.HR)
-  getAllAssignments() {
-    return this.assessmentsService.findAllAssignments();
+  getAllAssignments(@Request() req: any) {
+    return this.assessmentsService.findAllAssignments(req.user.organizationId);
   }
 
   @Post('assignments')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN, Role.HR)
   createAssignment(@Body() dto: CreateAssignmentDto, @Request() req: any) {
-    return this.assessmentsService.createAssignment(dto, req.user.id);
+    return this.assessmentsService.createAssignment(dto, req.user.id, req.user.organizationId);
   }
 
   @Delete('assignments/:id')
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN, Role.HR)
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteAssignment(@Param('id', ParseIntPipe) id: number) {
-    return this.assessmentsService.deleteAssignment(id);
+  deleteAssignment(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    return this.assessmentsService.deleteAssignment(id, req.user.organizationId);
   }
 
   @Get(':id')

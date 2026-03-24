@@ -117,9 +117,12 @@ export class UsersService {
     return this.usersRepository.save(user);
   }
 
-  async updateProfile(id: number, dto: UpdateProfileDto): Promise<User> {
+  async updateProfile(id: number, dto: UpdateProfileDto, callerOrganizationId?: number): Promise<User> {
     const user = await this.findById(id);
     if (!user) throw new NotFoundException('Użytkownik nie znaleziony');
+    if (callerOrganizationId && user.organizationId !== callerOrganizationId) {
+      throw new ForbiddenException('Brak dostępu do tego użytkownika');
+    }
     Object.assign(user, dto);
     return this.usersRepository.save(user);
   }
