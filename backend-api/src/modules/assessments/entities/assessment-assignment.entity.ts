@@ -49,6 +49,9 @@ export class AssessmentAssignment {
   @JoinColumn({ name: 'assignedByUserId' })
   assignedBy: User;
 
+  @Column({ nullable: true, type: 'int' })
+  organizationId: number | null;
+
   @CreateDateColumn()
   createdAt: Date;
 }

@@ -5,6 +5,7 @@ import { AssessmentResult } from '../results/entities/assessment-result.entity';
 import { User } from '../users/entities/user.entity';
 import { AssessmentAssignment } from '../assessments/entities/assessment-assignment.entity';
 import { UserStatus } from '../../common/enums/user-status.enum';
+import { Role } from '../../common/enums/role.enum';
 
 // Konfiguracja indeksu dobrostanu — taka sama jak w ResultsService
 const WB_CONFIG: Record<string, { weight: number; positive: boolean; maxRaw: number }> = {
@@ -57,13 +58,14 @@ export class AnalyticsService {
 
   async getSummary(organizationId: number) {
     const totalActive = await this.userRepo.count({
-      where: { status: UserStatus.ACTIVE, organizationId },
+      where: { status: UserStatus.ACTIVE, organizationId, role: Role.EMPLOYEE },
     });
 
     const totalResults = await this.resultRepo
       .createQueryBuilder('r')
       .leftJoin('r.user', 'u')
       .where('u.organizationId = :organizationId', { organizationId })
+      .andWhere('u.role = :role', { role: Role.EMPLOYEE })
       .getCount();
 
     const avgData = await this.resultRepo
@@ -71,6 +73,7 @@ export class AnalyticsService {
       .leftJoin('r.user', 'u')
       .select('AVG(r.normalizedScore)', 'avg')
       .where('u.organizationId = :organizationId', { organizationId })
+      .andWhere('u.role = :role', { role: Role.EMPLOYEE })
       .getRawOne();
 
     const avgNormalizedScore = avgData?.avg ? Math.round(Number(avgData.avg) * 10) / 10 : 0;
@@ -80,6 +83,7 @@ export class AnalyticsService {
       .leftJoin('r.user', 'u')
       .select('COUNT(DISTINCT r.userId)', 'count')
       .where('u.organizationId = :organizationId', { organizationId })
+      .andWhere('u.role = :role', { role: Role.EMPLOYEE })
       .getRawOne();
 
     const participantsCount = Number(participantsData?.count ?? 0);
@@ -108,6 +112,7 @@ export class AnalyticsService {
         'a.name AS "assessmentName"',
       ])
       .where('u.organizationId = :organizationId', { organizationId })
+      .andWhere('u.role = :role', { role: Role.EMPLOYEE })
       .groupBy(`DATE_TRUNC('week', r."submittedAt"), a.code, a.name`)
       .orderBy(`DATE_TRUNC('week', r."submittedAt")`, 'ASC');
 
@@ -143,6 +148,7 @@ export class AnalyticsService {
       ])
       .where('r.severity IS NOT NULL')
       .andWhere('u.organizationId = :organizationId', { organizationId })
+      .andWhere('u.role = :role', { role: Role.EMPLOYEE })
       .groupBy('r.severity, a.code, a.name')
       .orderBy('count', 'DESC');
 
@@ -161,7 +167,7 @@ export class AnalyticsService {
 
   async getParticipation(organizationId: number) {
     const totalActive = await this.userRepo.count({
-      where: { status: UserStatus.ACTIVE, organizationId },
+      where: { status: UserStatus.ACTIVE, organizationId, role: Role.EMPLOYEE },
     });
 
     const raw = await this.resultRepo
@@ -175,6 +181,7 @@ export class AnalyticsService {
         'COUNT(r.id) AS submissions',
       ])
       .where('u.organizationId = :organizationId', { organizationId })
+      .andWhere('u.role = :role', { role: Role.EMPLOYEE })
       .groupBy('a.code, a.name')
       .orderBy('participants', 'DESC')
       .getRawMany();
@@ -204,6 +211,7 @@ export class AnalyticsService {
       ])
       .where('u.status = :status', { status: UserStatus.ACTIVE })
       .andWhere('u.organizationId = :organizationId', { organizationId })
+      .andWhere('u.role = :role', { role: Role.EMPLOYEE })
       .groupBy('u.department')
       .orderBy('department', 'ASC')
       .getRawMany();
@@ -246,13 +254,14 @@ export class AnalyticsService {
     const startOfThisWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
     const activeEmployees = await this.userRepo.count({
-      where: { status: UserStatus.ACTIVE, organizationId },
+      where: { status: UserStatus.ACTIVE, organizationId, role: Role.EMPLOYEE },
     });
 
     const newThisMonth = await this.userRepo
       .createQueryBuilder('u')
       .where('u.status = :status', { status: UserStatus.ACTIVE })
       .andWhere('u.organizationId = :organizationId', { organizationId })
+      .andWhere('u.role = :role', { role: Role.EMPLOYEE })
       .andWhere('u."createdAt" >= :start', { start: startOfMonth })
       .getCount();
 
@@ -268,6 +277,7 @@ export class AnalyticsService {
       .leftJoin('r.user', 'u')
       .where('r."submittedAt" >= :start', { start: startOfToday })
       .andWhere('u.organizationId = :organizationId', { organizationId })
+      .andWhere('u.role = :role', { role: Role.EMPLOYEE })
       .getCount();
 
     const completionRate = assignedToday > 0
@@ -280,6 +290,7 @@ export class AnalyticsService {
       .select('AVG(r."normalizedScore")', 'avg')
       .where('r."submittedAt" >= :start', { start: startOfThisWeek })
       .andWhere('u.organizationId = :organizationId', { organizationId })
+      .andWhere('u.role = :role', { role: Role.EMPLOYEE })
       .getRawOne();
 
     const lastWeekAvg = await this.resultRepo
@@ -291,6 +302,7 @@ export class AnalyticsService {
         end: startOfThisWeek,
       })
       .andWhere('u.organizationId = :organizationId', { organizationId })
+      .andWhere('u.role = :role', { role: Role.EMPLOYEE })
       .getRawOne();
 
     const avgStressThisWeek = thisWeekAvg?.avg ? Math.round(Number(thisWeekAvg.avg) * 10) / 10 : null;
@@ -306,6 +318,7 @@ export class AnalyticsService {
       .addSelect('COUNT(r.id)', 'count')
       .where('r."submittedAt" >= :start', { start: startOfToday })
       .andWhere('u.organizationId = :organizationId', { organizationId })
+      .andWhere('u.role = :role', { role: Role.EMPLOYEE })
       .groupBy(`EXTRACT(HOUR FROM r."submittedAt")`)
       .orderBy(`EXTRACT(HOUR FROM r."submittedAt")`, 'ASC')
       .getRawMany();
@@ -348,6 +361,7 @@ export class AnalyticsService {
       .where('r."submittedAt" >= :d30', { d30 })
       .andWhere('u.status = :status', { status: UserStatus.ACTIVE })
       .andWhere('u.organizationId = :organizationId', { organizationId })
+      .andWhere('u.role = :role', { role: Role.EMPLOYEE })
       .andWhere('a.code IN (:...codes)', { codes: Object.keys(WB_CONFIG) })
       .groupBy('u.department, a.code')
       .getRawMany();
@@ -364,6 +378,7 @@ export class AnalyticsService {
       .where('r."submittedAt" >= :d28 AND r."submittedAt" < :d14', { d28, d14 })
       .andWhere('u.status = :status', { status: UserStatus.ACTIVE })
       .andWhere('u.organizationId = :organizationId', { organizationId })
+      .andWhere('u.role = :role', { role: Role.EMPLOYEE })
       .andWhere('a.code IN (:...codes)', { codes: Object.keys(WB_CONFIG) })
       .groupBy('u.department, a.code')
       .getRawMany();
@@ -376,6 +391,7 @@ export class AnalyticsService {
       ])
       .where('u.status = :status', { status: UserStatus.ACTIVE })
       .andWhere('u.organizationId = :organizationId', { organizationId })
+      .andWhere('u.role = :role', { role: Role.EMPLOYEE })
       .groupBy('u.department')
       .getRawMany();
 
@@ -436,7 +452,7 @@ export class AnalyticsService {
     const d60 = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
 
     const totalActive = await this.userRepo.count({
-      where: { status: UserStatus.ACTIVE, organizationId },
+      where: { status: UserStatus.ACTIVE, organizationId, role: Role.EMPLOYEE },
     });
 
     const risks = [
@@ -456,6 +472,7 @@ export class AnalyticsService {
         .andWhere('r."submittedAt" >= :from AND r."submittedAt" < :to', { from, to })
         .andWhere('r.severity IN (:...severities)', { severities })
         .andWhere('u.organizationId = :organizationId', { organizationId })
+        .andWhere('u.role = :role', { role: Role.EMPLOYEE })
         .getRawOne();
       return Number(raw?.count ?? 0);
     };
@@ -503,6 +520,7 @@ export class AnalyticsService {
         .where('r."submittedAt" >= :from AND r."submittedAt" < :to', { from, to })
         .andWhere('u.status = :status', { status: UserStatus.ACTIVE })
         .andWhere('u.organizationId = :organizationId', { organizationId })
+        .andWhere('u.role = :role', { role: Role.EMPLOYEE })
         .andWhere('a.code IN (:...codes)', { codes: Object.keys(WB_CONFIG) })
         .groupBy('u.department, a.code')
         .getRawMany();
@@ -572,6 +590,7 @@ export class AnalyticsService {
       ])
       .where('r."submittedAt" >= :start', { start: twelveWeeks })
       .andWhere('u.organizationId = :organizationId', { organizationId })
+      .andWhere('u.role = :role', { role: Role.EMPLOYEE })
       .andWhere('a.code IN (:...codes)', { codes: Object.keys(WB_CONFIG) })
       .groupBy(`DATE_TRUNC('week', r."submittedAt"), a.code`)
       .orderBy(`DATE_TRUNC('week', r."submittedAt")`, 'ASC')

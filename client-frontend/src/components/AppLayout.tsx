@@ -124,9 +124,9 @@ export default function AppLayout() {
           borderBottom: '1px solid rgba(221, 211, 186, 0.6)',
         }}
       >
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
           {/* Logo */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 shrink-0">
             <div
               className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-ruddy"
               style={{ background: 'linear-gradient(135deg, #C06226 0%, #984619 100%)' }}
@@ -141,9 +141,27 @@ export default function AppLayout() {
             </span>
           </div>
 
+          {/* Company badge */}
+          {user?.organization?.name && (
+            <div
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg min-w-0 overflow-hidden"
+              style={{ background: 'rgba(192,98,38,0.08)', border: '1px solid rgba(192,98,38,0.18)' }}
+            >
+              <svg className="w-3 h-3 shrink-0" style={{ color: '#C06226' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              <span
+                className="text-xs font-semibold truncate"
+                style={{ color: '#C06226' }}
+              >
+                {user.organization.name}
+              </span>
+            </div>
+          )}
+
           {/* User avatar */}
           {user && (
-            <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 shrink-0">
               <span className="text-sm text-raisin/60 hidden sm:block font-medium">
                 {user.firstName}
               </span>

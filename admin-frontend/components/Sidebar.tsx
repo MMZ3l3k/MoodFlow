@@ -99,9 +99,16 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isHr, setIsHr] = useState(false);
+  const [orgName, setOrgName] = useState('');
 
   useEffect(() => {
-    setIsHr(getRole() === 'hr');
+    const role = getRole();
+    setIsHr(role === 'hr');
+    if (role === 'admin' || role === 'hr') {
+      axiosClient.get('/organizations/my')
+        .then((res) => setOrgName(res.data?.name ?? ''))
+        .catch(() => {});
+    }
   }, []);
 
   const handleLogout = async () => {
@@ -137,11 +144,21 @@ export default function Sidebar() {
           >
             M
           </div>
-          <div>
+          <div className="min-w-0">
             <h1 className="text-sm font-bold" style={{ color: '#2E211C' }}>MoodFlow</h1>
             <p className="text-xs" style={{ color: 'rgba(46,33,28,0.4)' }} suppressHydrationWarning>
               {isHr ? 'Panel HR' : 'Panel administracyjny'}
             </p>
+            {orgName && (
+              <p
+                className="text-xs font-semibold truncate mt-0.5"
+                style={{ color: '#C06226' }}
+                title={orgName}
+                suppressHydrationWarning
+              >
+                {orgName}
+              </p>
+            )}
           </div>
         </div>
       </div>

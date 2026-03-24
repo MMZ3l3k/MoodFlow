@@ -53,7 +53,12 @@ export class ResponsesService {
       throw new ForbiddenException('Czas na wykonanie tego testu minął');
     }
 
-    // 5. Check user eligibility for this assignment
+    // 5. Check organization isolation: assignment must belong to user's organization
+    if (assignment.organizationId && user.organizationId && assignment.organizationId !== user.organizationId) {
+      throw new ForbiddenException('Nie masz dostępu do tego testu');
+    }
+
+    // 6. Check user eligibility for this assignment
     const isEligible =
       assignment.targetType === AssignmentTargetType.ALL ||
       (assignment.targetType === AssignmentTargetType.USER && assignment.targetUserId === user.id) ||
@@ -61,14 +66,14 @@ export class ResponsesService {
 
     if (!isEligible) throw new ForbiddenException('Nie masz dostępu do tego testu');
 
-    // 6. Prevent duplicate submission for the same assignment
+    // 7. Prevent duplicate submission for the same assignment
     const existing = await this.resultRepo.findOne({
       where: { userId: user.id, assignmentId: dto.assignmentId },
     });
 
     if (existing) throw new BadRequestException('Ten test został już przez Ciebie wypełniony');
 
-    // 7. Load assessment with questions for scoring
+    // 8. Load assessment with questions for scoring
     const assessment = await this.assessmentRepo.findOne({
       where: { id: dto.assessmentId, isActive: true },
       relations: ['questions'],
