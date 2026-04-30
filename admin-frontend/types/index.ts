@@ -4,7 +4,7 @@ export interface User {
   firstName: string;
   lastName: string;
   role: 'employee' | 'hr' | 'admin';
-  status: 'pending' | 'active' | 'rejected';
+  status: 'pending' | 'active' | 'rejected' | 'suspended';
   department?: string;
   organizationId?: number;
   organization?: { id: number; name: string };

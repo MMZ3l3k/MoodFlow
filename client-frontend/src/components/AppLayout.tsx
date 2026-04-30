@@ -4,6 +4,8 @@ import type { AppDispatch } from '../store/store';
 import { useAuth } from '../hooks/useAuth';
 import { fetchMe } from '../store/slices/authSlice';
 import { useEffect, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Toaster } from 'sonner';
 
 const navItems = [
   {
@@ -107,10 +109,6 @@ export default function AppLayout() {
     }
   }, [location.pathname]);
 
-  const activeIndex = navItems.findIndex((item) =>
-    location.pathname.startsWith(item.to)
-  );
-
   return (
     <div className="min-h-screen bg-pearl-light flex flex-col">
 
@@ -177,8 +175,29 @@ export default function AppLayout() {
       </header>
 
       {/* ── Page Content ─────────────────────────────── */}
-      <main className="flex-1 max-w-2xl w-full mx-auto px-4 pt-5 pb-nav page-enter">
-        <Outlet />
+      <main className="flex-1 max-w-2xl w-full mx-auto px-4 pt-5 pb-nav">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+          >
+            <Outlet />
+          </motion.div>
+        </AnimatePresence>
+        <Toaster
+          position="top-center"
+          toastOptions={{
+            style: {
+              background: 'rgba(255,255,255,0.9)',
+              backdropFilter: 'blur(12px)',
+              border: '1px solid rgba(221,211,186,0.5)',
+              borderRadius: '12px',
+            },
+          }}
+        />
       </main>
 
       {/* ── Bottom Navigation ────────────────────────── */}

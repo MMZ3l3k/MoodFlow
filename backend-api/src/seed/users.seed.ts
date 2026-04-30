@@ -16,30 +16,6 @@ export async function seedUsers(dataSource: DataSource): Promise<void> {
       status: UserStatus.ACTIVE,
       password: 'SuperAdmin1!',
     },
-    {
-      email: 'admin@moodflow.pl',
-      firstName: 'Adam',
-      lastName: 'Admin',
-      role: Role.ADMIN,
-      status: UserStatus.ACTIVE,
-      password: 'Admin123!',
-    },
-    {
-      email: 'hr@moodflow.pl',
-      firstName: 'Hanna',
-      lastName: 'HR',
-      role: Role.HR,
-      status: UserStatus.ACTIVE,
-      password: 'Hr123456!',
-    },
-    {
-      email: 'pracownik@moodflow.pl',
-      firstName: 'Piotr',
-      lastName: 'Kowalski',
-      role: Role.EMPLOYEE,
-      status: UserStatus.ACTIVE,
-      password: 'Pracownik1!',
-    },
   ];
 
   for (const u of defaultUsers) {
