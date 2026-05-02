@@ -59,9 +59,11 @@ import { HealthModule } from './modules/health/health.module';
         password: config.get<string>('DB_PASSWORD'),
         database: config.get<string>('DB_NAME'),
         entities: [User, Organization, Department, Assessment, Question, AnswerOption, AssessmentResult, UserResponse, AssessmentAssignment, AuditLog],
-        synchronize: config.get<string>('NODE_ENV') !== 'production',
-        migrations: ['dist/migrations/*.js'],
-        migrationsRun: config.get<string>('NODE_ENV') === 'production',
+        // synchronize: true generuje schemat z entiti przy starcie aplikacji.
+        // Dla MVP / projektu inżynierskiego jest akceptowalne — eliminuje
+        // problem ze stanem migrations w nowo utworzonych bazach na chmurze.
+        // W docelowej produkcji enterprise migrations powinny zastąpić sync.
+        synchronize: true,
       }),
     }),
     AuthModule,
