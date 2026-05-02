@@ -7,7 +7,10 @@ import { AssessmentResult } from '../results/entities/assessment-result.entity';
 import { CreateAssignmentDto } from './dto/create-assignment.dto';
 import { User } from '../users/entities/user.entity';
 import { UserStatus } from '../../common/enums/user-status.enum';
+import { Role } from '../../common/enums/role.enum';
 import { MailService } from '../notifications/mail.service';
+import { AuditService } from '../audit/audit.service';
+import { AuditAction } from '../audit/entities/audit-log.entity';
 
 @Injectable()
 export class AssessmentsService {
@@ -21,6 +24,7 @@ export class AssessmentsService {
     @InjectRepository(User)
     private userRepo: Repository<User>,
     private readonly mailService: MailService,
+    private readonly auditService: AuditService,
   ) {}
 
   findAll(): Promise<Assessment[]> {
@@ -119,14 +123,30 @@ export class AssessmentsService {
       // błędy logowane wewnątrz mailService
     });
 
+    await this.auditService.log({
+      action: AuditAction.ASSIGNMENT_CREATED,
+      actorUserId: assignedByUserId,
+      organizationId,
+      entityType: 'assignment',
+      entityId: saved.id,
+      metadata: {
+        assessmentId: dto.assessmentId,
+        assessmentName: assessment.name,
+        targetType: saved.targetType,
+        targetUserId: saved.targetUserId,
+        targetDepartment: saved.targetDepartment,
+      },
+    });
+
     return saved;
   }
 
   private async sendAssignmentEmails(assignment: AssessmentAssignment, assessmentName: string): Promise<void> {
     const targetUsers = await this.resolveTargetUsers(assignment);
+    const recipients = targetUsers.filter((user) => user.role === Role.EMPLOYEE);
 
     await Promise.all(
-      targetUsers.map((user) =>
+      recipients.map((user) =>
         this.mailService.sendAssignmentNotification({
           toEmail: user.email,
           toName: `${user.firstName} ${user.lastName}`,
@@ -166,12 +186,19 @@ export class AssessmentsService {
     });
   }
 
-  async deleteAssignment(id: number, organizationId: number): Promise<void> {
+  async deleteAssignment(id: number, organizationId: number, actorUserId?: number): Promise<void> {
     const assignment = await this.assignmentRepo.findOne({ where: { id } });
     if (!assignment) throw new NotFoundException('Przypisanie nie znalezione');
     if (assignment.organizationId !== organizationId) {
       throw new ForbiddenException('Brak dostępu do tego przypisania');
     }
     await this.assignmentRepo.delete(id);
+    await this.auditService.log({
+      action: AuditAction.ASSIGNMENT_DELETED,
+      actorUserId: actorUserId ?? null,
+      organizationId,
+      entityType: 'assignment',
+      entityId: id,
+    });
   }
 }

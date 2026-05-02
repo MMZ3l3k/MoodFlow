@@ -3,6 +3,7 @@ import axios from 'axios';
 const axiosClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:4000',
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,
 });
 
 axiosClient.interceptors.request.use((config) => {
@@ -12,5 +13,49 @@ axiosClient.interceptors.request.use((config) => {
   }
   return config;
 });
+
+let isRefreshing = false;
+let pendingQueue: Array<() => void> = [];
+
+axiosClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    const status = error.response?.status;
+
+    if (status !== 401 || !originalRequest || originalRequest._retry || originalRequest.url?.includes('/auth/')) {
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+    if (isRefreshing) {
+      await new Promise<void>((resolve) => pendingQueue.push(resolve));
+      return axiosClient(originalRequest);
+    }
+
+    isRefreshing = true;
+    try {
+      const refreshToken = typeof window !== 'undefined'
+        ? localStorage.getItem('admin_refresh_token') ?? undefined
+        : undefined;
+      await axiosClient.post('/auth/refresh', refreshToken ? { refreshToken } : {});
+      pendingQueue.forEach((cb) => cb());
+      pendingQueue = [];
+      return axiosClient(originalRequest);
+    } catch (refreshError) {
+      pendingQueue = [];
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('admin_access_token');
+        localStorage.removeItem('admin_refresh_token');
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
+      }
+      return Promise.reject(refreshError);
+    } finally {
+      isRefreshing = false;
+    }
+  },
+);
 
 export default axiosClient;

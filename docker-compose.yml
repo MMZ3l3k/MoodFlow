@@ -1,12 +1,10 @@
-version: '3.8'
-
 services:
   client-frontend:
     build:
       context: ./client-frontend
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - "3000:80"
     environment:
       - VITE_API_URL=http://localhost:4000
     depends_on:
@@ -14,6 +12,7 @@ services:
     volumes:
       - ./client-frontend:/app
       - /app/node_modules
+    restart: unless-stopped
 
   admin-frontend:
     build:
@@ -28,6 +27,8 @@ services:
     volumes:
       - ./admin-frontend:/app
       - /app/node_modules
+    command: npm run dev
+    restart: unless-stopped
 
   backend-api:
     build:
@@ -40,35 +41,42 @@ services:
       - PORT=4000
       - DB_HOST=postgres
       - DB_PORT=5432
-      - DB_USER=moodflow
-      - DB_PASSWORD=moodflow_secret
-      - DB_NAME=moodflow
-      - JWT_SECRET=change_me_jwt_secret
-      - JWT_REFRESH_SECRET=change_me_refresh_secret
-      - CORS_ORIGIN=http://localhost:3000,http://localhost:3001
+      - DB_USER=${DB_USER:?DB_USER must be set}
+      - DB_PASSWORD=${DB_PASSWORD:?DB_PASSWORD must be set}
+      - DB_NAME=${DB_NAME:?DB_NAME must be set}
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:?JWT_REFRESH_SECRET must be set}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3000,http://localhost:3001}
+      - MAIL_HOST=${MAIL_HOST:-smtp.gmail.com}
+      - MAIL_PORT=${MAIL_PORT:-587}
+      - MAIL_USER=${MAIL_USER:-}
+      - MAIL_PASS=${MAIL_PASS:-}
+      - MAIL_FROM=MoodFlow <moodflow.biuro@gmail.com>
     depends_on:
       postgres:
         condition: service_healthy
     volumes:
       - ./backend-api:/app
       - /app/node_modules
+    command: npm run start:dev
+    restart: unless-stopped
 
   postgres:
     image: postgres:16-alpine
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_DB=moodflow
-      - POSTGRES_USER=moodflow
-      - POSTGRES_PASSWORD=moodflow_secret
+      - POSTGRES_DB=${DB_NAME:?DB_NAME must be set}
+      - POSTGRES_USER=${DB_USER:?DB_USER must be set}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:?DB_PASSWORD must be set}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U moodflow -d moodflow"]
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
       timeout: 5s
       retries: 10
+    restart: unless-stopped
 
   adminer:
     image: adminer:latest
@@ -76,6 +84,7 @@ services:
       - "5050:8080"
     depends_on:
       - postgres
+    restart: unless-stopped
 
 volumes:
   postgres_data:

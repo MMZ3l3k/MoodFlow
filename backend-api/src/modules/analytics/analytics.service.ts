@@ -7,6 +7,14 @@ import { AssessmentAssignment } from '../assessments/entities/assessment-assignm
 import { UserStatus } from '../../common/enums/user-status.enum';
 import { Role } from '../../common/enums/role.enum';
 
+// Próg anonimizacji — wyniki dla grup mniejszych niż ten próg są maskowane (k-anonymity)
+// Zgodnie z RULES.md pkt 12: dane HR muszą być zagregowane i anonimowe
+const MIN_GROUP_SIZE = 5;
+
+function meetsThreshold(groupSize: number): boolean {
+  return groupSize >= MIN_GROUP_SIZE;
+}
+
 // Konfiguracja indeksu dobrostanu — taka sama jak w ResultsService
 const WB_CONFIG: Record<string, { weight: number; positive: boolean; maxRaw: number }> = {
   WHO5:   { weight: 0.30, positive: true,  maxRaw: 25 },
@@ -219,15 +227,19 @@ export class AnalyticsService {
     return raw.map((row) => {
       const activeUsers = Number(row.activeUsers);
       const participantCount = Number(row.participantCount);
+      const isAnonymized = !meetsThreshold(participantCount);
       return {
         department: row.department,
         activeUsers,
         participantCount,
         submissions: Number(row.submissions),
-        avgScore: row.avgScore ? Number(row.avgScore) : null,
+        // k-anonymity: ukryj agregaty dla grup < MIN_GROUP_SIZE
+        avgScore: isAnonymized ? null : (row.avgScore ? Number(row.avgScore) : null),
         participationRate: activeUsers > 0
           ? Math.round((participantCount / activeUsers) * 100)
           : 0,
+        anonymized: isAnonymized,
+        minGroupSize: MIN_GROUP_SIZE,
       };
     });
   }
@@ -424,10 +436,12 @@ export class AnalyticsService {
     ])).sort();
 
     return departments.map((dept) => {
+      const participants = participantsMap.get(dept) ?? 0;
+      const isAnonymized = !meetsThreshold(participants);
       const cur = map30.get(dept) ?? new Map();
       const prev = mapPrev.get(dept) ?? new Map();
-      const index = calcWellbeingIndex(cur);
-      const indexPrev = calcWellbeingIndex(prev);
+      const index = isAnonymized ? null : calcWellbeingIndex(cur);
+      const indexPrev = isAnonymized ? null : calcWellbeingIndex(prev);
       const trend: 'improving' | 'worsening' | 'stable' | 'no_data' =
         index === null || indexPrev === null ? 'no_data'
         : index - indexPrev > 5 ? 'improving'
@@ -437,11 +451,13 @@ export class AnalyticsService {
       return {
         department: dept,
         deptSize: sizeMap.get(dept) ?? 0,
-        participants: participantsMap.get(dept) ?? 0,
+        participants,
         wellbeingIndex: index,
         load: loadLevel(index),
         trend,
         color: wbColor(index),
+        anonymized: isAnonymized,
+        minGroupSize: MIN_GROUP_SIZE,
       };
     });
   }

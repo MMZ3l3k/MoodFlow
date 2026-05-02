@@ -51,6 +51,8 @@ interface DepartmentStat {
   submissions: number;
   avgScore: number | null;
   participationRate: number;
+  anonymized?: boolean;
+  minGroupSize?: number;
 }
 
 const SEVERITY_COLORS: Record<string, string> = {
@@ -60,8 +62,12 @@ const SEVERITY_COLORS: Record<string, string> = {
   'moderately-severe': '#f97316',
   severe: '#ef4444',
   high: '#ef4444',
+  very_high: '#dc2626',
   low: '#22c55e',
+  very_low: '#16a34a',
   average: '#3b82f6',
+  normal: '#3b82f6',
+  none: '#94a3b8',
   'low-distress': '#22c55e',
   'moderate-distress': '#f59e0b',
   'high-distress': '#ef4444',
@@ -74,12 +80,29 @@ const SEVERITY_LABELS: Record<string, string> = {
   'moderately-severe': 'Umiark. ciężkie',
   severe: 'Ciężkie',
   high: 'Wysokie',
+  very_high: 'Bardzo wysokie',
   low: 'Niskie',
+  very_low: 'Bardzo niskie',
   average: 'Przeciętne',
+  normal: 'Normalne',
+  none: 'Brak',
   'low-distress': 'Niski stres',
   'moderate-distress': 'Umiark. stres',
   'high-distress': 'Wysoki stres',
 };
+
+const SEVERITY_ORDER = [
+  'very_low', 'low', 'minimal', 'mild', 'normal', 'average',
+  'moderate', 'moderately-severe', 'high', 'very_high', 'severe',
+  'low-distress', 'moderate-distress', 'high-distress', 'none',
+];
+
+function severityLabel(code: string): string {
+  return SEVERITY_LABELS[code] ?? code.replace(/[_-]/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+function severityColor(code: string): string {
+  return SEVERITY_COLORS[code] ?? '#94a3b8';
+}
 
 function KpiCard({ label, value, unit, color }: { label: string; value: string | number; unit?: string; color: string }) {
   return (
@@ -239,48 +262,131 @@ export default function AnalyticsPage() {
           )}
         </div>
 
-        {/* Severity distribution pie */}
-        <div className="bg-white rounded-2xl shadow-sm p-6">
-          <h3 className="text-base font-semibold text-gray-700 mb-4">Rozkład nasilenia objawów</h3>
+        {/* Severity distribution donut */}
+        <div className="admin-card p-6">
+          <div className="mb-4">
+            <h3 className="text-base font-semibold" style={{ color: '#2E211C' }}>Rozkład nasilenia objawów</h3>
+            <p className="text-xs mt-0.5" style={{ color: 'rgba(46,33,28,0.45)' }}>
+              Udział poziomów nasilenia w zebranych wynikach
+            </p>
+          </div>
           {pieData.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-10">Brak danych dla wybranego filtru</p>
-          ) : (
-            <ResponsiveContainer width="100%" height={240}>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={90}
-                  dataKey="value"
-                  label={({ name, percent }: { name?: string; percent?: number }) =>
-                    `${SEVERITY_LABELS[name ?? ''] ?? name ?? ''} ${Math.round((percent ?? 0) * 100)}%`
-                  }
-                  labelLine={false}
-                >
-                  {pieData.map((entry) => (
-                    <Cell
-                      key={entry.name}
-                      fill={SEVERITY_COLORS[entry.name] ?? '#94a3b8'}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb', fontSize: '12px' }}
-                  formatter={(value, name) => [value, SEVERITY_LABELS[String(name)] ?? String(name)]}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          )}
+            <div className="flex flex-col items-center justify-center py-10">
+              <div className="text-3xl mb-2">📊</div>
+              <p className="text-sm" style={{ color: 'rgba(46,33,28,0.45)' }}>Brak danych dla wybranego filtru</p>
+            </div>
+          ) : (() => {
+            const sorted = [...pieData].sort((a, b) => {
+              const ai = SEVERITY_ORDER.indexOf(a.name);
+              const bi = SEVERITY_ORDER.indexOf(b.name);
+              return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+            });
+            const total = sorted.reduce((sum, d) => sum + (d.value as number), 0);
+            return (
+              <div className="flex flex-col sm:flex-row items-center gap-6">
+                <div className="relative shrink-0" style={{ width: 200, height: 200 }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={sorted}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={90}
+                        paddingAngle={2}
+                        dataKey="value"
+                        stroke="none"
+                      >
+                        {sorted.map((entry) => (
+                          <Cell key={entry.name} fill={severityColor(entry.name)} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{
+                          borderRadius: 12,
+                          border: '1px solid rgba(221,211,186,0.8)',
+                          background: 'rgba(255,255,255,0.95)',
+                          fontSize: 12,
+                          color: '#2E211C',
+                          boxShadow: '0 4px 16px rgba(46,33,28,0.08)',
+                        }}
+                        formatter={(value, name) => [value, severityLabel(String(name))]}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div
+                    className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none"
+                  >
+                    <span className="text-2xl font-bold" style={{ color: '#2E211C' }}>{total}</span>
+                    <span className="text-[11px] uppercase tracking-wider font-semibold" style={{ color: 'rgba(46,33,28,0.45)' }}>
+                      wyników
+                    </span>
+                  </div>
+                </div>
+
+                <ul className="flex-1 w-full space-y-2.5">
+                  {sorted.map((entry) => {
+                    const pct = total > 0 ? Math.round(((entry.value as number) / total) * 100) : 0;
+                    const color = severityColor(entry.name);
+                    return (
+                      <li key={entry.name} className="flex items-center gap-3">
+                        <span
+                          className="w-2.5 h-2.5 rounded-full shrink-0"
+                          style={{ background: color, boxShadow: `0 0 0 3px ${color}22` }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-baseline justify-between gap-2 mb-1">
+                            <span className="text-sm font-semibold truncate" style={{ color: '#2E211C' }}>
+                              {severityLabel(entry.name)}
+                            </span>
+                            <span className="text-[11px] tabular-nums" style={{ color: 'rgba(46,33,28,0.55)' }}>
+                              <span className="font-semibold" style={{ color: '#2E211C' }}>{entry.value}</span>
+                              <span className="mx-1">·</span>
+                              {pct}%
+                            </span>
+                          </div>
+                          <div
+                            className="h-1.5 rounded-full overflow-hidden"
+                            style={{ background: 'rgba(46,33,28,0.06)' }}
+                          >
+                            <div
+                              className="h-full rounded-full transition-all duration-500"
+                              style={{ width: `${pct}%`, background: color }}
+                            />
+                          </div>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            );
+          })()}
         </div>
       </div>
 
       {/* Department stats table */}
-      {departmentStats.length > 0 && (
+      {departmentStats.length > 0 && (() => {
+        const minSize = departmentStats.find((d) => d.minGroupSize)?.minGroupSize ?? 5;
+        return (
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
-            <h3 className="text-base font-semibold text-gray-700">Statystyki działów</h3>
-            <p className="text-xs text-gray-400 mt-0.5">Dane zagregowane — bez identyfikacji indywidualnych osób</p>
+            <div className="flex items-start justify-between gap-3 flex-wrap">
+              <div>
+                <h3 className="text-base font-semibold text-gray-700">Statystyki działów</h3>
+                <p className="text-xs text-gray-400 mt-0.5">Dane zagregowane — bez identyfikacji indywidualnych osób</p>
+              </div>
+              <span
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold whitespace-nowrap"
+                style={{ background: 'rgba(99,102,241,0.08)', color: '#4f46e5', border: '1px solid rgba(99,102,241,0.18)' }}
+                title={`Anonimizacja k=${minSize}: dane dla grup mniejszych niż ${minSize} osób są ukrywane.`}
+              >
+                <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/>
+                </svg>
+                Anonimizacja: min. {minSize} osób w grupie
+              </span>
+            </div>
           </div>
           <table className="w-full text-sm">
             <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
@@ -300,8 +406,21 @@ export default function AnalyticsPage() {
                   <td className="px-6 py-3 text-right text-gray-600">{dept.activeUsers}</td>
                   <td className="px-6 py-3 text-right text-gray-600">{dept.participantCount}</td>
                   <td className="px-6 py-3 text-right text-gray-600">{dept.submissions}</td>
-                  <td className="px-6 py-3 text-right text-gray-600">
-                    {dept.avgScore !== null ? `${dept.avgScore} / 100` : '—'}
+                  <td className="px-6 py-3 text-right">
+                    {dept.anonymized ? (
+                      <span
+                        className="inline-flex items-center gap-1 text-[11px] font-medium"
+                        style={{ color: '#6366f1' }}
+                        title={`Grupa < ${dept.minGroupSize ?? minSize} osób — dane ukryte dla zachowania anonimowości.`}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/>
+                        </svg>
+                        Ukryte
+                      </span>
+                    ) : (
+                      <span className="text-gray-600">{dept.avgScore !== null ? `${dept.avgScore} / 100` : '—'}</span>
+                    )}
                   </td>
                   <td className="px-6 py-3 text-right">
                     <span className={`font-semibold ${dept.participationRate >= 50 ? 'text-emerald-600' : dept.participationRate >= 25 ? 'text-amber-600' : 'text-red-500'}`}>
@@ -313,7 +432,8 @@ export default function AnalyticsPage() {
             </tbody>
           </table>
         </div>
-      )}
+        );
+      })()}
 
       {/* Participation bar chart */}
       <div className="bg-white rounded-2xl shadow-sm p-6">

@@ -44,7 +44,7 @@ export class AssessmentsController {
   @Roles(Role.ADMIN, Role.HR)
   @HttpCode(HttpStatus.NO_CONTENT)
   deleteAssignment(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
-    return this.assessmentsService.deleteAssignment(id, req.user.organizationId);
+    return this.assessmentsService.deleteAssignment(id, req.user.organizationId, req.user.id);
   }
 
   @Get(':id')

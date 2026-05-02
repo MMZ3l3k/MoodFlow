@@ -6,6 +6,8 @@ import { CreateOrganizationDto } from './dto/create-organization.dto';
 import { OrganizationStatus } from '../../common/enums/organization-status.enum';
 import { UserStatus } from '../../common/enums/user-status.enum';
 import { User } from '../users/entities/user.entity';
+import { AuditService } from '../audit/audit.service';
+import { AuditAction } from '../audit/entities/audit-log.entity';
 
 @Injectable()
 export class OrganizationsService {
@@ -14,6 +16,7 @@ export class OrganizationsService {
     private organizationsRepository: Repository<Organization>,
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    private auditService: AuditService,
   ) {}
 
   async create(dto: CreateOrganizationDto): Promise<Organization> {
@@ -51,7 +54,7 @@ export class OrganizationsService {
   }
 
   // Właściciel platformy zatwierdza firmę — aktywuje org i jej admina
-  async approve(id: number): Promise<Organization> {
+  async approve(id: number, actorUserId?: number): Promise<Organization> {
     const org = await this.findById(id);
     org.status = OrganizationStatus.ACTIVE;
     await this.organizationsRepository.save(org);
@@ -60,11 +63,20 @@ export class OrganizationsService {
       await this.usersRepository.update(org.adminUserId, { status: UserStatus.ACTIVE });
     }
 
+    await this.auditService.log({
+      action: AuditAction.ORGANIZATION_APPROVED,
+      actorUserId: actorUserId ?? null,
+      organizationId: org.id,
+      entityType: 'organization',
+      entityId: org.id,
+      metadata: { name: org.name, nip: org.nip },
+    });
+
     return org;
   }
 
   // Właściciel platformy odrzuca firmę
-  async reject(id: number): Promise<Organization> {
+  async reject(id: number, actorUserId?: number): Promise<Organization> {
     const org = await this.findById(id);
     org.status = OrganizationStatus.REJECTED;
     await this.organizationsRepository.save(org);
@@ -73,14 +85,33 @@ export class OrganizationsService {
       await this.usersRepository.update(org.adminUserId, { status: UserStatus.REJECTED });
     }
 
+    await this.auditService.log({
+      action: AuditAction.ORGANIZATION_REJECTED,
+      actorUserId: actorUserId ?? null,
+      organizationId: org.id,
+      entityType: 'organization',
+      entityId: org.id,
+      metadata: { name: org.name },
+    });
+
     return org;
   }
 
   // Właściciel platformy blokuje firmę
-  async block(id: number): Promise<Organization> {
+  async block(id: number, actorUserId?: number): Promise<Organization> {
     const org = await this.findById(id);
     org.status = OrganizationStatus.BLOCKED;
     await this.organizationsRepository.save(org);
+
+    await this.auditService.log({
+      action: AuditAction.ORGANIZATION_SUSPENDED,
+      actorUserId: actorUserId ?? null,
+      organizationId: org.id,
+      entityType: 'organization',
+      entityId: org.id,
+      metadata: { name: org.name },
+    });
+
     return org;
   }
 }

@@ -53,23 +53,23 @@ export class OrganizationsController {
   @Post(':id/approve')
   @Roles(Role.SUPER_ADMIN)
   @HttpCode(HttpStatus.OK)
-  approve(@Param('id', ParseIntPipe) id: number) {
-    return this.organizationsService.approve(id);
+  approve(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    return this.organizationsService.approve(id, req.user.id);
   }
 
   // Super Admin — odrzuca firmę
   @Post(':id/reject')
   @Roles(Role.SUPER_ADMIN)
   @HttpCode(HttpStatus.OK)
-  reject(@Param('id', ParseIntPipe) id: number) {
-    return this.organizationsService.reject(id);
+  reject(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    return this.organizationsService.reject(id, req.user.id);
   }
 
   // Super Admin — blokuje firmę
   @Post(':id/block')
   @Roles(Role.SUPER_ADMIN)
   @HttpCode(HttpStatus.OK)
-  block(@Param('id', ParseIntPipe) id: number) {
-    return this.organizationsService.block(id);
+  block(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    return this.organizationsService.block(id, req.user.id);
   }
 }

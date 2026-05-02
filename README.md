@@ -1,104 +1,141 @@
 # MoodFlow
 
-System do monitorowania nastrojów pracowników w organizacji.
+Platforma do monitorowania dobrostanu psychicznego pracowników w organizacji.
+Aplikacja webowa (PWA) zbudowana w architekturze multi-tenant.
+
+## Funkcjonalność
+
+- **Panel pracownika** — codzienny check-in nastroju, wypełnianie walidowanych testów psychologicznych (PHQ-9, GAD-7, PSS-10, WHO-5, MOOD10), własna historia, indeks dobrostanu.
+- **Panel HR** — zagregowane raporty z anonimizacją (k-anonymity), trendy, ryzyko, statystyki działowe.
+- **Panel administratora firmy** — zarządzanie pracownikami, działami, przypisywanie testów, audit log.
+- **Panel właściciela platformy** — zatwierdzanie firm, globalny widok systemu.
+
+## Stos technologiczny
+
+| Warstwa | Technologia |
+|---|---|
+| Frontend pracownika | React 18, Vite, Redux Toolkit, Tailwind CSS, vite-plugin-pwa |
+| Frontend admin/HR | Next.js 16, React 18, Tailwind CSS, recharts |
+| Backend | NestJS 11, TypeORM, JWT, bcrypt, helmet, class-validator |
+| Baza danych | PostgreSQL 16 |
+| Mailing | Nodemailer + Gmail SMTP |
+| Konteneryzacja | Docker, Docker Compose |
 
 ## Struktura projektu
 
 ```
 MoodFlow/
-├── client-frontend/      # Aplikacja React dla pracowników (port 3000)
-├── admin-frontend/       # Panel administracyjny Next.js (port 3001)
-├── backend-api/          # API NestJS (port 4000)
-├── mysql/                # Konfiguracja bazy danych MySQL
-├── docker-compose.yml
-├── .env.example
+├── client-frontend/        # Aplikacja React (port 3000) — pracownicy
+├── admin-frontend/         # Aplikacja Next.js (port 3001) — HR/Admin/Super-admin
+├── backend-api/            # API NestJS (port 4000)
+├── postgres/               # Init scripts
+├── docs/                   # Dokumentacja techniczna
+│   ├── api-endpoints.md
+│   ├── data-model.md
+│   ├── deployment.md
+│   ├── security.md
+│   ├── decisions.md       # ADR — dziennik decyzji architektonicznych
+│   └── diagrams/          # UML + BPMN (Mermaid)
+├── docker-compose.yml      # Środowisko developerskie
+├── docker-compose.prod.yml # Środowisko produkcyjne
+├── PRD.md                  # Product Requirements Document
+├── ARCHITECTURE.md         # Architektura techniczna
+├── RULES.md                # Reguły projektowe
 └── README.md
 ```
 
-## Wymagania
+## Szybki start (development)
 
-- [Docker](https://www.docker.com/) i Docker Compose
-- Node.js 20+ (do lokalnego developmentu)
+### Wymagania
 
-## Uruchomienie projektu
+- Docker Desktop 24+ (z Compose plugin)
+- Wolne porty: `3000`, `3001`, `4000`, `5050` (Adminer), `5432`
 
-### 1. Sklonuj repozytorium i przejdź do katalogu projektu
+### Uruchomienie
 
-```bash
-git clone <url-repozytorium>
-cd MoodFlow
-```
+1. **Sklonuj repo i wejdź do katalogu:**
+   ```bash
+   git clone <repo-url> MoodFlow
+   cd MoodFlow
+   ```
 
-### 2. Skonfiguruj zmienne środowiskowe
+2. **Skopiuj `.env.example` do `.env`** i wypełnij sekcję SMTP (App Password z Gmaila):
+   ```bash
+   cp .env.example .env
+   # edytuj MAIL_USER i MAIL_PASS
+   ```
 
-```bash
-cp .env.example .env
-```
+3. **Uruchom kontenery:**
+   ```bash
+   docker compose up -d
+   ```
 
-Edytuj plik `.env` i ustaw odpowiednie wartości (hasła, sekrety JWT itp.).
+4. **Otwórz w przeglądarce:**
+   - http://localhost:3000 — panel pracownika
+   - http://localhost:3001 — panel admin/HR
+   - http://localhost:3001/super-admin/login — panel właściciela platformy
+   - http://localhost:5050 — Adminer (dostęp do bazy)
 
-### 3. Uruchom projekt za pomocą Docker Compose
+### Domyślne konto super-admina (seed)
 
-```bash
-docker-compose up --build
-```
+| Pole | Wartość |
+|---|---|
+| Email | `owner@moodflow.pl` |
+| Hasło | `SuperAdmin1!` |
 
-Aby uruchomić w tle:
+⚠️ **Zmień hasło przy pierwszym logowaniu w panelu Ustawień.**
 
-```bash
-docker-compose up --build -d
-```
+## Konta testowe (do utworzenia ręcznie)
 
-### 4. Dostęp do aplikacji
+1. Zarejestruj firmę w panelu admin: `http://localhost:3001/login` → „Załóż konto firmy"
+2. Zaloguj się jako super-admin i zatwierdź firmę.
+3. Zaloguj się jako admin firmy, otrzymasz `inviteCode` (`MOOD-XXXX`).
+4. Zarejestruj pracownika: `http://localhost:3000/register` z kodem zaproszenia.
+5. Zatwierdź pracownika z poziomu admina firmy.
 
-| Serwis              | Adres                   |
-|---------------------|-------------------------|
-| Aplikacja kliencka  | http://localhost:3000   |
-| Panel admina        | http://localhost:3001   |
-| API (NestJS)        | http://localhost:4000   |
-| MySQL               | localhost:3306          |
+## Komendy
 
-## Zatrzymanie projektu
+| Komenda | Opis |
+|---|---|
+| `docker compose up -d` | Start środowiska |
+| `docker compose down` | Stop |
+| `docker compose down -v` | Stop + reset bazy danych |
+| `docker compose logs -f backend-api` | Logi backendu |
+| `docker compose exec backend-api npm run migration:generate <ścieżka>` | Generowanie migracji |
+| `docker compose exec backend-api npm run migration:run` | Uruchomienie migracji |
+| `docker compose exec backend-api npm run migration:revert` | Cofnięcie ostatniej migracji |
 
-```bash
-docker-compose down
-```
+## Dokumentacja
 
-Aby usunąć również wolumeny (dane bazy danych):
+- [PRD.md](./PRD.md) — wymagania produktowe
+- [ARCHITECTURE.md](./ARCHITECTURE.md) — architektura techniczna
+- [RULES.md](./RULES.md) — reguły projektowe
+- [docs/api-endpoints.md](./docs/api-endpoints.md) — lista endpointów API
+- [docs/data-model.md](./docs/data-model.md) — model danych
+- [docs/security.md](./docs/security.md) — bezpieczeństwo
+- [docs/deployment.md](./docs/deployment.md) — wdrożenie
+- [docs/decisions.md](./docs/decisions.md) — dziennik decyzji architektonicznych (ADR)
+- [docs/diagrams/](./docs/diagrams/) — diagramy UML + BPMN
 
-```bash
-docker-compose down -v
-```
+## Bezpieczeństwo
 
-## Lokalny development (bez Dockera)
+Mechanizmy zaimplementowane:
 
-### Backend API (NestJS)
+- bcrypt (12 rounds) dla haseł
+- JWT (HS256) z silnymi sekretami w env (fail-fast walidacja przy starcie)
+- httpOnly cookies + Bearer fallback (auto-refresh przy 401)
+- Helmet (X-Frame-Options, HSTS, X-Content-Type-Options, Referrer-Policy)
+- CORS z jawnymi originami
+- Rate limiting na auth (login: 10/15min, register: 5/15min)
+- Anonimizacja k-anonymity (k=5) w panelu HR
+- Audit log akcji administracyjnych (USER_APPROVED, ORGANIZATION_*, ASSIGNMENT_*, LOGIN_*)
+- HTML escape w mailach
+- Multi-tenant izolacja przez `organizationId`
+- TypeORM `synchronize: false` w prod, migracje przez `migrationsRun: true`
+- Service Worker wyklucza `/auth/*` i `/users/me` z cache (brak wycieków po wylogowaniu)
 
-```bash
-cd backend-api
-npm install
-npm run start:dev
-```
+Szczegóły w [docs/security.md](./docs/security.md).
 
-### Client Frontend (React + Vite)
+## Licencja
 
-```bash
-cd client-frontend
-npm install
-npm run dev
-```
-
-### Admin Frontend (Next.js)
-
-```bash
-cd admin-frontend
-npm install
-npm run dev
-```
-
-## Technologie
-
-- **client-frontend**: React 19, TypeScript, Vite, Tailwind CSS, Redux Toolkit, React Router
-- **admin-frontend**: Next.js 16, TypeScript, Tailwind CSS
-- **backend-api**: NestJS, TypeScript
-- **baza danych**: MySQL 8.0
+UNLICENSED — projekt edukacyjny, praca inżynierska.

@@ -10,10 +10,12 @@ import SettingsPage from './pages/SettingsPage';
 import TakeAssessmentPage from './pages/TakeAssessmentPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import AppLayout from './components/AppLayout';
+import PwaUpdatePrompt from './components/PwaUpdatePrompt';
 
 function App() {
   return (
     <Provider store={store}>
+      <PwaUpdatePrompt />
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />

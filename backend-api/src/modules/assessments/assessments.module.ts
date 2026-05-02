@@ -9,11 +9,13 @@ import { AssessmentAssignment } from './entities/assessment-assignment.entity';
 import { AssessmentResult } from '../results/entities/assessment-result.entity';
 import { User } from '../users/entities/user.entity';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { AuditModule } from '../audit/audit.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Assessment, Question, AnswerOption, AssessmentAssignment, AssessmentResult, User]),
     NotificationsModule,
+    AuditModule,
   ],
   controllers: [AssessmentsController],
   providers: [AssessmentsService],

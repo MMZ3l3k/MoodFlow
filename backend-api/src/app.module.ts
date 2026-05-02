@@ -22,6 +22,9 @@ import { AnswerOption } from './modules/assessments/entities/answer-option.entit
 import { AssessmentResult } from './modules/results/entities/assessment-result.entity';
 import { UserResponse } from './modules/responses/entities/user-response.entity';
 import { AssessmentAssignment } from './modules/assessments/entities/assessment-assignment.entity';
+import { AuditLog } from './modules/audit/entities/audit-log.entity';
+import { AuditModule } from './modules/audit/audit.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -50,13 +53,15 @@ import { AssessmentAssignment } from './modules/assessments/entities/assessment-
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
         type: 'postgres',
-        host: config.get<string>('DB_HOST', 'localhost'),
+        host: config.get<string>('DB_HOST'),
         port: config.get<number>('DB_PORT', 5432),
-        username: config.get<string>('DB_USER', 'moodflow'),
-        password: config.get<string>('DB_PASSWORD', 'moodflow_secret'),
-        database: config.get<string>('DB_NAME', 'moodflow'),
-        entities: [User, Organization, Department, Assessment, Question, AnswerOption, AssessmentResult, UserResponse, AssessmentAssignment],
+        username: config.get<string>('DB_USER'),
+        password: config.get<string>('DB_PASSWORD'),
+        database: config.get<string>('DB_NAME'),
+        entities: [User, Organization, Department, Assessment, Question, AnswerOption, AssessmentResult, UserResponse, AssessmentAssignment, AuditLog],
         synchronize: config.get<string>('NODE_ENV') !== 'production',
+        migrations: ['dist/migrations/*.js'],
+        migrationsRun: config.get<string>('NODE_ENV') === 'production',
       }),
     }),
     AuthModule,
@@ -69,6 +74,8 @@ import { AssessmentAssignment } from './modules/assessments/entities/assessment-
     AdminModule,
     NotificationsModule,
     DepartmentsModule,
+    AuditModule,
+    HealthModule,
   ],
 })
 export class AppModule {}

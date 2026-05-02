@@ -39,7 +39,7 @@ export default function AuthCallbackPage() {
       <div className="min-h-screen flex items-center justify-center" style={{ background: '#F5EEE3' }}>
         <div className="text-center">
           <p className="text-raisin/70 mb-4">Nieprawidłowy link logowania.</p>
-          <a href="http://localhost:3000/login" className="text-sm underline" style={{ color: '#C06226' }}>
+          <a href={`${process.env.NEXT_PUBLIC_CLIENT_URL ?? 'http://localhost:3000'}/login`} className="text-sm underline" style={{ color: '#C06226' }}>
             Wróć do strony logowania
           </a>
         </div>

@@ -1,17 +1,23 @@
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import type { AppDispatch } from '../store/store';
 import { useAuth } from '../hooks/useAuth';
-import { fetchMe } from '../store/slices/authSlice';
-import { useEffect, useRef, useState } from 'react';
+import { fetchMe, logoutThunk } from '../store/slices/authSlice';
+import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster } from 'sonner';
 
-const navItems = [
+interface NavItem {
+  to: string;
+  label: string;
+  icon: (active: boolean) => ReactElement;
+}
+
+const navItems: NavItem[] = [
   {
     to: '/app/home',
     label: 'Główna',
-    icon: (active: boolean) => (
+    icon: (active) => (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         className="w-6 h-6 transition-all duration-300"
@@ -28,7 +34,7 @@ const navItems = [
   {
     to: '/app/tests',
     label: 'Testy',
-    icon: (active: boolean) => (
+    icon: (active) => (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         className="w-6 h-6 transition-all duration-300"
@@ -45,7 +51,7 @@ const navItems = [
   {
     to: '/app/results',
     label: 'Wyniki',
-    icon: (active: boolean) => (
+    icon: (active) => (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         className="w-6 h-6 transition-all duration-300"
@@ -62,7 +68,7 @@ const navItems = [
   {
     to: '/app/settings',
     label: 'Ustawienia',
-    icon: (active: boolean) => (
+    icon: (active) => (
       <svg
         xmlns="http://www.w3.org/2000/svg"
         className="w-6 h-6 transition-all duration-300"
@@ -79,8 +85,126 @@ const navItems = [
   },
 ];
 
+function DesktopSidebar({
+  user,
+  onLogout,
+}: {
+  user: ReturnType<typeof useAuth>['user'];
+  onLogout: () => void;
+}) {
+  const location = useLocation();
+
+  return (
+    <aside className="client-sidebar">
+      <div className="client-sidebar-inner">
+        {/* Brand */}
+        <div className="flex items-center gap-2.5 px-2 mb-7">
+          <div
+            className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-lg font-bold"
+            style={{
+              background: 'linear-gradient(135deg, #C06226 0%, #984619 100%)',
+              boxShadow: '0 6px 18px rgba(192, 98, 38, 0.35)',
+            }}
+          >
+            M
+          </div>
+          <span className="text-base font-bold tracking-tight" style={{ color: '#fff' }}>
+            MoodFlow
+          </span>
+        </div>
+
+        {/* User card */}
+        {user && (
+          <div
+            className="px-2 py-3 rounded-xl mb-5"
+            style={{
+              background: 'rgba(255, 255, 255, 0.06)',
+              border: '1px solid rgba(255, 255, 255, 0.10)',
+            }}
+          >
+            <div className="flex items-center gap-2.5">
+              <div
+                className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-semibold shrink-0"
+                style={{ background: 'linear-gradient(135deg, #9CB8B7 0%, #7A9E9D 100%)' }}
+              >
+                {user.firstName?.[0]?.toUpperCase() ?? '?'}
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold truncate" style={{ color: 'rgba(255,255,255,0.95)' }}>
+                  {user.firstName} {user.lastName}
+                </p>
+                <p className="text-[11px] truncate" style={{ color: 'rgba(255,255,255,0.5)' }}>
+                  {user.email}
+                </p>
+              </div>
+            </div>
+            {user.organization?.name && (
+              <div
+                className="mt-2.5 px-2.5 py-1.5 rounded-lg flex items-center gap-1.5"
+                style={{ background: 'rgba(192,98,38,0.18)', border: '1px solid rgba(192,98,38,0.28)' }}
+              >
+                <svg className="w-3 h-3 shrink-0" style={{ color: '#F5C99B' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                <span className="text-[11px] font-semibold truncate" style={{ color: '#F5C99B' }}>
+                  {user.organization.name}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Nav */}
+        <nav className="flex-1 flex flex-col gap-0.5">
+          <p className="text-[10px] font-bold uppercase tracking-widest mb-2 px-3" style={{ color: 'rgba(255,255,255,0.32)' }}>
+            Nawigacja
+          </p>
+          {navItems.map((item) => {
+            const isActive =
+              item.to === '/app/home'
+                ? location.pathname === item.to || location.pathname === '/app'
+                : location.pathname.startsWith(item.to);
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className="client-sidebar-item"
+                style={{
+                  background: isActive
+                    ? 'linear-gradient(135deg, #C06226 0%, #984619 100%)'
+                    : 'transparent',
+                  color: isActive ? '#fff' : 'rgba(255,255,255,0.55)',
+                  boxShadow: isActive ? '0 4px 14px rgba(192,98,38,0.35)' : 'none',
+                }}
+              >
+                <span className="w-5 h-5 flex items-center justify-center shrink-0">
+                  {item.icon(isActive)}
+                </span>
+                <span className="text-[13.5px] font-medium">{item.label}</span>
+              </NavLink>
+            );
+          })}
+        </nav>
+
+        {/* Logout */}
+        <button onClick={onLogout} className="client-sidebar-logout">
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          <span>Wyloguj się</span>
+        </button>
+
+        <p className="text-[10px] mt-3 px-2" style={{ color: 'rgba(255,255,255,0.28)' }}>
+          © MoodFlow · 2026
+        </p>
+      </div>
+    </aside>
+  );
+}
+
 export default function AppLayout() {
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const location = useLocation();
   const navRef = useRef<HTMLDivElement>(null);
@@ -109,12 +233,20 @@ export default function AppLayout() {
     }
   }, [location.pathname]);
 
-  return (
-    <div className="min-h-screen bg-pearl-light flex flex-col">
+  const handleLogout = async () => {
+    await dispatch(logoutThunk());
+    navigate('/login');
+  };
 
-      {/* ── Top Header ───────────────────────────────── */}
+  return (
+    <div className="min-h-screen bg-pearl-light client-shell">
+
+      {/* ── Desktop sidebar ─────────────────────────── */}
+      <DesktopSidebar user={user} onLogout={handleLogout} />
+
+      {/* ── Mobile top header ───────────────────────── */}
       <header
-        className="sticky top-0 z-20"
+        className="sticky top-0 z-20 client-mobile-header"
         style={{
           background: 'rgba(245, 238, 227, 0.85)',
           backdropFilter: 'blur(12px)',
@@ -123,7 +255,6 @@ export default function AppLayout() {
         }}
       >
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          {/* Logo */}
           <div className="flex items-center gap-2.5 shrink-0">
             <div
               className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-lg font-bold shadow-ruddy"
@@ -131,15 +262,11 @@ export default function AppLayout() {
             >
               M
             </div>
-            <span
-              className="text-lg font-bold tracking-tight"
-              style={{ color: '#2E211C' }}
-            >
+            <span className="text-lg font-bold tracking-tight" style={{ color: '#2E211C' }}>
               MoodFlow
             </span>
           </div>
 
-          {/* Company badge */}
           {user?.organization?.name && (
             <div
               className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg min-w-0 overflow-hidden"
@@ -148,21 +275,15 @@ export default function AppLayout() {
               <svg className="w-3 h-3 shrink-0" style={{ color: '#C06226' }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
-              <span
-                className="text-xs font-semibold truncate"
-                style={{ color: '#C06226' }}
-              >
+              <span className="text-xs font-semibold truncate" style={{ color: '#C06226' }}>
                 {user.organization.name}
               </span>
             </div>
           )}
 
-          {/* User avatar */}
           {user && (
             <div className="flex items-center gap-2.5 shrink-0">
-              <span className="text-sm text-raisin/60 hidden sm:block font-medium">
-                {user.firstName}
-              </span>
+              <span className="text-sm text-raisin/60 hidden sm:block font-medium">{user.firstName}</span>
               <div
                 className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-warm"
                 style={{ background: 'linear-gradient(135deg, #9CB8B7 0%, #7A9E9D 100%)' }}
@@ -174,19 +295,21 @@ export default function AppLayout() {
         </div>
       </header>
 
-      {/* ── Page Content ─────────────────────────────── */}
-      <main className="flex-1 max-w-2xl w-full mx-auto px-4 pt-5 pb-nav">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={location.pathname}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            transition={{ duration: 0.22, ease: 'easeOut' }}
-          >
-            <Outlet />
-          </motion.div>
-        </AnimatePresence>
+      {/* ── Main content ────────────────────────────── */}
+      <main className="client-main">
+        <div className="client-main-inner">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.22, ease: 'easeOut' }}
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
+        </div>
         <Toaster
           position="top-center"
           toastOptions={{
@@ -200,9 +323,9 @@ export default function AppLayout() {
         />
       </main>
 
-      {/* ── Bottom Navigation ────────────────────────── */}
+      {/* ── Mobile bottom navigation ────────────────── */}
       <nav
-        className="fixed bottom-0 left-0 right-0 z-20"
+        className="fixed bottom-0 left-0 right-0 z-20 client-mobile-nav"
         style={{
           background: 'rgba(255, 255, 255, 0.95)',
           backdropFilter: 'blur(16px)',
@@ -213,16 +336,10 @@ export default function AppLayout() {
         }}
       >
         <div ref={navRef} className="max-w-2xl mx-auto flex relative" style={{ height: 68 }}>
-
-          {/* Sliding indicator at top */}
           <div
             className="nav-indicator"
-            style={{
-              left: indicatorStyle.left,
-              width: indicatorStyle.width,
-            }}
+            style={{ left: indicatorStyle.left, width: indicatorStyle.width }}
           />
-
           {navItems.map((item, index) => (
             <NavLink
               key={item.to}
@@ -233,14 +350,10 @@ export default function AppLayout() {
             >
               {({ isActive }) => (
                 <>
-                  {/* Icon container with background animation */}
                   <div
                     className="relative flex items-center justify-center transition-all duration-300"
-                    style={{
-                      color: isActive ? '#C06226' : 'rgba(46, 33, 28, 0.4)',
-                    }}
+                    style={{ color: isActive ? '#C06226' : 'rgba(46, 33, 28, 0.4)' }}
                   >
-                    {/* Glow ring on active */}
                     {isActive && (
                       <div
                         className="absolute inset-0 rounded-full"
@@ -251,18 +364,13 @@ export default function AppLayout() {
                         }}
                       />
                     )}
-                    <div className="relative z-10">
-                      {item.icon(isActive)}
-                    </div>
+                    <div className="relative z-10">{item.icon(isActive)}</div>
                   </div>
-
-                  {/* Label */}
                   <span
                     className="text-xs transition-all duration-300"
                     style={{
                       color: isActive ? '#C06226' : 'rgba(46, 33, 28, 0.4)',
                       fontWeight: isActive ? 600 : 400,
-                      transform: isActive ? 'translateY(0px)' : 'translateY(0)',
                     }}
                   >
                     {item.label}

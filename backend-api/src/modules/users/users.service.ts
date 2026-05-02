@@ -9,12 +9,15 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { ApproveUserDto } from './dto/approve-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CreateUserAdminDto } from './dto/create-user-admin.dto';
+import { AuditService } from '../audit/audit.service';
+import { AuditAction } from '../audit/entities/audit-log.entity';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    private auditService: AuditService,
   ) {}
 
   async create(data: Partial<User>): Promise<User> {
@@ -97,14 +100,33 @@ export class UsersService {
   }
 
   // ADMIN może zmieniać status tylko użytkownika ze swojej org
-  async updateStatus(id: number, dto: ApproveUserDto, callerOrganizationId?: number): Promise<User> {
+  async updateStatus(id: number, dto: ApproveUserDto, callerOrganizationId?: number, actorUserId?: number): Promise<User> {
     const user = await this.findById(id);
     if (!user) throw new NotFoundException('Użytkownik nie znaleziony');
     if (callerOrganizationId && user.organizationId !== callerOrganizationId) {
       throw new ForbiddenException('Brak dostępu do tego użytkownika');
     }
+    const previousStatus = user.status;
     user.status = dto.status;
-    return this.usersRepository.save(user);
+    const saved = await this.usersRepository.save(user);
+
+    const actionMap: Record<string, AuditAction> = {
+      [UserStatus.ACTIVE]: previousStatus === UserStatus.SUSPENDED ? AuditAction.USER_REACTIVATED : AuditAction.USER_APPROVED,
+      [UserStatus.REJECTED]: AuditAction.USER_REJECTED,
+      [UserStatus.SUSPENDED]: AuditAction.USER_SUSPENDED,
+    };
+    const auditAction = actionMap[dto.status] ?? AuditAction.USER_APPROVED;
+
+    await this.auditService.log({
+      action: auditAction,
+      actorUserId: actorUserId ?? null,
+      organizationId: user.organizationId ?? null,
+      entityType: 'user',
+      entityId: user.id,
+      metadata: { previousStatus, newStatus: dto.status, email: user.email },
+    });
+
+    return saved;
   }
 
   async update(id: number, dto: UpdateUserDto, callerOrganizationId?: number): Promise<User> {
@@ -141,10 +163,28 @@ export class UsersService {
     if (!match) throw new UnauthorizedException('Aktualne hasło jest nieprawidłowe');
     user.passwordHash = await bcrypt.hash(newPassword, 12);
     await this.usersRepository.save(user);
+    await this.auditService.log({
+      action: AuditAction.PASSWORD_CHANGED,
+      actorUserId: user.id,
+      organizationId: user.organizationId ?? null,
+      entityType: 'user',
+      entityId: user.id,
+    });
   }
 
   async deleteAccount(id: number): Promise<void> {
+    const user = await this.usersRepository.findOne({ where: { id } });
     await this.usersRepository.delete(id);
+    if (user) {
+      await this.auditService.log({
+        action: AuditAction.ACCOUNT_DELETED,
+        actorUserId: id,
+        organizationId: user.organizationId ?? null,
+        entityType: 'user',
+        entityId: id,
+        metadata: { email: user.email, role: user.role },
+      });
+    }
   }
 
   getProfile(user: User) {

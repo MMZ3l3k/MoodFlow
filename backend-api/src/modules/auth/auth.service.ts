@@ -17,6 +17,8 @@ import { LoginDto } from './dto/login.dto';
 import { UserStatus } from '../../common/enums/user-status.enum';
 import { OrganizationStatus } from '../../common/enums/organization-status.enum';
 import { Role } from '../../common/enums/role.enum';
+import { AuditService } from '../audit/audit.service';
+import { AuditAction } from '../audit/entities/audit-log.entity';
 
 @Injectable()
 export class AuthService {
@@ -25,12 +27,13 @@ export class AuthService {
     private organizationsService: OrganizationsService,
     private jwtService: JwtService,
     private configService: ConfigService,
+    private auditService: AuditService,
   ) {}
 
   // Stara rejestracja — zachowana dla backward compat
   async register(dto: RegisterDto) {
     const existing = await this.usersService.findByEmail(dto.email);
-    if (existing) throw new ConflictException('Użytkownik z tym adresem email już istnieje');
+    if (existing) throw new ConflictException('Nie można utworzyć konta z tymi danymi. Sprawdź wpisane informacje lub spróbuj się zalogować.');
 
     const passwordHash = await bcrypt.hash(dto.password, 12);
     const user = await this.usersService.create({
@@ -51,10 +54,10 @@ export class AuthService {
   // Rejestracja nowej firmy — tworzy organizację PENDING + admina PENDING
   async registerCompany(dto: RegisterCompanyDto) {
     const existing = await this.usersService.findByEmail(dto.email);
-    if (existing) throw new ConflictException('Użytkownik z tym adresem email już istnieje');
+    if (existing) throw new ConflictException('Nie można utworzyć konta z tymi danymi. Sprawdź wpisane informacje lub spróbuj się zalogować.');
 
     const nipTaken = await this.organizationsService.findByNip(dto.nip);
-    if (nipTaken) throw new ConflictException('Firma z tym NIP już istnieje w systemie');
+    if (nipTaken) throw new ConflictException('Nie można utworzyć konta z tymi danymi. Sprawdź wpisane informacje lub spróbuj się zalogować.');
 
     const inviteCode = 'MOOD-' + randomBytes(4).toString('hex').toUpperCase();
 
@@ -89,7 +92,7 @@ export class AuthService {
   // Rejestracja pracownika przez kod zaproszenia
   async registerEmployee(dto: RegisterEmployeeDto) {
     const existing = await this.usersService.findByEmail(dto.email);
-    if (existing) throw new ConflictException('Użytkownik z tym adresem email już istnieje');
+    if (existing) throw new ConflictException('Nie można utworzyć konta z tymi danymi. Sprawdź wpisane informacje lub spróbuj się zalogować.');
 
     const organization = await this.organizationsService.findByInviteCode(dto.inviteCode);
     if (!organization) throw new BadRequestException('Nieprawidłowy kod zaproszenia');
@@ -117,10 +120,25 @@ export class AuthService {
 
   async login(dto: LoginDto) {
     const user = await this.usersService.findByEmail(dto.email);
-    if (!user) throw new UnauthorizedException('Nieprawidłowy email lub hasło');
+    if (!user) {
+      await this.auditService.log({
+        action: AuditAction.LOGIN_FAILED,
+        actorUserId: null,
+        metadata: { email: dto.email, reason: 'unknown_user' },
+      });
+      throw new UnauthorizedException('Nieprawidłowy email lub hasło');
+    }
 
     const passwordMatch = await bcrypt.compare(dto.password, user.passwordHash);
-    if (!passwordMatch) throw new UnauthorizedException('Nieprawidłowy email lub hasło');
+    if (!passwordMatch) {
+      await this.auditService.log({
+        action: AuditAction.LOGIN_FAILED,
+        actorUserId: user.id,
+        organizationId: user.organizationId ?? null,
+        metadata: { email: dto.email, reason: 'wrong_password' },
+      });
+      throw new UnauthorizedException('Nieprawidłowy email lub hasło');
+    }
 
     if (user.status === UserStatus.PENDING) {
       throw new UnauthorizedException('Konto oczekuje na zatwierdzenie przez administratora');
@@ -133,6 +151,12 @@ export class AuthService {
     }
 
     await this.usersService.setOnline(user.id, true);
+    await this.auditService.log({
+      action: AuditAction.LOGIN_SUCCESS,
+      actorUserId: user.id,
+      organizationId: user.organizationId ?? null,
+      metadata: { email: user.email, role: user.role },
+    });
     return this.generateTokens(user.id, user.email, user.role, user.organizationId ?? undefined);
   }
 
