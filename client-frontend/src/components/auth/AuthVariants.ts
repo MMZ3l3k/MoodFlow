@@ -1,7 +1,7 @@
 export type AuthVariant = 'employee' | 'admin' | 'super';
 
-const ADMIN_BASE = (import.meta as any).env?.VITE_ADMIN_URL ?? 'http://localhost:3001';
-const CLIENT_BASE = (import.meta as any).env?.VITE_CLIENT_URL ?? 'http://localhost:3000';
+const ADMIN_BASE = (import.meta as any).env?.VITE_ADMIN_URL ?? 'https://lavish-bravery-production.up.railway.app';
+const CLIENT_BASE = (import.meta as any).env?.VITE_CLIENT_URL ?? 'https://innovative-presence-production.up.railway.app';
 
 export interface VariantTheme {
   badge: string;

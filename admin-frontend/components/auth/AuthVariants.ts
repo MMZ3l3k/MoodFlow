@@ -49,7 +49,7 @@ export const VARIANTS: Record<AuthVariant, VariantTheme> = {
       { icon: '📈', title: 'Twoja historia, Twoja prywatność', desc: 'Dane osobowe widoczne tylko dla Ciebie.' },
       { icon: '🧭', title: 'Wsparcie, kiedy go potrzebujesz', desc: 'Walidowane narzędzia psychologiczne (PHQ-9, GAD-7, WHO-5).' },
     ],
-    loginRoute: `${process.env.NEXT_PUBLIC_CLIENT_URL ?? 'http://localhost:3000'}/login`,
+    loginRoute: `${process.env.NEXT_PUBLIC_CLIENT_URL ?? 'https://innovative-presence-production.up.railway.app'}/login`,
     panelLabel: 'Pracownik',
   },
   admin: {

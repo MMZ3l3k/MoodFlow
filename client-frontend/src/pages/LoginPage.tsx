@@ -8,7 +8,7 @@ import AuthHero from '../components/auth/AuthHero';
 import RolePicker from '../components/auth/RolePicker';
 import { VARIANTS } from '../components/auth/AuthVariants';
 
-const ADMIN_FRONTEND_URL = (import.meta as any).env?.VITE_ADMIN_URL ?? 'http://localhost:3001';
+const ADMIN_FRONTEND_URL = (import.meta as any).env?.VITE_ADMIN_URL ?? 'https://lavish-bravery-production.up.railway.app';
 const t = VARIANTS.employee;
 
 export default function LoginPage() {
