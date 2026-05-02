@@ -6,6 +6,7 @@ import { fetchMe, logoutThunk } from '../store/slices/authSlice';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster } from 'sonner';
+import ThemeToggle from './ThemeToggle';
 
 interface NavItem {
   to: string;
@@ -186,13 +187,16 @@ function DesktopSidebar({
           })}
         </nav>
 
-        {/* Logout */}
-        <button onClick={onLogout} className="client-sidebar-logout">
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-          <span>Wyloguj się</span>
-        </button>
+        {/* Theme + Logout */}
+        <div className="flex items-center gap-2 mt-3">
+          <ThemeToggle compact />
+          <button onClick={onLogout} className="client-sidebar-logout" style={{ marginTop: 0, flex: 1 }}>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+            </svg>
+            <span>Wyloguj się</span>
+          </button>
+        </div>
 
         <p className="text-[10px] mt-3 px-2" style={{ color: 'rgba(255,255,255,0.28)' }}>
           © MoodFlow · 2026
@@ -281,17 +285,20 @@ export default function AppLayout() {
             </div>
           )}
 
-          {user && (
-            <div className="flex items-center gap-2.5 shrink-0">
-              <span className="text-sm text-raisin/60 hidden sm:block font-medium">{user.firstName}</span>
-              <div
-                className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-warm"
-                style={{ background: 'linear-gradient(135deg, #9CB8B7 0%, #7A9E9D 100%)' }}
-              >
-                {user.firstName?.[0]?.toUpperCase() ?? '?'}
-              </div>
-            </div>
-          )}
+          <div className="flex items-center gap-2 shrink-0">
+            <ThemeToggle compact />
+            {user && (
+              <>
+                <span className="text-sm text-raisin/60 hidden sm:block font-medium">{user.firstName}</span>
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-semibold shadow-warm"
+                  style={{ background: 'linear-gradient(135deg, #9CB8B7 0%, #7A9E9D 100%)' }}
+                >
+                  {user.firstName?.[0]?.toUpperCase() ?? '?'}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </header>
 

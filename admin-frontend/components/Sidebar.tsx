@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { clearTokens, getRole } from '../lib/auth';
 import axiosClient from '../lib/axiosClient';
+import ThemeToggle from './ThemeToggle';
 
 const adminItems = [
   { href: '/dashboard', label: 'Przegląd', exact: true, icon: LayoutDashboard },
@@ -153,10 +154,11 @@ export default function Sidebar() {
       </nav>
 
       {/* User / Logout */}
-      <div className="px-4 py-4">
+      <div className="px-4 py-4 flex items-center gap-2">
+        <ThemeToggle compact />
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2.5 w-full px-3 py-2.5 rounded-xl text-[13px] font-medium text-gray-500 hover:text-rose-400 hover:bg-white/5 transition-all duration-200"
+          className="flex-1 flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-[13px] font-medium text-gray-500 hover:text-rose-400 hover:bg-white/5 transition-all duration-200"
         >
           <LogOut className="w-[17px] h-[17px]" />
           Wyloguj się

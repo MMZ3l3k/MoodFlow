@@ -13,6 +13,35 @@
   --cambridge-dark: #7A9E9D;
   --background: #F5EEE3;
   --foreground: #2E211C;
+
+  /* tokeny motywu — light */
+  --bg-page: #F5EEE3;
+  --bg-surface: rgba(255, 255, 255, 0.92);
+  --bg-surface-strong: #ffffff;
+  --bg-input: rgba(255, 255, 255, 0.7);
+  --bg-muted: rgba(46, 33, 28, 0.04);
+  --border-base: rgba(221, 211, 186, 0.6);
+  --border-subtle: rgba(46, 33, 28, 0.08);
+  --text-base: #2E211C;
+  --text-muted: rgba(46, 33, 28, 0.55);
+  --text-subtle: rgba(46, 33, 28, 0.40);
+  --shadow-sm: 0 2px 12px rgba(46, 33, 28, 0.06);
+}
+
+html.dark {
+  --background: #1a1410;
+  --foreground: #F5EEE3;
+  --bg-page: #1a1410;
+  --bg-surface: rgba(46, 33, 28, 0.55);
+  --bg-surface-strong: #3c2d26;
+  --bg-input: rgba(255, 255, 255, 0.05);
+  --bg-muted: rgba(255, 255, 255, 0.04);
+  --border-base: rgba(221, 211, 186, 0.12);
+  --border-subtle: rgba(221, 211, 186, 0.06);
+  --text-base: #F5EEE3;
+  --text-muted: rgba(245, 238, 227, 0.65);
+  --text-subtle: rgba(245, 238, 227, 0.40);
+  --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.30);
 }
 
 * {
@@ -25,8 +54,6 @@ html {
 }
 
 body {
-  background: var(--pearl-light);
-  color: var(--raisin);
   font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -549,3 +576,43 @@ body {
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Theme tokens override ─────────────────── */
+body {
+  background-color: var(--bg-page) !important;
+  color: var(--text-base) !important;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}
+.admin-card {
+  background: var(--bg-surface) !important;
+  border-color: var(--border-base) !important;
+  color: var(--text-base);
+}
+.admin-input {
+  background: var(--bg-input) !important;
+  border-color: var(--border-base) !important;
+  color: var(--text-base) !important;
+}
+.admin-input::placeholder { color: var(--text-subtle) !important; }
+.admin-table th { background: var(--bg-muted) !important; color: var(--text-muted) !important; }
+.admin-table td { color: var(--text-base) !important; border-top-color: var(--border-base) !important; }
+.admin-table tr:hover td { background: var(--bg-muted) !important; }
+
+/* Theme toggle button */
+.theme-toggle-admin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border-base);
+  background: var(--bg-input);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border-color 0.18s;
+}
+.theme-toggle-admin:hover {
+  background: var(--bg-surface-strong);
+  color: var(--text-base);
+}

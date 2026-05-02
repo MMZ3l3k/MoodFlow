@@ -5,6 +5,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap');
 
 :root {
+  /* paleta marki — bez zmian dla obu motywów */
   --raisin: #2E211C;
   --cambridge: #9CB8B7;
   --pearl: #EAE0C7;
@@ -14,6 +15,64 @@
   --pearl-mid: #DDD3BA;
   --cambridge-light: #C5DADA;
   --nav-height: 68px;
+
+  /* tokeny motywu — light (domyślny) */
+  --bg-page: #F5EEE3;
+  --bg-surface: rgba(255, 255, 255, 0.92);
+  --bg-surface-strong: rgba(255, 255, 255, 1);
+  --bg-elevated: rgba(255, 255, 255, 0.95);
+  --bg-input: rgba(255, 255, 255, 0.7);
+  --bg-muted: rgba(46, 33, 28, 0.04);
+  --border-base: rgba(221, 211, 186, 0.6);
+  --border-subtle: rgba(46, 33, 28, 0.08);
+  --text-base: #2E211C;
+  --text-muted: rgba(46, 33, 28, 0.55);
+  --text-subtle: rgba(46, 33, 28, 0.40);
+  --shadow-sm: 0 2px 12px rgba(46, 33, 28, 0.06);
+  --shadow-md: 0 4px 18px rgba(46, 33, 28, 0.08);
+  --shadow-lg: 0 16px 48px rgba(46, 33, 28, 0.10);
+}
+
+[data-theme="dark"] {
+  --bg-page: #1a1410;
+  --bg-surface: rgba(46, 33, 28, 0.55);
+  --bg-surface-strong: rgba(60, 45, 38, 1);
+  --bg-elevated: rgba(60, 45, 38, 0.92);
+  --bg-input: rgba(255, 255, 255, 0.05);
+  --bg-muted: rgba(255, 255, 255, 0.04);
+  --border-base: rgba(221, 211, 186, 0.12);
+  --border-subtle: rgba(221, 211, 186, 0.06);
+  --text-base: #F5EEE3;
+  --text-muted: rgba(245, 238, 227, 0.65);
+  --text-subtle: rgba(245, 238, 227, 0.40);
+  --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.30);
+  --shadow-md: 0 4px 18px rgba(0, 0, 0, 0.40);
+  --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.45);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg-page: #1a1410;
+    --bg-surface: rgba(46, 33, 28, 0.55);
+    --bg-surface-strong: rgba(60, 45, 38, 1);
+    --bg-elevated: rgba(60, 45, 38, 0.92);
+    --bg-input: rgba(255, 255, 255, 0.05);
+    --bg-muted: rgba(255, 255, 255, 0.04);
+    --border-base: rgba(221, 211, 186, 0.12);
+    --border-subtle: rgba(221, 211, 186, 0.06);
+    --text-base: #F5EEE3;
+    --text-muted: rgba(245, 238, 227, 0.65);
+    --text-subtle: rgba(245, 238, 227, 0.40);
+    --shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.30);
+    --shadow-md: 0 4px 18px rgba(0, 0, 0, 0.40);
+    --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.45);
+  }
+}
+
+body {
+  background-color: var(--bg-page);
+  color: var(--text-base);
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 * {
@@ -27,8 +86,6 @@ html {
 
 body {
   font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
-  background-color: var(--pearl-light);
-  color: var(--raisin);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -793,4 +850,84 @@ body {
 @media (min-width: 1024px) {
   .client-page-header h1 { font-size: 30px; }
   .client-page-header p { font-size: 14.5px; }
+}
+
+/* ── Theme overrides — wymuszamy var() na kluczowych stylach ── */
+.client-card,
+.client-card-hover,
+.stat-card {
+  background: var(--bg-surface) !important;
+  border-color: var(--border-base) !important;
+  box-shadow: var(--shadow-sm);
+  color: var(--text-base);
+}
+.client-card-hover:hover { box-shadow: var(--shadow-md); }
+.stat-card-value { color: var(--text-base) !important; }
+.stat-card-label, .stat-card-sub { color: var(--text-muted) !important; }
+.section-title { color: var(--text-muted) !important; }
+.client-page-header h1 { color: var(--text-base) !important; }
+.client-page-header p { color: var(--text-muted) !important; }
+.client-input {
+  background: var(--bg-input) !important;
+  border-color: var(--border-base) !important;
+  color: var(--text-base) !important;
+}
+.client-input::placeholder { color: var(--text-subtle) !important; }
+.client-label { color: var(--text-muted) !important; }
+.btn-client-ghost {
+  background: var(--bg-input) !important;
+  border-color: var(--border-base) !important;
+  color: var(--text-muted) !important;
+}
+.btn-client-ghost:hover { background: var(--bg-surface-strong) !important; color: var(--text-base) !important; }
+.client-tabs {
+  background: var(--bg-muted) !important;
+  border-color: var(--border-subtle) !important;
+}
+.client-tabs button:not(.active) { color: var(--text-muted) !important; }
+.client-tabs button:not(.active):hover { color: var(--text-base) !important; }
+
+/* Mobile bottom nav + header */
+.client-mobile-header {
+  background: color-mix(in srgb, var(--bg-page) 85%, transparent) !important;
+  border-bottom-color: var(--border-base) !important;
+}
+.client-mobile-header span,
+.client-mobile-header .text-raisin { color: var(--text-base) !important; }
+.client-mobile-nav {
+  background: var(--bg-elevated) !important;
+  border-top-color: var(--border-base) !important;
+}
+
+/* Tailwind utility classes overrides via CSS vars */
+.bg-pearl-light { background-color: var(--bg-page) !important; }
+.text-raisin { color: var(--text-base) !important; }
+.text-raisin\/70 { color: var(--text-muted) !important; }
+.text-raisin\/60 { color: var(--text-muted) !important; }
+.text-raisin\/55 { color: var(--text-muted) !important; }
+.text-raisin\/50 { color: var(--text-muted) !important; }
+.text-raisin\/45 { color: var(--text-subtle) !important; }
+.text-raisin\/40 { color: var(--text-subtle) !important; }
+.text-raisin\/35 { color: var(--text-subtle) !important; }
+.text-raisin\/30 { color: var(--text-subtle) !important; }
+.text-raisin\/25 { color: var(--text-subtle) !important; }
+
+/* Theme toggle button */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid var(--border-base);
+  background: var(--bg-input);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s, border-color 0.18s;
+}
+.theme-toggle:hover {
+  background: var(--bg-surface-strong);
+  color: var(--text-base);
+  border-color: var(--text-muted);
 }
