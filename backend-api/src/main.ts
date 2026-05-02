@@ -61,7 +61,8 @@ async function bootstrap() {
   });
 
   const port = Number(process.env.PORT ?? 4000);
-  await app.listen(port);
+  // Listen na 0.0.0.0 (nie tylko localhost) — wymagane dla Railway/kontenerów
+  await app.listen(port, '0.0.0.0');
   logger.log(`Backend API działa na porcie ${port}`);
 
   const dataSource = app.get(DataSource);
