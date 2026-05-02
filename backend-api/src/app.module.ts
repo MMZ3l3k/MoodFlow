@@ -33,20 +33,28 @@ import { HealthModule } from './modules/health/health.module';
     MailerModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
+      useFactory: (config: ConfigService) => {
+        const port = config.get<number>('MAIL_PORT', 587);
+        return {
         transport: {
           host: config.get<string>('MAIL_HOST', 'smtp.gmail.com'),
-          port: config.get<number>('MAIL_PORT', 587),
-          secure: false,
+          port,
+          // Port 465 = implicit TLS (secure), 587 = STARTTLS
+          secure: port === 465,
           auth: {
             user: config.get<string>('MAIL_USER'),
             pass: config.get<string>('MAIL_PASS'),
           },
+          // Krótszy timeout dla szybszego fail-fast w środowiskach blokujących SMTP
+          connectionTimeout: 10000,
+          greetingTimeout: 10000,
+          socketTimeout: 10000,
         },
         defaults: {
           from: config.get<string>('MAIL_FROM', '"MoodFlow" <noreply@moodflow.pl>'),
         },
-      }),
+        };
+      },
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
