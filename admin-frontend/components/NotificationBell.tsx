@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useRouter } from 'next/navigation';
-import { Bell } from 'lucide-react';
+import { Bell, X } from 'lucide-react';
 import axiosClient from '../lib/axiosClient';
 
 interface Notification {
@@ -40,8 +41,11 @@ export default function NotificationBell({ compact = false }: { compact?: boolea
   const [items, setItems] = useState<Notification[]>([]);
   const [unread, setUnread] = useState(0);
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
-  const dropdownRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => setMounted(true), []);
 
   const fetchData = async () => {
     try {
@@ -51,7 +55,7 @@ export default function NotificationBell({ compact = false }: { compact?: boolea
       ]);
       setItems(list.data);
       setUnread(count.data.count);
-    } catch { /* 401 — interceptor obsłuży */ }
+    } catch { /* */ }
   };
 
   useEffect(() => {
@@ -62,13 +66,9 @@ export default function NotificationBell({ compact = false }: { compact?: boolea
 
   useEffect(() => {
     if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
   }, [open]);
 
   const markRead = async (id: number) => {
@@ -96,8 +96,9 @@ export default function NotificationBell({ compact = false }: { compact?: boolea
   };
 
   return (
-    <div ref={dropdownRef} style={{ position: 'relative', display: 'inline-block' }}>
+    <>
       <button
+        ref={buttonRef}
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-label={`Powiadomienia${unread > 0 ? ` (${unread} nieprzeczytanych)` : ''}`}
@@ -132,99 +133,121 @@ export default function NotificationBell({ compact = false }: { compact?: boolea
         )}
       </button>
 
-      {open && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 'calc(100% + 8px)',
-            right: 0,
-            width: 360,
-            maxWidth: 'calc(100vw - 32px)',
-            maxHeight: 480,
-            overflowY: 'auto',
-            background: 'var(--bg-surface-strong, #fff)',
-            border: '1px solid var(--border-base)',
-            borderRadius: 16,
-            boxShadow: '0 16px 48px rgba(0,0,0,0.15)',
-            zIndex: 50,
-          }}
-        >
-          <div style={{
-            padding: '14px 16px',
-            borderBottom: '1px solid var(--border-base)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            position: 'sticky',
-            top: 0,
-            background: 'var(--bg-surface-strong, #fff)',
-          }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-base)' }}>
-              Powiadomienia {unread > 0 && <span style={{ color: '#C06226' }}>({unread})</span>}
-            </span>
-            {items.length > 0 && unread > 0 && (
-              <button
-                onClick={markAllRead}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  fontSize: 12,
-                  color: '#C06226',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
-                Oznacz wszystkie
-              </button>
-            )}
-          </div>
-
-          {items.length === 0 ? (
-            <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-subtle)' }}>
-              <div style={{ fontSize: 32, marginBottom: 8 }}>🔕</div>
-              <div style={{ fontSize: 13 }}>Brak powiadomień</div>
-            </div>
-          ) : (
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              {items.map((n) => (
-                <li
-                  key={n.id}
-                  onClick={() => handleClick(n)}
+      {mounted && open && createPortal(
+        <>
+          <div
+            onClick={() => setOpen(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              background: 'rgba(0,0,0,0.30)',
+              backdropFilter: 'blur(2px)',
+              zIndex: 998,
+            }}
+          />
+          <div
+            role="dialog"
+            aria-label="Powiadomienia"
+            style={{
+              position: 'fixed',
+              zIndex: 999,
+              background: 'var(--bg-surface-strong, #fff)',
+              border: '1px solid var(--border-base)',
+              boxShadow: '0 16px 48px rgba(0,0,0,0.18)',
+              display: 'flex',
+              flexDirection: 'column',
+              ...(typeof window !== 'undefined' && window.innerWidth < 1024
+                ? { bottom: 0, left: 0, right: 0, maxHeight: '70vh', borderRadius: '20px 20px 0 0' }
+                : { top: 16, right: 16, width: 380, maxHeight: 'calc(100vh - 32px)', borderRadius: 16 }),
+            }}
+          >
+            <div style={{
+              padding: '14px 16px',
+              borderBottom: '1px solid var(--border-base)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 8,
+              flexShrink: 0,
+            }}>
+              <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-base)' }}>
+                Powiadomienia {unread > 0 && <span style={{ color: '#C06226' }}>({unread})</span>}
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {items.length > 0 && unread > 0 && (
+                  <button
+                    onClick={markAllRead}
+                    style={{
+                      background: 'none', border: 'none', fontSize: 12,
+                      color: '#C06226', fontWeight: 600, cursor: 'pointer',
+                      padding: '4px 8px', borderRadius: 6,
+                    }}
+                  >
+                    Oznacz wszystkie
+                  </button>
+                )}
+                <button
+                  onClick={() => setOpen(false)}
+                  aria-label="Zamknij"
                   style={{
-                    padding: '12px 16px',
-                    borderBottom: '1px solid var(--border-subtle)',
-                    cursor: n.link ? 'pointer' : 'default',
-                    display: 'flex',
-                    gap: 12,
-                    alignItems: 'flex-start',
-                    background: n.read ? 'transparent' : 'rgba(192, 98, 38, 0.06)',
-                    transition: 'background 0.15s',
+                    background: 'transparent', border: '1px solid var(--border-base)',
+                    width: 28, height: 28, borderRadius: 8, cursor: 'pointer',
+                    color: 'var(--text-muted)', display: 'inline-flex',
+                    alignItems: 'center', justifyContent: 'center',
                   }}
                 >
-                  <span style={{ fontSize: 20, flexShrink: 0 }}>{ICONS[n.type] ?? '🔔'}</span>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-base)', marginBottom: 2 }}>
-                      {n.title}
-                    </div>
-                    <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.4, marginBottom: 4 }}>
-                      {n.message}
-                    </div>
-                    <div style={{ fontSize: 11, color: 'var(--text-subtle)' }}>
-                      {formatRelativeTime(n.createdAt)}
-                    </div>
-                  </div>
-                  {!n.read && (
-                    <span style={{
-                      width: 8, height: 8, borderRadius: '50%', background: '#C06226',
-                      flexShrink: 0, marginTop: 6,
-                    }} />
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+
+            <div style={{ overflowY: 'auto', flex: 1 }}>
+              {items.length === 0 ? (
+                <div style={{ padding: 32, textAlign: 'center', color: 'var(--text-subtle)' }}>
+                  <div style={{ fontSize: 32, marginBottom: 8 }}>🔕</div>
+                  <div style={{ fontSize: 13 }}>Brak powiadomień</div>
+                </div>
+              ) : (
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
+                  {items.map((n) => (
+                    <li
+                      key={n.id}
+                      onClick={() => handleClick(n)}
+                      style={{
+                        padding: '12px 16px',
+                        borderBottom: '1px solid var(--border-subtle)',
+                        cursor: n.link ? 'pointer' : 'default',
+                        display: 'flex', gap: 12, alignItems: 'flex-start',
+                        background: n.read ? 'transparent' : 'rgba(192, 98, 38, 0.06)',
+                      }}
+                    >
+                      <span style={{ fontSize: 20, flexShrink: 0 }}>{ICONS[n.type] ?? '🔔'}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-base)', marginBottom: 2 }}>
+                          {n.title}
+                        </div>
+                        <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.4, marginBottom: 4 }}>
+                          {n.message}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--text-subtle)' }}>
+                          {formatRelativeTime(n.createdAt)}
+                        </div>
+                      </div>
+                      {!n.read && (
+                        <span style={{
+                          width: 8, height: 8, borderRadius: '50%', background: '#C06226',
+                          flexShrink: 0, marginTop: 6,
+                        }} />
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </>,
+        document.body,
       )}
-    </div>
+    </>
   );
 }
