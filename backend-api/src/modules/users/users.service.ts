@@ -11,6 +11,8 @@ import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CreateUserAdminDto } from './dto/create-user-admin.dto';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/entities/audit-log.entity';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/entities/notification.entity';
 
 @Injectable()
 export class UsersService {
@@ -18,6 +20,7 @@ export class UsersService {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     private auditService: AuditService,
+    private notifications: NotificationsService,
   ) {}
 
   async create(data: Partial<User>): Promise<User> {
@@ -125,6 +128,24 @@ export class UsersService {
       entityId: user.id,
       metadata: { previousStatus, newStatus: dto.status, email: user.email },
     });
+
+    // In-app notification do użytkownika którego status zmieniono
+    if (auditAction === AuditAction.USER_APPROVED) {
+      await this.notifications.create({
+        userId: user.id,
+        type: NotificationType.USER_APPROVED,
+        title: 'Twoje konto zostało aktywowane',
+        message: 'Możesz teraz w pełni korzystać z platformy MoodFlow.',
+        link: '/app/home',
+      });
+    } else if (auditAction === AuditAction.USER_REJECTED) {
+      await this.notifications.create({
+        userId: user.id,
+        type: NotificationType.USER_REJECTED,
+        title: 'Twoje konto zostało odrzucone',
+        message: 'Skontaktuj się z administratorem firmy w celu wyjaśnienia.',
+      });
+    }
 
     return saved;
   }

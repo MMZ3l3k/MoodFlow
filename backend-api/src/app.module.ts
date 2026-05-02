@@ -25,6 +25,7 @@ import { AssessmentAssignment } from './modules/assessments/entities/assessment-
 import { AuditLog } from './modules/audit/entities/audit-log.entity';
 import { AuditModule } from './modules/audit/audit.module';
 import { HealthModule } from './modules/health/health.module';
+import { Notification } from './modules/notifications/entities/notification.entity';
 
 @Module({
   imports: [
@@ -66,7 +67,7 @@ import { HealthModule } from './modules/health/health.module';
         username: config.get<string>('DB_USER'),
         password: config.get<string>('DB_PASSWORD'),
         database: config.get<string>('DB_NAME'),
-        entities: [User, Organization, Department, Assessment, Question, AnswerOption, AssessmentResult, UserResponse, AssessmentAssignment, AuditLog],
+        entities: [User, Organization, Department, Assessment, Question, AnswerOption, AssessmentResult, UserResponse, AssessmentAssignment, AuditLog, Notification],
         // synchronize: true generuje schemat z entiti przy starcie aplikacji.
         // Dla MVP / projektu inżynierskiego jest akceptowalne — eliminuje
         // problem ze stanem migrations w nowo utworzonych bazach na chmurze.

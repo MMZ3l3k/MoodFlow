@@ -9,6 +9,8 @@ import { User } from '../users/entities/user.entity';
 import { UserStatus } from '../../common/enums/user-status.enum';
 import { Role } from '../../common/enums/role.enum';
 import { MailService } from '../notifications/mail.service';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '../notifications/entities/notification.entity';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/entities/audit-log.entity';
 
@@ -24,6 +26,7 @@ export class AssessmentsService {
     @InjectRepository(User)
     private userRepo: Repository<User>,
     private readonly mailService: MailService,
+    private readonly notifications: NotificationsService,
     private readonly auditService: AuditService,
   ) {}
 
@@ -145,6 +148,26 @@ export class AssessmentsService {
     const targetUsers = await this.resolveTargetUsers(assignment);
     const recipients = targetUsers.filter((user) => user.role === Role.EMPLOYEE);
 
+    // 1. In-app notifications — działa zawsze, niezależnie od SMTP
+    const deadline = assignment.availableTo.toLocaleDateString('pl-PL', {
+      day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit',
+    });
+    await this.notifications.createMany(
+      recipients.map((user) => ({
+        userId: user.id,
+        type: NotificationType.ASSIGNMENT_NEW,
+        title: 'Nowy test do wypełnienia',
+        message: `Przypisano Ci test "${assessmentName}". Dostępny do: ${deadline}.`,
+        link: '/app/tests',
+        metadata: {
+          assignmentId: assignment.id,
+          assessmentId: assignment.assessmentId,
+          assessmentName,
+        },
+      })),
+    );
+
+    // 2. Email — best effort (Railway hobby tier blokuje SMTP, więc to fallback)
     await Promise.all(
       recipients.map((user) =>
         this.mailService.sendAssignmentNotification({
