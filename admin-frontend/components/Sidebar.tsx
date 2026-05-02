@@ -10,6 +10,7 @@ import {
 import { clearTokens, getRole } from '../lib/auth';
 import axiosClient from '../lib/axiosClient';
 import ThemeToggle from './ThemeToggle';
+import NotificationBell from './NotificationBell';
 
 const adminItems = [
   { href: '/dashboard', label: 'Przegląd', exact: true, icon: LayoutDashboard },
@@ -155,6 +156,7 @@ export default function Sidebar() {
 
       {/* User / Logout */}
       <div className="px-4 py-4 flex items-center gap-2">
+        <NotificationBell compact />
         <ThemeToggle compact />
         <button
           onClick={handleLogout}
