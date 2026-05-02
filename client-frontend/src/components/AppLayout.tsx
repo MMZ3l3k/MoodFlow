@@ -7,6 +7,7 @@ import { useEffect, useRef, useState, type ReactElement } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Toaster } from 'sonner';
 import ThemeToggle from './ThemeToggle';
+import NotificationBell from './NotificationBell';
 
 interface NavItem {
   to: string;
@@ -187,8 +188,9 @@ function DesktopSidebar({
           })}
         </nav>
 
-        {/* Theme + Logout */}
+        {/* Notifications + Theme + Logout */}
         <div className="flex items-center gap-2 mt-3">
+          <NotificationBell compact />
           <ThemeToggle compact />
           <button onClick={onLogout} className="client-sidebar-logout" style={{ marginTop: 0, flex: 1 }}>
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}>
@@ -266,7 +268,7 @@ export default function AppLayout() {
             >
               M
             </div>
-            <span className="text-lg font-bold tracking-tight" style={{ color: '#2E211C' }}>
+            <span className="text-lg font-bold tracking-tight" style={{ color: 'var(--text-base)' }}>
               MoodFlow
             </span>
           </div>
@@ -286,6 +288,7 @@ export default function AppLayout() {
           )}
 
           <div className="flex items-center gap-2 shrink-0">
+            <NotificationBell compact />
             <ThemeToggle compact />
             {user && (
               <>
@@ -359,7 +362,7 @@ export default function AppLayout() {
                 <>
                   <div
                     className="relative flex items-center justify-center transition-all duration-300"
-                    style={{ color: isActive ? '#C06226' : 'rgba(46, 33, 28, 0.4)' }}
+                    style={{ color: isActive ? '#C06226' : 'var(--text-subtle)' }}
                   >
                     {isActive && (
                       <div
@@ -376,7 +379,7 @@ export default function AppLayout() {
                   <span
                     className="text-xs transition-all duration-300"
                     style={{
-                      color: isActive ? '#C06226' : 'rgba(46, 33, 28, 0.4)',
+                      color: isActive ? '#C06226' : 'var(--text-subtle)',
                       fontWeight: isActive ? 600 : 400,
                     }}
                   >
