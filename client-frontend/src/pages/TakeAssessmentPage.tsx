@@ -78,8 +78,30 @@ export default function TakeAssessmentPage() {
           </div>
 
           {result.riskFlags?.selfHarmRiskFlag && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-              Twoja odpowiedź wskazuje na trudne myśli. Rozważ rozmowę ze specjalistą.
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-left">
+              <div className="flex items-start gap-3 mb-3">
+                <div className="text-red-600 text-2xl shrink-0 mt-0.5" aria-hidden="true">⚠</div>
+                <div>
+                  <h3 className="text-sm font-bold text-red-700 mb-1">Skontaktuj się ze specjalistą</h3>
+                  <p className="text-sm text-red-700">
+                    Twoje odpowiedzi wskazują na trudne myśli. Nie jesteś sam(a) — porozmawiaj z kimś, kto może pomóc.
+                  </p>
+                </div>
+              </div>
+              <div className="bg-white border border-red-100 rounded-lg p-3 space-y-2">
+                <p className="text-xs font-semibold text-red-700 uppercase tracking-wide">
+                  Telefony zaufania (bezpłatne, 24/7)
+                </p>
+                <a href="tel:116123" className="block text-sm font-bold text-red-700 hover:underline">
+                  116 123 <span className="block text-xs font-normal text-red-600/80 mt-0.5">Kryzysowy Telefon Zaufania dla Dorosłych</span>
+                </a>
+                <a href="tel:800702222" className="block text-sm font-bold text-red-700 hover:underline">
+                  800 70 22 22 <span className="block text-xs font-normal text-red-600/80 mt-0.5">Centrum Wsparcia w Kryzysie Psychicznym</span>
+                </a>
+                <a href="tel:116111" className="block text-sm font-bold text-red-700 hover:underline">
+                  116 111 <span className="block text-xs font-normal text-red-600/80 mt-0.5">Telefon Zaufania dla Dzieci i Młodzieży</span>
+                </a>
+              </div>
             </div>
           )}
 
