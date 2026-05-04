@@ -30,6 +30,8 @@ interface DeptLoad {
   load: 'stable' | 'moderate' | 'high' | 'no_data';
   trend: 'improving' | 'worsening' | 'stable' | 'no_data';
   color: string;
+  anonymized?: boolean;
+  minGroupSize?: number;
 }
 
 interface OrgHistoryPoint {
@@ -105,32 +107,48 @@ function DeptCard({ dept }: { dept: DeptLoad }) {
         </span>
       </div>
 
-      {/* Indeks + pasek */}
-      <div>
-        <div className="flex items-baseline justify-between mb-1.5">
-          <span className="text-2xl font-bold" style={{ color: dept.color ?? '#94a3b8' }}>
-            {dept.wellbeingIndex ?? '—'}
-            {dept.wellbeingIndex !== null && (
-              <span className="text-sm font-normal text-gray-400 ml-1">/100</span>
-            )}
-          </span>
-          <span className={`text-xs font-medium flex items-center gap-0.5 ${tc.color}`}>
-            <span className="text-base leading-none">{tc.icon}</span>
-            {tc.label}
-          </span>
+      {dept.anonymized ? (
+        // K-anonymity: dział poniżej progu — ukrywamy konkretne metryki
+        <div
+          className="rounded-xl bg-white/70 border border-dashed border-gray-300 px-4 py-3 flex items-start gap-2.5"
+          title={`Wyniki ukryte — wymagane min. ${dept.minGroupSize ?? 5} osób, by zachować anonimowość.`}
+        >
+          <span className="text-lg leading-none mt-0.5" aria-hidden="true">🔒</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-gray-700">Dane utajnione</p>
+            <p className="text-xs text-gray-500 mt-0.5">
+              Niewystarczająca liczebność próby (wymagane min. {dept.minGroupSize ?? 5} osób).
+            </p>
+          </div>
         </div>
-        <div className="h-2 rounded-full bg-white/70 overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{
-              width: `${dept.wellbeingIndex ?? 0}%`,
-              background: dept.color ?? '#94a3b8',
-            }}
-          />
+      ) : (
+        // Normalny widok: indeks + pasek + trend
+        <div>
+          <div className="flex items-baseline justify-between mb-1.5">
+            <span className="text-2xl font-bold" style={{ color: dept.color ?? '#94a3b8' }}>
+              {dept.wellbeingIndex ?? '—'}
+              {dept.wellbeingIndex !== null && (
+                <span className="text-sm font-normal text-gray-400 ml-1">/100</span>
+              )}
+            </span>
+            <span className={`text-xs font-medium flex items-center gap-0.5 ${tc.color}`}>
+              <span className="text-base leading-none">{tc.icon}</span>
+              {tc.label}
+            </span>
+          </div>
+          <div className="h-2 rounded-full bg-white/70 overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-500"
+              style={{
+                width: `${dept.wellbeingIndex ?? 0}%`,
+                background: dept.color ?? '#94a3b8',
+              }}
+            />
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Uczestnictwo */}
+      {/* Uczestnictwo — zawsze widoczne (sama liczność nie jest danym wrażliwym) */}
       <div className="flex items-center justify-between text-xs text-gray-500">
         <span>Uczestnictwo (30 dni)</span>
         <span className="font-semibold text-gray-700">{dept.participants} os. ({participation}%)</span>

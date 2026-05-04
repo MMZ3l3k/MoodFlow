@@ -25,6 +25,8 @@ interface DeptLoad {
   load: 'stable' | 'moderate' | 'high' | 'no_data';
   trend: 'improving' | 'worsening' | 'stable' | 'no_data';
   color: string;
+  anonymized?: boolean;
+  minGroupSize?: number;
 }
 
 interface TrendPoint {
@@ -555,7 +557,16 @@ export default function HrReportsPage() {
                         <td className="px-6 py-3 text-right text-gray-600">{dept.deptSize}</td>
                         <td className="px-6 py-3 text-right text-gray-600">{dept.participants}</td>
                         <td className="px-6 py-3 text-right">
-                          <WellbeingBar index={dept.wellbeingIndex} />
+                          {dept.anonymized ? (
+                            <span
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 border border-dashed border-gray-300"
+                              title={`Wyniki ukryte — wymagane min. ${dept.minGroupSize ?? 5} osób, by zachować anonimowość.`}
+                            >
+                              🔒 Utajnione (min. {dept.minGroupSize ?? 5} os.)
+                            </span>
+                          ) : (
+                            <WellbeingBar index={dept.wellbeingIndex} />
+                          )}
                         </td>
                         <td className="px-6 py-3 text-right">
                           <span
