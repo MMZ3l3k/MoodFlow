@@ -69,6 +69,25 @@
   }
 }
 
+/* Ekrany logowania/rejestracji są zaprojektowane wyłącznie na jasno
+   (biała karta, kremowe tło). Wymuszamy jasne tokeny tekstu i tła
+   niezależnie od trybu systemowego — inaczej w dark mode etykiety
+   stają się niewidoczne na białej karcie. */
+.auth-bg,
+.auth-shell {
+  --bg-page: #F5EEE3;
+  --bg-surface: rgba(255, 255, 255, 0.85);
+  --bg-surface-strong: #FFFFFF;
+  --bg-elevated: #FFFFFF;
+  --bg-input: #FFFFFF;
+  --bg-muted: rgba(46, 33, 28, 0.04);
+  --border-base: rgba(221, 211, 186, 0.7);
+  --border-subtle: rgba(221, 211, 186, 0.35);
+  --text-base: #2E211C;
+  --text-muted: rgba(46, 33, 28, 0.65);
+  --text-subtle: rgba(46, 33, 28, 0.45);
+}
+
 body {
   background-color: var(--bg-page);
   color: var(--text-base);
