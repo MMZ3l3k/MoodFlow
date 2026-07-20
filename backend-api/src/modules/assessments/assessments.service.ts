@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual } from 'typeorm';
 import { Assessment } from './entities/assessment.entity';
@@ -109,9 +109,29 @@ export class AssessmentsService {
     const assessment = await this.assessmentRepo.findOne({ where: { id: dto.assessmentId } });
     if (!assessment) throw new NotFoundException('Test nie znaleziony');
 
+    const targetType = dto.targetType ?? AssignmentTargetType.ALL;
+
+    // H9: cel przypisania musi należeć do organizacji zlecającego — bez tego admin
+    // firmy A mógł wysłać powiadomienie/e-mail pracownikowi firmy B (enumeracja ID).
+    if (targetType === AssignmentTargetType.USER) {
+      if (!dto.targetUserId) throw new BadRequestException('Nie wskazano użytkownika');
+      const target = await this.userRepo.findOne({ where: { id: dto.targetUserId } });
+      if (!target || target.organizationId !== organizationId) {
+        throw new ForbiddenException('Wskazany użytkownik nie należy do Twojej organizacji');
+      }
+    } else if (targetType === AssignmentTargetType.DEPARTMENT) {
+      if (!dto.targetDepartment) throw new BadRequestException('Nie wskazano działu');
+      const deptCount = await this.userRepo.count({
+        where: { department: dto.targetDepartment, organizationId },
+      });
+      if (deptCount === 0) {
+        throw new ForbiddenException('Wskazany dział nie istnieje w Twojej organizacji');
+      }
+    }
+
     const assignment = this.assignmentRepo.create({
       assessmentId: dto.assessmentId,
-      targetType: dto.targetType ?? AssignmentTargetType.ALL,
+      targetType,
       targetUserId: dto.targetUserId ?? null,
       targetDepartment: dto.targetDepartment ?? null,
       availableFrom: new Date(),

@@ -1,8 +1,9 @@
-import { Controller, Post, Body, UseGuards, Request, Res, HttpCode, HttpStatus, Headers } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Request, Res, HttpCode, HttpStatus, Headers, UnauthorizedException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { AuthService } from './auth.service';
+import { HandoffService } from './handoff.service';
 import { RegisterDto } from './dto/register.dto';
 import { RegisterCompanyDto } from './dto/register-company.dto';
 import { RegisterEmployeeDto } from './dto/register-employee.dto';
@@ -40,7 +41,10 @@ function clearAuthCookies(res: Response) {
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private handoffService: HandoffService,
+  ) {}
 
   @Post('register')
   @UseGuards(ThrottlerGuard)
@@ -75,11 +79,35 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(AuthGuard('jwt-refresh'))
+  // H10: throttling na odświeżaniu — utrudnia nadużycie przechwyconego refresh tokena
+  @UseGuards(AuthGuard('jwt-refresh'), ThrottlerGuard)
+  @Throttle({ default: { ttl: 15 * 60 * 1000, limit: 30 } })
   async refresh(@Request() req: any, @Res({ passthrough: true }) res: Response) {
     const tokens = await this.authService.refresh(req.user.id, req.user.email);
     setAuthCookies(res, tokens.accessToken, tokens.refreshToken);
     return tokens;
+  }
+
+  // H3: pracownik-panel po zalogowaniu HR/admina generuje jednorazowy kod (zamiast
+  // przekazywać tokeny w URL fragment). Wymaga ważnego access tokena.
+  @Post('handoff')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(AuthGuard('jwt'))
+  async handoff(@Request() req: any) {
+    const tokens = await this.authService.refresh(req.user.id, req.user.email);
+    const code = this.handoffService.create(tokens, req.user.role);
+    return { code };
+  }
+
+  // H3: panel admina wymienia jednorazowy kod na tokeny. Publiczny, ale throttlowany.
+  @Post('handoff/exchange')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { ttl: 15 * 60 * 1000, limit: 30 } })
+  handoffExchange(@Body() body: { code?: string }) {
+    const entry = this.handoffService.consume(body?.code ?? '');
+    if (!entry) throw new UnauthorizedException('Nieprawidłowy lub wygasły kod logowania');
+    return { accessToken: entry.accessToken, refreshToken: entry.refreshToken, role: entry.role };
   }
 
   @Post('logout')

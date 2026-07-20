@@ -53,6 +53,8 @@ axiosClient.interceptors.response.use(
       pendingQueue = [];
       return axiosClient(originalRequest);
     } catch (refreshError) {
+      // H11: odblokuj żądania czekające w kolejce zanim wyczyścimy stan (inaczej wiszą)
+      pendingQueue.forEach((cb) => cb());
       pendingQueue = [];
       localStorage.removeItem('accessToken');
       localStorage.removeItem('refreshToken');

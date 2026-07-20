@@ -15,6 +15,9 @@ export default function TakeAssessmentPage() {
   const [result, setResult] = useState<AssessmentResult | null>(null);
   const [error, setError] = useState('');
 
+  // H5: klucz draftu per przypisanie — pozwala odtworzyć odpowiedzi po odświeżeniu.
+  const draftKey = assignmentId ? `mf_assessment_draft_${assignmentId}` : '';
+
   useEffect(() => {
     if (!assignmentId) {
       navigate('/app/tests');
@@ -25,6 +28,33 @@ export default function TakeAssessmentPage() {
       .catch(() => navigate('/app/tests'))
       .finally(() => setLoading(false));
   }, [id, assignmentId, navigate]);
+
+  // H5: odtwórz zapisany draft odpowiedzi (np. po przypadkowym odświeżeniu strony)
+  useEffect(() => {
+    if (!draftKey) return;
+    const raw = sessionStorage.getItem(draftKey);
+    if (raw) {
+      try { setAnswers(JSON.parse(raw)); } catch { /* uszkodzony draft — ignoruj */ }
+    }
+  }, [draftKey]);
+
+  // H5: zapisuj draft po każdej zmianie odpowiedzi (sessionStorage — znika po zamknięciu karty,
+  // świadomie: nie trzymamy wrażliwych odpowiedzi trwale)
+  useEffect(() => {
+    if (!draftKey) return;
+    if (Object.keys(answers).length > 0) {
+      sessionStorage.setItem(draftKey, JSON.stringify(answers));
+    }
+  }, [answers, draftKey]);
+
+  // H5: ostrzeż przed zamknięciem/odświeżeniem gdy są niewysłane odpowiedzi
+  useEffect(() => {
+    const hasProgress = Object.keys(answers).length > 0 && !result;
+    if (!hasProgress) return;
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [answers, result]);
 
   const allAnswered = assessment
     ? assessment.questions.every((q) => answers[q.id] !== undefined)
@@ -44,6 +74,8 @@ export default function TakeAssessmentPage() {
         })),
       };
       const { data } = await axiosClient.post<AssessmentResult>('/responses', payload);
+      // H5: test wysłany — usuń draft, żeby nie odtwarzał się przy kolejnym wejściu
+      if (draftKey) sessionStorage.removeItem(draftKey);
       setResult(data);
     } catch (err: any) {
       setError(err.response?.data?.message ?? 'Błąd podczas wysyłania odpowiedzi');
@@ -147,6 +179,14 @@ export default function TakeAssessmentPage() {
       </header>
 
       <main className="max-w-3xl mx-auto px-4 py-8">
+        {/* H6: informacja o prywatności — kluczowy wyróżnik MoodFlow (RULES §12, §35) */}
+        <div className="flex items-start gap-3 bg-emerald-50 border border-emerald-100 rounded-xl p-4 mb-4">
+          <span className="text-emerald-600 text-lg shrink-0" aria-hidden="true">🔒</span>
+          <p className="text-sm text-emerald-800">
+            <span className="font-semibold">Twoje odpowiedzi są prywatne.</span> Pracodawca ani dział HR nie widzą Twoich indywidualnych odpowiedzi — HR otrzymuje wyłącznie zanonimizowane dane zbiorcze (grupy min. 5 osób).
+          </p>
+        </div>
+
         <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
           <p className="text-sm text-blue-700 font-medium">Zakres: {assessment.timeframe}</p>
           {assessment.description && (

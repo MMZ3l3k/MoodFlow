@@ -5,7 +5,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource, QueryFailedError } from 'typeorm';
 import { UserResponse } from './entities/user-response.entity';
 import { AssessmentResult } from '../results/entities/assessment-result.entity';
 import { Assessment } from '../assessments/entities/assessment.entity';
@@ -26,6 +26,7 @@ export class ResponsesService {
     @InjectRepository(AssessmentAssignment)
     private assignmentRepo: Repository<AssessmentAssignment>,
     private scoringService: ScoringService,
+    private dataSource: DataSource,
   ) {}
 
   async submit(user: User, dto: SubmitResponsesDto): Promise<AssessmentResult> {
@@ -92,29 +93,42 @@ export class ResponsesService {
       return { questionId: a.questionId, value: a.value, theme: q?.theme ?? '' };
     });
 
-    const result = this.resultRepo.create({
-      userId: user.id,
-      assessmentId: dto.assessmentId,
-      assignmentId: dto.assignmentId,
-      rawScore: scoring.rawScore,
-      normalizedScore: scoring.normalizedScore,
-      severity: scoring.severity,
-      riskFlags: scoring.riskFlags,
-      answersSnapshot,
-    });
+    // H7: wynik i pojedyncze odpowiedzi zapisujemy w JEDNEJ transakcji — albo oba,
+    // albo żadne (brak niespójnego stanu: wynik bez odpowiedzi lub odwrotnie).
+    // H8: równoległy drugi submit narusza UNIQUE(userId, assignmentId) — łapiemy
+    // kod 23505 i zwracamy 400 zamiast nieobsłużonego 500.
+    try {
+      return await this.dataSource.transaction(async (manager) => {
+        const savedResult = await manager.save(
+          this.resultRepo.create({
+            userId: user.id,
+            assessmentId: dto.assessmentId,
+            assignmentId: dto.assignmentId,
+            rawScore: scoring.rawScore,
+            normalizedScore: scoring.normalizedScore,
+            severity: scoring.severity,
+            riskFlags: scoring.riskFlags,
+            answersSnapshot,
+          }),
+        );
 
-    const savedResult = await this.resultRepo.save(result);
+        const responses = dto.answers.map((a) =>
+          this.userResponseRepo.create({
+            resultId: savedResult.id,
+            questionId: a.questionId,
+            selectedValue: a.value,
+          }),
+        );
+        await manager.save(responses);
 
-    const responses = dto.answers.map((a) =>
-      this.userResponseRepo.create({
-        resultId: savedResult.id,
-        questionId: a.questionId,
-        selectedValue: a.value,
-      }),
-    );
-    await this.userResponseRepo.save(responses);
-
-    return savedResult;
+        return savedResult;
+      });
+    } catch (e) {
+      if (e instanceof QueryFailedError && (e as any).driverError?.code === '23505') {
+        throw new BadRequestException('Ten test został już przez Ciebie wypełniony');
+      }
+      throw e;
+    }
   }
 
   // K4: kontrola integralności przesłanych odpowiedzi względem definicji testu.

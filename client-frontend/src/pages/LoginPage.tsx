@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import type { AppDispatch } from '../store/store';
 import { login, fetchMe, clearError, logout } from '../store/slices/authSlice';
+import axiosClient from '../api/axiosClient';
 import { useAuth } from '../hooks/useAuth';
 import AuthHero from '../components/auth/AuthHero';
 import RolePicker from '../components/auth/RolePicker';
@@ -41,12 +42,16 @@ export default function LoginPage() {
         }
 
         if (user.role === 'admin' || user.role === 'hr') {
-          const accessToken = localStorage.getItem('accessToken') ?? '';
-          const refreshToken = localStorage.getItem('refreshToken') ?? '';
-          localStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          window.location.href =
-            `${ADMIN_FRONTEND_URL}/auth/callback#access=${encodeURIComponent(accessToken)}&refresh=${encodeURIComponent(refreshToken)}&role=${user.role}`;
+          // H3: zamiast tokenów w URL fragment — jednorazowy kod wymiany.
+          try {
+            const { data } = await axiosClient.post<{ code: string }>('/auth/handoff', {});
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            window.location.href =
+              `${ADMIN_FRONTEND_URL}/auth/callback#code=${encodeURIComponent(data.code)}&role=${user.role}`;
+          } catch {
+            setLocalError('Nie udało się przekierować do panelu administracyjnego. Zaloguj się bezpośrednio w panelu.');
+          }
           return;
         }
 
