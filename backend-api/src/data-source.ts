@@ -10,6 +10,7 @@ import { AssessmentResult } from './modules/results/entities/assessment-result.e
 import { UserResponse } from './modules/responses/entities/user-response.entity';
 import { AssessmentAssignment } from './modules/assessments/entities/assessment-assignment.entity';
 import { AuditLog } from './modules/audit/entities/audit-log.entity';
+import { Notification } from './modules/notifications/entities/notification.entity';
 
 // Konfiguracja DataSource używana wyłącznie przez CLI TypeORM
 // (npm run typeorm:generate / typeorm:run / typeorm:revert).
@@ -23,7 +24,7 @@ export default new DataSource({
   database: process.env.DB_NAME,
   entities: [
     User, Organization, Department, Assessment, Question, AnswerOption,
-    AssessmentResult, UserResponse, AssessmentAssignment, AuditLog,
+    AssessmentResult, UserResponse, AssessmentAssignment, AuditLog, Notification,
   ],
   migrations: ['src/migrations/*.ts'],
   synchronize: false,

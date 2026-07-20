@@ -38,7 +38,13 @@ axiosClient.interceptors.response.use(
       const refreshToken = typeof window !== 'undefined'
         ? localStorage.getItem('admin_refresh_token') ?? undefined
         : undefined;
-      await axiosClient.post('/auth/refresh', refreshToken ? { refreshToken } : {});
+      const { data } = await axiosClient.post('/auth/refresh', refreshToken ? { refreshToken } : {});
+      // K6: ZAPISZ nowe tokeny — bez tego retry szedł ze starym, wygasłym tokenem
+      // i w produkcji (cookie SameSite=Strict cross-site) sesja padała po ~15 min.
+      if (typeof window !== 'undefined' && data?.accessToken) {
+        localStorage.setItem('admin_access_token', data.accessToken);
+        if (data.refreshToken) localStorage.setItem('admin_refresh_token', data.refreshToken);
+      }
       pendingQueue.forEach((cb) => cb());
       pendingQueue = [];
       return axiosClient(originalRequest);

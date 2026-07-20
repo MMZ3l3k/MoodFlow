@@ -1,5 +1,5 @@
-import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger } from '@nestjs/common';
+import { NestFactory, Reflector } from '@nestjs/core';
+import { ValidationPipe, Logger, ClassSerializerInterceptor } from '@nestjs/common';
 import helmet from 'helmet';
 import cookieParser = require('cookie-parser');
 import { AppModule } from './app.module';
@@ -50,6 +50,9 @@ async function bootstrap() {
       transform: true,
     }),
   );
+
+  // K2: globalna serializacja respektuje @Exclude na encjach (usuwa m.in. passwordHash)
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get(Reflector)));
 
   const corsOrigin = process.env.CORS_ORIGIN;
   if (!corsOrigin) {

@@ -73,13 +73,17 @@ export class ResponsesService {
 
     if (existing) throw new BadRequestException('Ten test został już przez Ciebie wypełniony');
 
-    // 8. Load assessment with questions for scoring
+    // 8. Load assessment with questions and answer options for scoring + validation
     const assessment = await this.assessmentRepo.findOne({
       where: { id: dto.assessmentId, isActive: true },
-      relations: ['questions'],
+      relations: ['questions', 'answerOptions'],
     });
 
     if (!assessment) throw new NotFoundException('Test nie został znaleziony');
+
+    // 9. K4: waliduj odpowiedzi zanim policzymy wynik — bez tego scoring przyjmował
+    //    dowolne liczby (np. 100 albo wartości ujemne) i obce/zduplikowane questionId.
+    this.validateAnswers(assessment, dto.answers);
 
     const scoring = this.scoringService.compute(assessment, dto.answers);
 
@@ -111,5 +115,33 @@ export class ResponsesService {
     await this.userResponseRepo.save(responses);
 
     return savedResult;
+  }
+
+  // K4: kontrola integralności przesłanych odpowiedzi względem definicji testu.
+  private validateAnswers(assessment: Assessment, answers: { questionId: number; value: number }[]): void {
+    const validQuestionIds = new Set(assessment.questions.map((q) => q.id));
+    // Skala odpowiedzi zdefiniowana per test (answer_options). Gdy test nie ma
+    // zdefiniowanych opcji, pomijamy kontrolę wartości (nie mamy się do czego odnieść).
+    const validValues = new Set((assessment.answerOptions ?? []).map((o) => o.value));
+
+    const seen = new Set<number>();
+    for (const a of answers) {
+      if (!validQuestionIds.has(a.questionId)) {
+        throw new BadRequestException('Odpowiedź odnosi się do pytania spoza tego testu');
+      }
+      if (seen.has(a.questionId)) {
+        throw new BadRequestException('Zduplikowana odpowiedź na to samo pytanie');
+      }
+      seen.add(a.questionId);
+      if (validValues.size > 0 && !validValues.has(a.value)) {
+        throw new BadRequestException('Nieprawidłowa wartość odpowiedzi dla tego testu');
+      }
+    }
+
+    if (assessment.requiresAllAnswers && seen.size !== validQuestionIds.size) {
+      throw new BadRequestException(
+        `Test ${assessment.code} wymaga odpowiedzi na wszystkie ${validQuestionIds.size} pytań`,
+      );
+    }
   }
 }

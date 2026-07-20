@@ -22,8 +22,12 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
 
-  // API — zawsze sieć
-  if (url.pathname.startsWith('/api/') || url.port === '4000') return;
+  // K7: cache'ujemy WYŁĄCZNIE zasoby z tej samej domeny (statyki, app shell).
+  // Backend API jest na innej domenie — jego odpowiedzi (lista użytkowników,
+  // analityka, powiadomienia) nigdy nie trafiają do Cache Storage, więc nie
+  // wyciekają po wylogowaniu. Poprzedni warunek (/api/ + port 4000) w produkcji
+  // nie łapał niczego (API bez prefiksu /api, port 443).
+  if (url.origin !== self.location.origin) return;
 
   event.respondWith(
     fetch(event.request)

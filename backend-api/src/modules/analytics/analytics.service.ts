@@ -116,6 +116,7 @@ export class AnalyticsService {
         `TO_CHAR(DATE_TRUNC('week', r."submittedAt"), 'YYYY-MM-DD') AS week`,
         'ROUND(AVG(r.normalizedScore)::numeric, 1) AS "avgScore"',
         'COUNT(r.id) AS count',
+        'COUNT(DISTINCT r."userId") AS "userCount"',
         'a.code AS "assessmentCode"',
         'a.name AS "assessmentName"',
       ])
@@ -134,13 +135,17 @@ export class AnalyticsService {
     }
 
     const raw = await qb.getRawMany();
-    return raw.map((row) => ({
-      week: row.week,
-      avgScore: Number(row.avgScore),
-      count: Number(row.count),
-      assessmentCode: row.assessmentCode,
-      assessmentName: row.assessmentName,
-    }));
+    return raw
+      // K5: k-anonimowość — nie pokazuj średniej tygodniowej liczonej z mniej niż
+      // MIN_GROUP_SIZE unikalnych osób (punkt z 1 osobą = wynik konkretnego pracownika).
+      .filter((row) => meetsThreshold(Number(row.userCount)))
+      .map((row) => ({
+        week: row.week,
+        avgScore: Number(row.avgScore),
+        count: Number(row.count),
+        assessmentCode: row.assessmentCode,
+        assessmentName: row.assessmentName,
+      }));
   }
 
   async getSeverityDistribution(organizationId: number, assessmentCode?: string) {
@@ -153,6 +158,7 @@ export class AnalyticsService {
         'a.code AS "assessmentCode"',
         'a.name AS "assessmentName"',
         'COUNT(r.id) AS count',
+        'COUNT(DISTINCT r."userId") AS "userCount"',
       ])
       .where('r.severity IS NOT NULL')
       .andWhere('u.organizationId = :organizationId', { organizationId })
@@ -165,12 +171,26 @@ export class AnalyticsService {
     }
 
     const raw = await qb.getRawMany();
-    return raw.map((row) => ({
-      severity: row.severity,
-      assessmentCode: row.assessmentCode,
-      assessmentName: row.assessmentName,
-      count: Number(row.count),
-    }));
+
+    // K5: k-anonimowość na poziomie testu — sumujemy unikalnych uczestników per test
+    // i ukrywamy cały rozkład severity testu wypełnionego przez mniej niż MIN_GROUP_SIZE osób
+    // (rekord "1 osoba: severe" jednoznacznie wskazywałby konkretnego pracownika).
+    const participantsByAssessment = new Map<string, number>();
+    for (const row of raw) {
+      participantsByAssessment.set(
+        row.assessmentCode,
+        (participantsByAssessment.get(row.assessmentCode) ?? 0) + Number(row.userCount),
+      );
+    }
+
+    return raw
+      .filter((row) => meetsThreshold(participantsByAssessment.get(row.assessmentCode) ?? 0))
+      .map((row) => ({
+        severity: row.severity,
+        assessmentCode: row.assessmentCode,
+        assessmentName: row.assessmentName,
+        count: Number(row.count),
+      }));
   }
 
   async getParticipation(organizationId: number) {
@@ -532,6 +552,7 @@ export class AnalyticsService {
           `COALESCE(u.department, 'Brak działu') AS department`,
           'a.code AS code',
           'AVG(r."rawScore") AS "avgRaw"',
+          'COUNT(DISTINCT r."userId") AS participants',
         ])
         .where('r."submittedAt" >= :from AND r."submittedAt" < :to', { from, to })
         .andWhere('u.status = :status', { status: UserStatus.ACTIVE })
@@ -542,17 +563,22 @@ export class AnalyticsService {
         .getRawMany();
 
       const m = new Map<string, Map<string, number>>();
+      const participants = new Map<string, number>();
       for (const row of raw) {
         if (!m.has(row.department)) m.set(row.department, new Map());
         m.get(row.department)!.set(row.code, Number(row.avgRaw));
+        // liczba unikalnych uczestników w dziale = max po testach
+        participants.set(row.department, Math.max(participants.get(row.department) ?? 0, Number(row.participants)));
       }
-      return m;
+      return { avg: m, participants };
     };
 
-    const [mapRecent, mapPrev] = await Promise.all([
+    const [recent, prev] = await Promise.all([
       fetchDeptAvg(d14, now),
       fetchDeptAvg(d28, d14),
     ]);
+    const mapRecent = recent.avg;
+    const mapPrev = prev.avg;
 
     const allDepts = new Set([...mapRecent.keys(), ...mapPrev.keys()]);
     const changes: {
@@ -565,6 +591,10 @@ export class AnalyticsService {
     }[] = [];
 
     for (const dept of allDepts) {
+      // K5: k-anonimowość — pomiń działy, w których w bieżącym oknie mniej niż
+      // MIN_GROUP_SIZE uczestników (inaczej ujawnialiśmy indeks małej grupy / pojedynczej osoby).
+      if (!meetsThreshold(recent.participants.get(dept) ?? 0)) continue;
+
       const recentIndex = calcWellbeingIndex(mapRecent.get(dept) ?? new Map());
       const prevIndex = calcWellbeingIndex(mapPrev.get(dept) ?? new Map());
 

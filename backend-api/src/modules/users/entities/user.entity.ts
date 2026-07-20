@@ -7,6 +7,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
+import { Exclude } from 'class-transformer';
 import { Role } from '../../../common/enums/role.enum';
 import { UserStatus } from '../../../common/enums/user-status.enum';
 import { Organization } from '../../organizations/entities/organization.entity';
@@ -20,6 +21,9 @@ export class User {
   @Column({ unique: true })
   email: string;
 
+  // K2: nigdy nie serializuj hasha do odpowiedzi API (ClassSerializerInterceptor
+  // usuwa to pole ze wszystkich zwracanych encji User). Odczyt wewnętrzny (bcrypt.compare) działa normalnie.
+  @Exclude()
   @Column()
   passwordHash: string;
 

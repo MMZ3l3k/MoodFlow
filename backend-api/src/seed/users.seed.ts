@@ -7,14 +7,22 @@ import { UserStatus } from '../common/enums/user-status.enum';
 export async function seedUsers(dataSource: DataSource): Promise<void> {
   const userRepo = dataSource.getRepository(User);
 
+  // K3: hasło super-admina wyłącznie ze zmiennej środowiskowej — brak defaultu w repo.
+  // Bez ustawionego SEED_OWNER_PASSWORD pomijamy seed (istniejące konto i tak zostaje nietknięte).
+  const ownerPassword = process.env.SEED_OWNER_PASSWORD;
+  if (!ownerPassword) {
+    console.warn('[seed] SEED_OWNER_PASSWORD nie ustawione — pomijam seed konta super-admina.');
+    return;
+  }
+
   const defaultUsers = [
     {
-      email: 'owner@moodflow.pl',
+      email: process.env.SEED_OWNER_EMAIL ?? 'owner@moodflow.pl',
       firstName: 'Właściciel',
       lastName: 'Platformy',
       role: Role.SUPER_ADMIN,
       status: UserStatus.ACTIVE,
-      password: 'SuperAdmin1!',
+      password: ownerPassword,
     },
   ];
 

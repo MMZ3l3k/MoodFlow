@@ -32,6 +32,10 @@ export class UsersService {
   async createByAdmin(dto: CreateUserAdminDto, organizationId: number): Promise<User> {
     const existing = await this.usersRepository.findOne({ where: { email: dto.email } });
     if (existing) throw new ConflictException('Użytkownik z tym adresem email już istnieje');
+    // K1: admin firmy może tworzyć tylko konta EMPLOYEE/HR/ADMIN — nigdy SUPER_ADMIN
+    if (dto.role && ![Role.EMPLOYEE, Role.HR, Role.ADMIN].includes(dto.role)) {
+      throw new ForbiddenException('Nie można utworzyć konta z tą rolą');
+    }
     const passwordHash = await bcrypt.hash(dto.password, 12);
     const data: Partial<User> = {
       email: dto.email,
@@ -150,14 +154,33 @@ export class UsersService {
     return saved;
   }
 
-  async update(id: number, dto: UpdateUserDto, callerOrganizationId?: number): Promise<User> {
+  async update(id: number, dto: UpdateUserDto, callerOrganizationId?: number, actorUserId?: number): Promise<User> {
     const user = await this.findById(id);
     if (!user) throw new NotFoundException('Użytkownik nie znaleziony');
     if (callerOrganizationId && user.organizationId !== callerOrganizationId) {
       throw new ForbiddenException('Brak dostępu do tego użytkownika');
     }
+    // K1: admin firmy (callerOrganizationId ustawione) nie może eskalować konta do SUPER_ADMIN.
+    // Tylko SUPER_ADMIN (callerOrganizationId === undefined) ma pełną swobodę.
+    if (dto.role === Role.SUPER_ADMIN && callerOrganizationId !== undefined) {
+      throw new ForbiddenException('Nie masz uprawnień do nadania roli SUPER_ADMIN');
+    }
+    const previousRole = user.role;
     Object.assign(user, dto);
-    return this.usersRepository.save(user);
+    const saved = await this.usersRepository.save(user);
+
+    // M10: każda zmiana roli zostawia ślad w audit logu (wykrywanie nadużyć uprawnień)
+    if (dto.role !== undefined && dto.role !== previousRole) {
+      await this.auditService.log({
+        action: AuditAction.USER_ROLE_CHANGED,
+        actorUserId: actorUserId ?? null,
+        organizationId: user.organizationId ?? null,
+        entityType: 'user',
+        entityId: user.id,
+        metadata: { previousRole, newRole: dto.role, email: user.email },
+      });
+    }
+    return saved;
   }
 
   async updateProfile(id: number, dto: UpdateProfileDto, callerOrganizationId?: number): Promise<User> {
