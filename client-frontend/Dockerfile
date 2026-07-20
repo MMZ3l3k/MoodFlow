@@ -14,10 +14,11 @@ RUN npm run build
 
 # Stage 2: serve with nginx
 FROM nginx:alpine
-# Cache-bust: Railway nie zinwalidował warstwy COPY nginx.conf przy zmianie pliku
-# (deploy d028a88 serwował stary config bez nagłówków bezpieczeństwa). Nowa instrukcja
-# ARG wymusza przebudowę całego etapu nginx od tego miejsca. Zmień wartość, by ponowić.
-ARG NGINX_CACHE_BUST=etap2-security-headers
+# Cache-bust: BuildKit ignoruje NIEUŻYWANY ARG, dlatego ARG musi być użyty w RUN,
+# by realnie unieważnić cache kolejnych warstw (COPY nginx.conf utykało w cache i
+# serwowało config bez nagłówków bezpieczeństwa H2). Zmień wartość, by wymusić rebuild.
+ARG NGINX_CACHE_BUST=etap2-security-headers-v2
+RUN echo "cache-bust: ${NGINX_CACHE_BUST}"
 COPY --from=builder /app/dist /usr/share/nginx/html
 # nginx.conf jako szablon — obraz nginx uruchamia envsubst na starcie
 # i podstawia ${PORT} (Railway wstrzykuje własny $PORT; lokalnie fallback 80).
