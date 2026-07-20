@@ -14,16 +14,12 @@ RUN npm run build
 
 # Stage 2: serve with nginx
 FROM nginx:alpine
-# Cache-bust: BuildKit ignoruje NIEUŻYWANY ARG, dlatego ARG musi być użyty w RUN,
-# by realnie unieważnić cache kolejnych warstw (COPY nginx.conf utykało w cache i
-# serwowało config bez nagłówków bezpieczeństwa H2). Zmień wartość, by wymusić rebuild.
-ARG NGINX_CACHE_BUST=etap2-security-headers-v2
-RUN echo "cache-bust: ${NGINX_CACHE_BUST}"
 COPY --from=builder /app/dist /usr/share/nginx/html
-# nginx.conf jako szablon — obraz nginx uruchamia envsubst na starcie
-# i podstawia ${PORT} (Railway wstrzykuje własny $PORT; lokalnie fallback 80).
-# envsubst podstawia tylko zdefiniowane zmienne env, więc $uri/$http_pragma zostają nietknięte.
-COPY nginx.conf /etc/nginx/templates/default.conf.template
-ENV PORT=80
+# Kopiujemy config BEZPOŚREDNIO do conf.d (NIE jako szablon envsubst). Railway
+# uruchamia serwis przez startCommand (nginx -g ...), co pomija entrypoint obrazu
+# przetwarzający szablony — przez co nginx startował z DOMYŚLNYM configiem
+# (brak SPA fallback → deep-linki 404, brak nagłówków bezpieczeństwa). Bezpośredni
+# COPY sprawia, że nasz config jest aktywny niezależnie od sposobu startu.
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
