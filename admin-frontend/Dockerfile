@@ -4,6 +4,12 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 COPY . .
+# Adresy wstrzykiwane na etapie builda (Next zapieka NEXT_PUBLIC_* do bundla).
+# Railway przekazuje zmienne serwisu jako build-args; lokalnie fallback z kodu.
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_CLIENT_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_CLIENT_URL=$NEXT_PUBLIC_CLIENT_URL
 RUN npm run build
 
 # Stage 2: run
@@ -16,5 +22,8 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 RUN chown -R node:node /app
 USER node
+# next start czyta port ze zmiennej PORT (Railway wstrzykuje własny $PORT;
+# lokalnie fallback 3001, zgodny z docker-compose.prod.yml).
+ENV PORT=3001
 EXPOSE 3001
-CMD ["npm", "run", "start", "--", "-p", "3001"]
+CMD ["npm", "run", "start"]

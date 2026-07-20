@@ -4,11 +4,21 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install --legacy-peer-deps
 COPY . .
+# Adresy wstrzykiwane na etapie builda (Vite zapieka import.meta.env do bundla).
+# Railway przekazuje zmienne serwisu jako build-args; lokalnie fallback z kodu.
+ARG VITE_API_URL
+ARG VITE_ADMIN_URL
+ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_ADMIN_URL=$VITE_ADMIN_URL
 RUN npm run build
 
 # Stage 2: serve with nginx
 FROM nginx:alpine
 COPY --from=builder /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# nginx.conf jako szablon — obraz nginx uruchamia envsubst na starcie
+# i podstawia ${PORT} (Railway wstrzykuje własny $PORT; lokalnie fallback 80).
+# envsubst podstawia tylko zdefiniowane zmienne env, więc $uri/$http_pragma zostają nietknięte.
+COPY nginx.conf /etc/nginx/templates/default.conf.template
+ENV PORT=80
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
