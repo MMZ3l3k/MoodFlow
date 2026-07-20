@@ -3,6 +3,11 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm install --legacy-peer-deps
+# Cache-bust etapu builder: Railway serwował stary bundle JS mimo zmian w źródłach
+# (COPY . . / npm run build utykały w cache). ARG użyty w RUN realnie unieważnia
+# kolejne warstwy. Zmień wartość, by wymusić przebudowę bundla.
+ARG SRC_CACHE_BUST=etap2-client-v1
+RUN echo "src-cache-bust: ${SRC_CACHE_BUST}"
 COPY . .
 # Adresy wstrzykiwane na etapie builda (Vite zapieka import.meta.env do bundla).
 # Railway przekazuje zmienne serwisu jako build-args; lokalnie fallback z kodu.
