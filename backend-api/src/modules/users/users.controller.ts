@@ -21,6 +21,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { ApproveUserDto } from './dto/approve-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { CreateUserAdminDto } from './dto/create-user-admin.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -34,13 +35,13 @@ export class UsersController {
 
   @Post('me/change-password')
   @HttpCode(HttpStatus.OK)
-  changePasswordPost(@Request() req: any, @Body() body: { currentPassword: string; newPassword: string }) {
+  changePasswordPost(@Request() req: any, @Body() body: ChangePasswordDto) {
     return this.usersService.changePassword(req.user.id, body.currentPassword, body.newPassword);
   }
 
   @Patch('me/password')
   @HttpCode(HttpStatus.OK)
-  changePasswordPatch(@Request() req: any, @Body() body: { currentPassword: string; newPassword: string }) {
+  changePasswordPatch(@Request() req: any, @Body() body: ChangePasswordDto) {
     return this.usersService.changePassword(req.user.id, body.currentPassword, body.newPassword);
   }
 

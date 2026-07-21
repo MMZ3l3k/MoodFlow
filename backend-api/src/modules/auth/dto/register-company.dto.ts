@@ -1,4 +1,5 @@
 import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength, Matches } from 'class-validator';
+import { IsSecurePassword } from '../../../common/validators/password-policy.decorator';
 
 export class RegisterCompanyDto {
   @IsEmail()
@@ -6,6 +7,7 @@ export class RegisterCompanyDto {
 
   @IsNotEmpty()
   @MinLength(8)
+  @IsSecurePassword()
   password: string;
 
   @IsNotEmpty()

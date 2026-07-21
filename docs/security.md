@@ -36,6 +36,7 @@ SUPER_ADMIN > ADMIN > HR > EMPLOYEE
 
 - **Globalny `ValidationPipe`** w `main.ts` z `whitelist: true` (odrzuca pola spoza DTO) i `forbidNonWhitelisted: true` (zwraca 400).
 - **DTOs** używają `class-validator` (`@IsEmail`, `@MinLength`, `@IsString` itd.).
+- **Polityka haseł (NF2)** — dekorator `@IsSecurePassword()` (`common/validators/password-policy.decorator.ts`): hasło musi mieć min. 8 znaków (`@MinLength`), zawierać literę i cyfrę oraz nie znajdować się na liście haseł trywialnych (porównanie case-insensitive). Stosowany we wszystkich DTO ustawiających hasło (rejestracja firmy/pracownika, tworzenie konta przez admina, zmiana hasła — `ChangePasswordDto`); celowo NIE dotyczy logowania. Pokryty testami jednostkowymi (`password-policy.spec.ts`).
 - **TypeORM** parametryzuje zapytania (brak SQL injection przy używaniu repo / queryBuilder).
 
 ## Rate limiting
