@@ -97,7 +97,7 @@ agregaty (`avgScore`, `wellbeingIndex`) zwracane jako `null` z flagą
 ## ADR-005: synchronize: false + migracje TypeORM w produkcji
 
 **Data:** 2026-05
-**Status:** Zaakceptowana
+**Status:** Zrewidowana (2026-07 — patrz „Rewizja" poniżej)
 
 ### Kontekst
 TypeORM `synchronize: true` w produkcji może usunąć kolumny przy zmianach
@@ -112,6 +112,19 @@ encji — niedopuszczalne dla danych HR.
 ### Konsekwencje
 - W prod DDL wymaga jawnej migracji — kontrolowane zmiany schematu.
 - Dev pozostaje wygodny (auto-sync z entitiesa).
+
+### Rewizja (2026-07)
+
+W trakcie wdrożenia na Railway migracja `InitialSchema` okazała się zawodna
+(meta-komendy psql w zrzucie, problem tabeli `migrations` przy pierwszym
+starcie), a baza produkcyjna została w praktyce zbudowana przez `synchronize`.
+**Stan faktyczny:** runtime działa z `synchronize: true` (świadoma decyzja dla
+MVP — komentarz w `app.module.ts`); `data-source.ts` dla CLI ma
+`synchronize: false` i migracje. Przejście na wyłącznie-migracje pozostaje
+kierunkiem docelowym, ale wymaga osobnego, kontrolowanego kroku operacyjnego
+na żywej bazie (baseline migracji zgodny z aktualnym schematem). Ryzyko
+`synchronize` ograniczają: brak destrukcyjnych zmian encji oraz kopie zapasowe
+bazy po stronie Railway.
 
 ---
 

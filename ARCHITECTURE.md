@@ -1,673 +1,297 @@
+# ARCHITECTURE.md — MoodFlow
 
 ## 1. Cel dokumentu
 
-Dokument opisuje architekturę systemu MoodMaster — aplikacji webowej wspierającej monitorowanie dobrostanu psychicznego pracowników w organizacji.  
-Celem dokumentu jest ujednolicenie sposobu projektowania, implementacji i rozwijania systemu przez zespół programistyczny.
+Dokument opisuje **faktyczną** architekturę techniczną platformy MoodFlow — stan zaimplementowany i wdrożony, nie projekt docelowy. Przeznaczony dla osób rozwijających i utrzymujących system oraz jako materiał źródłowy do dokumentacji pracy inżynierskiej.
 
-MoodMaster ma umożliwiać:
-- wykonywanie testów i ankiet przez pracowników,
-- analizę wyników oraz trendów dobrostanu,
-- prezentację danych w dashboardach,
-- wspieranie działu HR i administratorów w monitorowaniu zbiorczych wskaźników,
-- zachowanie wysokiego poziomu bezpieczeństwa i prywatności danych.
+Dokumenty powiązane: [PRD.md](./PRD.md) (wymagania produktowe), [docs/api-endpoints.md](./docs/api-endpoints.md) (pełna lista endpointów), [docs/data-model.md](./docs/data-model.md) (model danych), [docs/security.md](./docs/security.md) (bezpieczeństwo), [docs/decisions.md](./docs/decisions.md) (dziennik decyzji ADR), [docs/deployment.md](./docs/deployment.md) (wdrożenie).
 
 ---
 
-## 2. Założenia architektoniczne
+## 2. Przegląd systemu
 
-Architektura systemu została zaprojektowana zgodnie z następującymi założeniami:
-
-- system ma być modularny i łatwy do rozbudowy,
-- frontend użytkownika i panel administracyjny mają być od siebie oddzielone,
-- backend ma udostępniać spójne API dla wszystkich klientów,
-- logika biznesowa ma być skoncentrowana po stronie serwera,
-- system ma być gotowy na rozwój o kolejne moduły, np. raporty PDF, integracje z firmowym SSO, powiadomienia e-mail, rekomendacje lub moduły AI,
-- dane wrażliwe mają być odpowiednio chronione, a dostęp do nich ograniczony rolami i uprawnieniami.
-
----
-
-## 3. Styl architektury
-
-W projekcie przyjmujemy architekturę warstwową z wyraźnym podziałem na:
-
-1. **Warstwę prezentacji**
-   - aplikacja dla pracownika,
-   - panel administracyjny / HR.
-
-2. **Warstwę logiki biznesowej**
-   - backend API,
-   - autoryzacja,
-   - obsługa testów, wyników, raportów i dashboardów.
-
-3. **Warstwę danych**
-   - relacyjna baza danych,
-   - struktury do przechowywania użytkowników, organizacji, testów, odpowiedzi, wyników i raportów.
-
-Dodatkowo system jest logicznie podzielony na moduły domenowe, co ułatwia dalsze utrzymanie i rozwój.
-
----
-
-## 4. Architektura wysokiego poziomu
-
-System składa się z czterech głównych części:
-
-### 4.1 Client Frontend
-Aplikacja przeznaczona dla pracownika końcowego.  
-Odpowiada za:
-- logowanie i rejestrację,
-- wypełnianie ankiet i testów,
-- przegląd własnych wyników,
-- podgląd historii ocen,
-- odbieranie zaleceń i informacji zwrotnych,
-- zarządzanie podstawowymi ustawieniami konta.
-
-### 4.2 Admin Frontend
-Panel dla administratora, HR lub managera z odpowiednimi uprawnieniami.  
-Odpowiada za:
-- zarządzanie użytkownikami i organizacjami,
-- zarządzanie testami i ankietami,
-- przegląd danych zagregowanych,
-- analizę wyników i trendów,
-- generowanie raportów,
-- nadawanie ról i uprawnień.
-
-### 4.3 Backend API
-Centralny element systemu.  
-Odpowiada za:
-- uwierzytelnianie i autoryzację,
-- obsługę logiki biznesowej,
-- walidację danych,
-- obliczanie wyników testów,
-- agregację danych do dashboardów,
-- komunikację z bazą danych,
-- integracje z zewnętrznymi usługami.
-
-### 4.4 Database
-Relacyjna baza danych przechowująca:
-- użytkowników,
-- role i uprawnienia,
-- organizacje i działy,
-- ankiety i testy,
-- pytania i odpowiedzi,
-- wyniki indywidualne i zbiorcze,
-- logi zdarzeń,
-- konfigurację systemową.
-
----
-
-## 5. Docelowy stack technologiczny
-
-## 5.1 Client Frontend
-- **Język:** TypeScript
-- **Framework:** React
-- **Routing:** React Router
-- **Stan aplikacji:** Redux Toolkit
-- **UI:** Shadcn/ui + Tailwind CSS
-- **Port:** 3000
-- **Katalog:** `client-frontend/`
-
-### Uzasadnienie
-React zapewnia szybkie budowanie nowoczesnego interfejsu użytkownika, dobrą skalowalność oraz szerokie wsparcie społeczności.  
-TypeScript zwiększa bezpieczeństwo typów i ogranicza liczbę błędów.  
-Redux Toolkit upraszcza zarządzanie stanem globalnym, np. sesją użytkownika, wynikami i dashboardem.
-
----
-
-## 5.2 Admin Frontend
-- **Język:** TypeScript
-- **Framework:** Next.js
-- **UI:** Shadcn/ui + Tailwind CSS
-- **Port:** 3001
-- **Katalog:** `admin-frontend/`
-
-### Uzasadnienie
-Panel administracyjny wymaga przejrzystej struktury, dobrej organizacji routingu oraz możliwości rozbudowy o rozbudowane widoki tabelaryczne, raportowe i analityczne.  
-Next.js dobrze sprawdza się przy panelach administracyjnych i umożliwia uporządkowany rozwój projektu.
-
----
-
-## 5.3 Backend API
-- **Język:** TypeScript
-- **Framework:** NestJS
-- **Port:** 4000
-- **Katalog:** `backend-api/`
-
-### Uzasadnienie
-NestJS wspiera podejście modułowe, warstwową organizację kodu i dobrą separację odpowiedzialności.  
-Dzięki TypeScript i architekturze opartej o moduły, kontrolery, serwisy i repozytoria backend będzie czytelny i łatwy w utrzymaniu.
-
----
-
-## 5.4 Database
-- **Silnik:** MySQL
-- **Port:** 3306
-- **Katalog:** `mysql/`
-
-### Uzasadnienie
-MySQL jest stabilnym i sprawdzonym rozwiązaniem relacyjnym.  
-Dobrze nadaje się do systemów biznesowych opartych o użytkowników, role, ankiety, wyniki oraz raportowanie.
-
----
-
-## 6. Struktura repozytorium
+MoodFlow to platforma **multi-tenant** do monitorowania dobrostanu psychicznego pracowników. System składa się z trzech aplikacji i jednej bazy danych:
 
 ```txt
-moodmaster/
-├── client-frontend/      # aplikacja pracownika
-├── admin-frontend/       # panel administratora / HR
-├── backend-api/          # API i logika biznesowa
-├── mysql/                # konfiguracja bazy danych
-├── docs/                 # dokumentacja projektowa
-├── docker-compose.yml    # uruchamianie całego środowiska
-├── .env.example          # przykładowe zmienne środowiskowe
-└── README.md             # instrukcja uruchomienia projektu
-````
-
----
-
-## 7. Główne moduły domenowe backendu
-
-Backend powinien być podzielony na moduły domenowe.
-
-### 7.1 Auth Module
-
-Odpowiada za:
-
-* logowanie,
-* rejestrację,
-* odświeżanie tokenów,
-* reset hasła,
-* obsługę sesji,
-* integrację z JWT lub innym mechanizmem tokenowym.
-
-### 7.2 Users Module
-
-Odpowiada za:
-
-* profile użytkowników,
-* dane kont,
-* role,
-* uprawnienia,
-* status aktywności użytkownika.
-
-### 7.3 Organizations Module
-
-Odpowiada za:
-
-* firmy,
-* działy,
-* zespoły,
-* powiązanie użytkowników z organizacją.
-
-### 7.4 Assessments Module
-
-Odpowiada za:
-
-* testy psychologiczne,
-* ankiety okresowe,
-* definicje formularzy,
-* pytania,
-* wersjonowanie formularzy.
-
-### 7.5 Responses Module
-
-Odpowiada za:
-
-* zapisywanie odpowiedzi użytkowników,
-* walidację odpowiedzi,
-* przypisanie odpowiedzi do konkretnego testu i użytkownika.
-
-### 7.6 Results Module
-
-Odpowiada za:
-
-* obliczanie wyników,
-* interpretację progów,
-* zapis wyników końcowych,
-* generowanie historii pomiarów.
-
-### 7.7 Dashboard Module
-
-Odpowiada za:
-
-* przygotowanie danych do wykresów,
-* agregację statystyk,
-* filtrowanie wyników,
-* raportowanie dla administratorów i HR.
-
-### 7.8 Notifications Module
-
-Odpowiada za:
-
-* przypomnienia o ankietach,
-* komunikaty systemowe,
-* powiadomienia e-mail lub in-app.
-
-### 7.9 Reports Module
-
-Odpowiada za:
-
-* eksport raportów,
-* generowanie zestawień zbiorczych,
-* przygotowanie danych do analiz.
-
-### 7.10 Audit / Logs Module
-
-Odpowiada za:
-
-* rejestrowanie ważnych operacji,
-* historię logowań,
-* śledzenie zmian administracyjnych,
-* wsparcie bezpieczeństwa i zgodności.
-
----
-
-## 8. Warstwy backendu
-
-W backendzie należy zachować spójny podział na warstwy:
-
-### 8.1 Controllers
-
-Odpowiadają za:
-
-* odbieranie żądań HTTP,
-* walidację wejścia na poziomie DTO,
-* zwracanie odpowiedzi do klienta.
-
-### 8.2 Services
-
-Odpowiadają za:
-
-* logikę biznesową,
-* wywoływanie odpowiednich repozytoriów,
-* przetwarzanie danych,
-* egzekwowanie reguł domenowych.
-
-### 8.3 Repositories / Data Access
-
-Odpowiadają za:
-
-* komunikację z bazą danych,
-* pobieranie i zapis danych,
-* operacje CRUD.
-
-### 8.4 DTO / Validators
-
-Odpowiadają za:
-
-* walidację danych wejściowych,
-* definiowanie kontraktów API,
-* ograniczanie błędnych żądań.
-
-### 8.5 Guards / Middleware / Interceptors
-
-Odpowiadają za:
-
-* uwierzytelnianie,
-* autoryzację,
-* logowanie żądań,
-* obsługę wyjątków,
-* transformację odpowiedzi.
-
----
-
-## 9. Role użytkowników w systemie
-
-W systemie przewiduje się następujące role:
-
-### 9.1 Employee
-
-Pracownik końcowy, który:
-
-* wypełnia testy i ankiety,
-* przegląda własne wyniki,
-* śledzi własne zmiany w czasie.
-
-### 9.2 HR / Manager
-
-Użytkownik biznesowy z dostępem do danych zagregowanych:
-
-* przegląda dashboardy zbiorcze,
-* analizuje trendy,
-* monitoruje poziom dobrostanu w organizacji,
-* nie powinien mieć dostępu do nieuzasadnionych danych wrażliwych jednostki, jeśli system nie przewiduje takiego zakresu.
-
-### 9.3 Admin
-
-Administrator techniczny systemu:
-
-* zarządza kontami,
-* zarządza konfiguracją systemu,
-* nadaje role,
-* zarządza ankietami, testami i ustawieniami.
-
----
-
-## 10. Przepływ danych w systemie
-
-### 10.1 Przykładowy przepływ — wykonanie testu przez pracownika
-
-1. Użytkownik loguje się do aplikacji.
-2. Frontend pobiera listę dostępnych testów z backendu.
-3. Użytkownik wybiera test i odpowiada na pytania.
-4. Odpowiedzi są wysyłane do backendu.
-5. Backend waliduje dane i zapisuje odpowiedzi.
-6. Moduł wyników oblicza rezultat testu.
-7. Wynik zostaje zapisany w bazie danych.
-8. Frontend pobiera wynik oraz interpretację i prezentuje je użytkownikowi.
-9. Dane zagregowane mogą zostać uwzględnione w dashboardzie administratora.
-
-### 10.2 Przykładowy przepływ — analiza przez administratora
-
-1. Administrator loguje się do panelu.
-2. Panel pobiera dane dashboardowe z backendu.
-3. Backend pobiera dane zagregowane z bazy.
-4. Wyniki są filtrowane wg organizacji, działu, zakresu dat lub typu testu.
-5. Administrator otrzymuje dashboard z wykresami, wskaźnikami i trendami.
-
----
-
-## 11. Komunikacja między komponentami
-
-Komunikacja odbywa się w modelu:
-
-* frontendy → backend API → baza danych
-
-Frontendy nie komunikują się bezpośrednio z bazą danych.
-Wszelka logika biznesowa i dostęp do danych przechodzi przez backend API.
-
-### Format komunikacji
-
-* REST API
-* JSON jako podstawowy format wymiany danych
-* HTTPS w środowisku produkcyjnym
-
----
-
-## 12. Autoryzacja i uwierzytelnianie
-
-System powinien wykorzystywać mechanizm oparty o tokeny, np. JWT.
-
-### Założenia:
-
-* logowanie przez e-mail i hasło,
-* hasła przechowywane wyłącznie w postaci hashowanej,
-* sesje zarządzane przez access token i refresh token,
-* kontrola dostępu oparta o role,
-* zabezpieczenie endpointów guardami,
-* możliwość rozszerzenia o SSO w przyszłości.
-
----
-
-## 13. Bezpieczeństwo
-
-Ze względu na charakter danych, bezpieczeństwo jest jednym z kluczowych elementów architektury.
-
-### Wymagania bezpieczeństwa:
-
-* szyfrowanie komunikacji HTTPS,
-* hashowanie haseł,
-* walidacja danych wejściowych,
-* ochrona przed podstawowymi atakami webowymi,
-* ograniczanie dostępu do danych zgodnie z rolą użytkownika,
-* logowanie zdarzeń administracyjnych,
-* minimalizacja zakresu przetwarzanych danych,
-* przygotowanie systemu pod wymagania prywatności i ochrony danych osobowych.
-
-### Dodatkowe zalecenia:
-
-* rate limiting dla logowania,
-* blokada konta po wielu nieudanych próbach,
-* maskowanie danych wrażliwych w logach,
-* wersjonowanie API i kontrola zmian.
-
----
-
-## 14. Prywatność i dane wrażliwe
-
-MoodMaster operuje na danych dotyczących samopoczucia i dobrostanu, dlatego należy stosować zasadę minimalizacji danych.
-
-### Zasady:
-
-* gromadzić wyłącznie dane niezbędne do działania systemu,
-* ograniczyć dostęp do wyników indywidualnych,
-* dane zbiorcze prezentować w formie zagregowanej,
-* jednoznacznie rozdzielić dane identyfikacyjne od danych ankietowych tam, gdzie jest to uzasadnione,
-* przewidzieć możliwość anonimizacji lub pseudonimizacji danych,
-* zapewnić kontrolę dostępu i audyt operacji.
-
----
-
-## 15. Skalowalność
-
-Architektura powinna umożliwiać rozwój systemu bez konieczności przebudowy całej aplikacji.
-
-### Podejście:
-
-* podział na niezależne aplikacje frontendowe,
-* modularny backend,
-* oddzielenie warstwy prezentacji od logiki biznesowej,
-* możliwość wydzielenia wybranych modułów do osobnych usług w przyszłości,
-* możliwość rozbudowy o cache, kolejki i zewnętrzne integracje.
-
-### Potencjalne kierunki rozwoju:
-
-* moduł AI do rekomendacji,
-* integracja z narzędziami HR,
-* import użytkowników z systemów zewnętrznych,
-* eksport raportów do PDF/Excel,
-* powiadomienia push i e-mail automation,
-* wielojęzyczność.
-
----
-
-## 16. Wydajność
-
-System nie wymaga na początku architektury mikroserwisowej, jednak powinien być przygotowany na wzrost liczby użytkowników.
-
-### Założenia wydajnościowe:
-
-* szybki czas odpowiedzi dla operacji CRUD,
-* paginacja dla dużych list,
-* filtrowanie i sortowanie po stronie backendu,
-* indeksowanie kluczowych pól w bazie danych,
-* ograniczenie liczby ciężkich zapytań raportowych,
-* możliwość cache’owania wybranych dashboardów.
-
----
-
-## 17. Strategia wdrożenia
-
-Na potrzeby developmentu i testów system powinien być uruchamiany lokalnie w środowisku kontenerowym.
-
-### Kontenery:
-
-* `client-frontend`
-* `admin-frontend`
-* `backend-api`
-* `mysql`
-
-Całość powinna być uruchamiana przez `docker-compose.yml`.
-
-### Środowiska:
-
-* local
-* development
-* staging
-* production
-
-Dla każdego środowiska należy przewidzieć osobne zmienne środowiskowe.
-
----
-
-## 18. Zmienne środowiskowe
-
-Każda aplikacja powinna korzystać z własnych zmiennych środowiskowych.
-
-### Przykładowe zmienne:
-
-* `PORT`
-* `NODE_ENV`
-* `DATABASE_URL`
-* `DB_HOST`
-* `DB_PORT`
-* `DB_USER`
-* `DB_PASSWORD`
-* `DB_NAME`
-* `JWT_SECRET`
-* `JWT_REFRESH_SECRET`
-* `CORS_ORIGIN`
-* `MAIL_HOST`
-* `MAIL_PORT`
-* `MAIL_USER`
-* `MAIL_PASSWORD`
-
-W repozytorium należy umieścić plik `.env.example` bez wrażliwych danych.
-
----
-
-## 19. Konwencje projektowe
-
-### 19.1 Zasady ogólne
-
-* używać TypeScript we wszystkich warstwach aplikacji,
-* utrzymywać spójne nazewnictwo modułów i plików,
-* stosować podział na małe, czytelne komponenty,
-* unikać duplikacji logiki,
-* logikę biznesową trzymać w backendzie.
-
-### 19.2 Nazewnictwo
-
-* komponenty React: `PascalCase`
-* pliki pomocnicze: `camelCase` lub `kebab-case`
-* endpointy REST: `kebab-case` lub logiczne nazwy zasobów
-* moduły backendowe: zgodnie z domeną biznesową
-
-### 19.3 Jakość kodu
-
-* ESLint
-* Prettier
-* spójne reguły formatowania
-* code review przed mergem
-* sensowne komunikaty commitów
-
----
-
-## 20. Testowanie
-
-System powinien być rozwijany z uwzględnieniem testów.
-
-### Typy testów:
-
-* testy jednostkowe dla logiki biznesowej,
-* testy integracyjne dla API,
-* testy komponentów frontendowych,
-* testy end-to-end dla kluczowych ścieżek użytkownika.
-
-### Kluczowe obszary testowania:
-
-* logowanie i autoryzacja,
-* wypełnianie ankiet,
-* obliczanie wyników,
-* dostęp zależny od roli,
-* dashboardy i filtrowanie,
-* bezpieczeństwo wejścia i walidacja danych.
-
----
-
-## 21. Dokumentacja techniczna
-
-Każdy główny moduł powinien być opisany w dokumentacji technicznej.
-
-Minimalny zestaw dokumentów:
-
-* `README.md`
-* `ARCHITECTURE.md`
-* `PRD.md`
-* dokumentacja endpointów API
-* opis modelu danych
-* instrukcja uruchomienia lokalnego środowiska
-
----
-
-## 22. Zasady pracy dla programistów
-
-Rules:
-Zaczynaj od szkieletu aplikacji, następnie utwórz konfigurację Dockera.
-Najpierw opracuj plan — napisz, co, jak i dlaczego chcesz zrobić.
-Utrzymuj jak najprostszą strukturę katalogów, nie twórz katalogu pośredniego.
-Wykorzystuj komendę `pwd`, aby upewnić się, że wykonujesz operacje w odpowiednim katalogu.
-Stwórz dokumentację w pliku `README.md`.
-
-Dodatkowo:
-
-* nie implementuj wszystkiego naraz — rozwijaj projekt etapami,
-* najpierw przygotuj fundament: auth, users, organizations, assessments,
-* każdą większą zmianę poprzedzaj krótkim planem technicznym,
-* dbaj o spójność typów między frontendem i backendem,
-* nie mieszaj logiki widoku z logiką domenową,
-* endpointy i modele danych projektuj tak, aby były gotowe na rozwój.
-
----
-
-## 23. Minimalna kolejność implementacji
-
-### Etap 1 — fundament projektu
-
-* konfiguracja repozytorium,
-* utworzenie aplikacji frontendowych,
-* utworzenie backendu,
-* konfiguracja bazy danych,
-* docker-compose,
-* podstawowy README.
-
-### Etap 2 — bezpieczeństwo i użytkownicy
-
-* rejestracja,
-* logowanie,
-* role i uprawnienia,
-* profile użytkowników,
-* organizacje i przypisanie użytkowników.
-
-### Etap 3 — ankiety i testy
-
-* definicje testów,
-* pytania,
-* odpowiedzi,
-* zapis formularzy,
-* obliczanie wyników.
-
-### Etap 4 — dashboard i raportowanie
-
-* historia wyników użytkownika,
-* dashboard administratora,
-* agregacje,
-* filtrowanie,
-* raporty.
-
-### Etap 5 — rozwój i optymalizacja
-
-* powiadomienia,
-* eksport danych,
-* audyt,
-* optymalizacje wydajności,
-* rozbudowa bezpieczeństwa.
-
----
-
-## 24. Podsumowanie
-
-Architektura MoodMaster opiera się na czytelnym podziale odpowiedzialności pomiędzy dwa frontendy, centralny backend API i relacyjną bazę danych.
-Wybrany stack technologiczny wspiera szybki rozwój MVP, a jednocześnie pozostawia przestrzeń do późniejszej rozbudowy systemu.
-
-Najważniejsze cechy tej architektury:
-
-* modularność,
-* bezpieczeństwo,
-* skalowalność,
-* prostota wdrożenia,
-* gotowość do dalszego rozwoju funkcjonalnego i biznesowego.
-
+client-frontend (React+Vite, port 3000)  ──┐
+                                           ├──>  backend-api (NestJS, port 4000)  ──>  PostgreSQL 16 (port 5432)
+admin-frontend (Next.js, port 3001)     ──┘
 ```
 
+- **client-frontend** — panel pracownika (PWA): check-iny nastroju, wypełnianie testów, własne wyniki.
+- **admin-frontend** — panel HR / administratora firmy / właściciela platformy: raporty zagregowane, zarządzanie użytkownikami i firmami, planowanie testów.
+- **backend-api** — całość logiki biznesowej: uwierzytelnianie, autoryzacja, scoring, agregacje, anonimizacja, audit.
+- **PostgreSQL** — jedna wspólna baza; izolacja tenantów przez kolumnę `organizationId` (separacja logiczna wierszy, nie fizyczna baz).
 
+### Zasady architektoniczne
+
+- cała logika biznesowa po stronie backendu — frontend nie liczy wyników, nie decyduje o uprawnieniach, nie anonimizuje,
+- dwa osobne frontendy, bo pracownik i administracja mają rozłączne scenariusze, uprawnienia i wymagania UX (RULES.md §33),
+- anonimizacja danych HR jest egzekwowana w backendzie (k-anonimowość, k=5) — panel HR konsumuje wyłącznie agregaty,
+- prostota ponad wzorce: monolit modularny NestJS zamiast mikroserwisów — adekwatnie do skali projektu (RULES.md §9).
+
+---
+
+## 3. Stack technologiczny (stan faktyczny)
+
+| Warstwa | Technologia | Wersja | Uzasadnienie |
+|---|---|---|---|
+| Panel pracownika | React + Vite | React 19.2, Vite 8.0 | komponentowy UI, szybki dev server i build; PWA przez vite-plugin-pwa |
+| — routing / stan | React Router 7, Redux Toolkit | 7.13 | standardowe SPA; Redux dla sesji i stanu globalnego |
+| Panel admin/HR | Next.js (App Router) | 16.1 | struktura wielopanelowa (HR/admin/super-admin) z layoutami per segment; recharts do wykresów |
+| Backend | NestJS | 11 | modularna architektura (kontroler→serwis→repozytorium), wbudowane guardy, DI, walidacja DTO |
+| ORM | TypeORM | 0.3.28 | mapowanie encji, parametryzacja zapytań (ochrona przed SQL injection) |
+| Baza danych | PostgreSQL | 16 (alpine) | relacyjna, JSONB dla `audit_logs.metadata` i `riskFlags` (ADR-002: zmiana z planowanego MySQL) |
+| Auth | JWT (passport-jwt), bcrypt | — | tokeny access/refresh; bcrypt cost 12 |
+| Mail | @nestjs-modules/mailer + Nodemailer | — | powiadomienia e-mail przez SMTP (Gmail) |
+| Konteneryzacja | Docker + Docker Compose | — | powtarzalne środowisko dev i prod |
+| Hosting produkcyjny | Railway | — | 4 serwisy: backend, 2 frontendy, Postgres |
+
+Wszystkie aplikacje w **TypeScript**.
+
+---
+
+## 4. Struktura repozytorium
+
+```txt
+MoodFlow/
+├── backend-api/            # NestJS API (port 4000)
+│   └── src/
+│       ├── main.ts         # bootstrap: helmet, CORS, ValidationPipe, walidacja env, seed
+│       ├── app.module.ts   # TypeORM, Throttler, Mailer, moduły domenowe
+│       ├── data-source.ts  # konfiguracja CLI TypeORM (migracje)
+│       ├── migrations/     # migracja InitialSchema (patrz §12 — świadome odstępstwo)
+│       ├── seed/           # seed super-admina i katalogu testów
+│       ├── common/         # enums (Role, UserStatus...), guards, decorators
+│       └── modules/        # 12 modułów domenowych (patrz §5)
+├── client-frontend/        # React+Vite PWA (port 3000, w kontenerze nginx:80)
+│   └── src/
+│       ├── api/            # axiosClient (VITE_API_URL, interceptor refresh)
+│       ├── components/     # AppLayout, ProtectedRoute, NotificationBell...
+│       ├── pages/          # Login, Register, Home, Tests, TakeAssessment, Results, Settings
+│       ├── store/          # Redux (authSlice)
+│       └── hooks/          # useAuth, useTheme
+├── admin-frontend/         # Next.js App Router (port 3001)
+│   ├── app/                # login/, super-admin/, auth/callback/, dashboard/ (users, hr/, analytics...)
+│   ├── components/         # Sidebar, NotificationBell, SwRegister...
+│   └── lib/                # auth.ts (sesja), axiosClient, buildReportPdf
+├── docs/                   # dokumentacja techniczna (endpointy, model danych, ADR, security, deployment)
+├── docker-compose.yml      # środowisko developerskie (+ adminer :5050)
+├── docker-compose.prod.yml # środowisko produkcyjne
+└── .env.example            # szablon konfiguracji bez sekretów
+```
+
+---
+
+## 5. Backend — moduły domenowe
+
+Każdy moduł ma tę samą strukturę wewnętrzną: `*.module.ts`, `*.controller.ts`, `*.service.ts`, `dto/`, `entities/`.
+
+| Moduł | Odpowiedzialność |
+|---|---|
+| `auth` | rejestracja firmy/pracownika, logowanie, JWT access+refresh, wylogowanie, **handoff** (jednorazowy kod przekazania sesji między panelami) |
+| `users` | profil (`/users/me`), zmiana hasła, usunięcie konta, zarządzanie użytkownikami i statusami przez admina |
+| `organizations` | cykl życia firm-tenantów: rejestracja → zatwierdzenie/odrzucenie/blokada przez SUPER_ADMIN |
+| `departments` | CRUD działów w obrębie organizacji |
+| `assessments` | katalog testów psychologicznych, przypisania (assignments) do firmy/działu/pracownika z oknem czasowym |
+| `responses` | przyjęcie wypełnionego testu: walidacja kompletności, zakresów wartości i duplikatów |
+| `results` | wyniki użytkownika, indeks dobrostanu, historia; podmoduł `scoring/` — obliczanie wyników |
+| `analytics` | agregaty dla HR/admina z egzekwowaną k-anonimowością (k=5) |
+| `admin` | przegląd systemu i aktywność dzienna dla panelu administracyjnego |
+| `notifications` | powiadomienia in-app (dzwonek) + wysyłka e-mail (MailService) |
+| `audit` | dziennik działań administracyjnych i logowań |
+| `health` | `GET /health` — status aplikacji i bazy (używany przez monitoring) |
+
+### Warstwy wewnątrz modułu
+
+- **Kontroler** — przyjmuje żądanie, waliduje DTO, zwraca odpowiedź; brak logiki biznesowej.
+- **Serwis** — reguły biznesowe, kontrola uprawnień kontekstowych (np. przynależność do organizacji), orkiestracja.
+- **Repozytorium TypeORM** — dostęp do danych (wstrzykiwane `Repository<Entity>`).
+- **DTO + class-validator** — jawny kontrakt wejścia; globalny `ValidationPipe` z `whitelist: true` i `forbidNonWhitelisted: true` odrzuca pola spoza kontraktu.
+- **Guardy/interceptory** — `JwtAuthGuard` → `RolesGuard` (dekorator `@Roles()`); globalny `ClassSerializerInterceptor` respektuje `@Exclude()` (np. `passwordHash` nigdy nie opuszcza API).
+
+---
+
+## 6. Model danych (skrót)
+
+Pełny opis: [docs/data-model.md](./docs/data-model.md).
+
+Główne encje: `users`, `organizations`, `departments`, `assessments`, `questions`, `answer_options`, `assessment_assignments`, `assessment_results`, `user_responses`, `notifications`, `audit_logs`.
+
+Kluczowe relacje:
+
+- `Organization 1—N User`, `Organization 1—N Department`,
+- `Assessment 1—N Question`, `Assessment 1—N AnswerOption` (cascade),
+- `AssessmentAssignment` → test + cel (cała firma / dział / użytkownik) + okno czasowe (`startsAt`/`dueAt`) + autor,
+- `AssessmentResult` → użytkownik + test + `rawScore`/`normalizedScore`/`severity`/`riskFlags (json)`; `UserResponse 1—N` na wynik (zapis transakcyjny),
+- `AuditLog` — aktor, akcja, typ i id encji, `metadata (jsonb)`, ip; indeksy po aktorze, organizacji i encji.
+
+**Multi-tenancy:** kolumna `organizationId` w `users`, `departments`, `assessment_assignments`, `assessment_results`, `audit_logs`. Każde zapytanie domenowe filtruje po `organizationId` z tokenu JWT — użytkownik firmy A nie może odczytać danych firmy B (wymuszane w serwisach, nie w frontendzie).
+
+Statusy: `UserStatus` = pending / active / rejected / suspended; `OrganizationStatus` = pending / active / rejected / blocked.
+
+---
+
+## 7. Role i autoryzacja
+
+Role (`Role` enum): `EMPLOYEE`, `HR`, `ADMIN` (administrator firmy), `SUPER_ADMIN` (właściciel platformy).
+
+| Rola | Zakres |
+|---|---|
+| EMPLOYEE | własne check-iny, testy, wyniki i historia; zero dostępu do danych innych osób |
+| HR | agregaty analityczne własnej organizacji (z k-anonimowością), planowanie testów, lista pracowników (bez wyników jednostkowych) |
+| ADMIN | jak HR + zatwierdzanie pracowników, zarządzanie działami i rolami we własnej organizacji |
+| SUPER_ADMIN | zatwierdzanie/odrzucanie/blokowanie firm, przegląd platformy; poza strukturą pojedynczego tenanta |
+
+Egzekwowanie: `RolesGuard` czyta metadane `@Roles(...)` na poziomie metody kontrolera i porównuje z rolą z JWT. Eskalacja uprawnień jest zablokowana — endpointy aktualizacji użytkownika walidują docelową rolę i nie pozwalają nadać `SUPER_ADMIN` (naprawa K1 z audytu; zmiany ról trafiają do audit logu).
+
+Po stronie admin-frontendu dodatkowa warstwa UX: kontrola roli względem trasy w `app/dashboard/layout.tsx` (np. HR wchodzący na `/dashboard/users` jest przekierowany do `/dashboard/hr`) — to wygoda nawigacyjna; właściwa autoryzacja zawsze w backendzie.
+
+---
+
+## 8. Uwierzytelnianie i sesje
+
+### Logowanie i tokeny
+
+1. `POST /auth/login` weryfikuje hasło (bcrypt, cost 12) i status konta,
+2. backend wystawia **access token JWT (15 min)** i **refresh token JWT (7 dni)** — payload: `{ sub, email, role, organizationId }`,
+3. tokeny wracają w body oraz jako ciasteczka httpOnly (`mf_access`, `mf_refresh`); klienci używają nagłówka `Authorization: Bearer` z automatycznym odświeżaniem po 401 (interceptor axios zapisuje nowe tokeny i ponawia kolejkę żądań),
+4. `POST /auth/refresh` (strategia `jwt-refresh`) odświeża sesję; konta `SUSPENDED`/`REJECTED` są odrzucane przy odświeżaniu; endpoint ma własny rate limit (30/15 min),
+5. `POST /auth/logout` czyści ciasteczka.
+
+Sekrety JWT są walidowane przy starcie aplikacji (fail-fast): wymagane, min. 32 znaki, różne od siebie, bez trywialnych wartości.
+
+### Handoff między panelami (bez tokenów w URL)
+
+Gdy kontem HR/ADMIN ktoś loguje się w panelu pracownika:
+
+1. client-frontend po zalogowaniu woła `POST /auth/handoff` (z Bearer) → backend generuje **jednorazowy kod** (`randomBytes(32)`, TTL 60 s, przechowywany w pamięci procesu),
+2. przeglądarka jest przekierowana na `admin-frontend /auth/callback?code=...`,
+3. callback woła `POST /auth/handoff/exchange` → kod jest konsumowany (jednorazowo) i wymieniany na tokeny + rolę,
+4. tokeny nigdy nie występują w URL (naprawa H3 z audytu — poprzednio tokeny szły we fragmencie URL).
+
+Ograniczenie świadome: magazyn kodów jest in-memory — wystarczający przy pojedynczej instancji backendu; przy skalowaniu horyzontalnym wymagałby przeniesienia do współdzielonego magazynu (np. Redis).
+
+### Sesja w panelu admina
+
+`admin-frontend` przechowuje tokeny w `localStorage` (`admin_access_token`, `admin_refresh_token`, `admin_role`) z timeoutem bezczynności (domyślnie 15 min). Wariant cookies `SameSite` + CSRF dla adminów opisany jako przyszły rozwój (ADR/H1) — obecne podejście Bearer działa poprawnie z osobnymi domenami frontendów.
+
+---
+
+## 9. Scoring testów (backend-only)
+
+`ScoringService` (`results/scoring/`) oblicza wyniki wyłącznie po stronie serwera, po kodzie testu:
+
+| Test | Zakres | Logika |
+|---|---|---|
+| PHQ-9 | 0–27 | progi 5/10/15/20 (minimal→severe); odpowiedź >0 na pytanie 9 ustawia `selfHarmRiskFlag` niezależnie od sumy |
+| GAD-7 | 0–21 | progi 5/10/15; `needsFurtherEvaluation` przy ≥10 |
+| PSS-10 | 0–40 | pytania 4/5/7/8 odwrócone (4−wartość); progi 14/27 |
+| WHO-5 | 0–25 raw | normalizacja ×4 do 0–100; `poorWellbeingFlag` przy raw <13 |
+| MOOD10 | 10–50 | część pytań odwrócona (6−wartość); progi 20/30/40 |
+| DAILY_MOOD | 1–5 | mapa poziomów very_bad→very_good |
+
+Zapis odpowiedzi i wyniku jest **transakcyjny** (H7): albo wynik i wszystkie odpowiedzi, albo nic. Walidacja wejścia (K4): kompletność zestawu, zakres wartości, poprawność `questionId`, brak duplikatów, brak ponownego wypełnienia przypisania.
+
+Pokrycie testami: `scoring.service.spec.ts` — 50 testów jednostkowych progów, pytań odwróconych, flag i walidacji.
+
+---
+
+## 10. Prywatność i k-anonimowość
+
+Zasada: **HR nigdy nie widzi danych jednostkowych.** `AnalyticsService` egzekwuje próg `MIN_GROUP_SIZE = 5` we wszystkich agregatach:
+
+- statystyki i indeks dobrostanu per dział (`avgScore: null`, `anonymized: true` poniżej progu),
+- historia tygodniowa i indeks organizacji,
+- rozkład poziomów nasilenia per test,
+- obciążenie działów i raport zmian krytycznych (działy <5 osób pomijane).
+
+Dodatkowo: nota prywatności na ekranie testu (H6), odpowiedź kryzysowa PHQ-9 Q9 pokazywana wyłącznie pracownikowi, minimalizacja danych w odpowiedziach API (DTO + `@Exclude`).
+
+---
+
+## 11. Frontendy
+
+### client-frontend (panel pracownika)
+
+- **PWA**: vite-plugin-pwa, manifest, service worker workbox — `NetworkOnly` dla `/auth/*`, `/users/me`, `/results`, `/admin`, `/analytics` (brak cache danych wrażliwych), `NetworkFirst` dla reszty API,
+- **ProtectedRoute** — trasy `/app/*` wymagają sesji,
+- **Autozapis draftu testu** (H5): odpowiedzi zapisywane w `sessionStorage` pod kluczem `mf_assessment_draft_<assignmentId>`, odtwarzane po odświeżeniu strony,
+- serwowany przez **nginx** z fallbackiem SPA i nagłówkami bezpieczeństwa (X-Frame-Options DENY, nosniff, Referrer-Policy, Permissions-Policy, CSP w trybie Report-Only).
+
+### admin-frontend (HR / admin / super-admin)
+
+- Next.js App Router z segmentami: `login/`, `super-admin/`, `auth/callback/` (handoff), `dashboard/` (admin: users, pending, analytics, assessments, settings) i `dashboard/hr/` (raporty, pracownicy, generowanie),
+- wykresy recharts; eksport raportu przez `lib/buildReportPdf.ts`,
+- własny service worker (`SwRegister`) cache'ujący wyłącznie zasoby same-origin (K7).
+
+---
+
+## 12. Świadome odstępstwa i ograniczenia (do obrony)
+
+Każde z poniższych to udokumentowana decyzja, nie przeoczenie:
+
+| Temat | Stan | Uzasadnienie / plan |
+|---|---|---|
+| Schemat bazy | **`synchronize: true` w runtime**; migracja InitialSchema istnieje, ale nie jest uruchamiana | baza produkcyjna została zbudowana przez synchronize; przejście na wyłącznie-migracje to osobny krok operacyjny (ryzyko rozjazdu schematu przy „flipie" na żywej bazie); `data-source.ts` dla CLI ma już `synchronize: false` |
+| CSP | Report-Only (client nginx) | najpierw obserwacja raportów naruszeń, potem enforce — uniknięcie zepsucia produkcji |
+| Rewokacja sesji | częściowa (H10): status konta sprawdzany przy refresh + rate limit | pełny `tokenVersion` (unieważnienie wszystkich sesji użytkownika) w planie rozwoju |
+| Sesja admina | tokeny w localStorage (H1) | wariant cookies SameSite+CSRF odłożony świadomie — wymaga wspólnej domeny lub proxy; opisany jako przyszły rozwój |
+| Handoff store | in-memory, TTL 60 s | wystarczające dla 1 instancji; przy skalowaniu → Redis |
+| Prefix API | brak globalnego `/api/v1` | ścieżki płaskie (`/auth`, `/users`...); wersjonowanie odłożone do czasu pierwszego breaking change |
+
+---
+
+## 13. Wdrożenie
+
+### Środowisko developerskie (`docker-compose.yml`)
+
+| Serwis | Port (host) | Uwagi |
+|---|---|---|
+| client-frontend | 3000 | nginx:80 w kontenerze |
+| admin-frontend | 3001 | `npm run dev` |
+| backend-api | 4000 | `npm run start:dev`, czeka na healthy Postgres |
+| postgres | 5432 | postgres:16-alpine, healthcheck `pg_isready`, wolumen `postgres_data` |
+| adminer | 5050 | podgląd bazy (tylko dev) |
+
+`docker-compose.prod.yml` — analogicznie, ale Postgres bez publikacji portu na hosta.
+
+### Produkcja (Railway)
+
+4 serwisy budowane z Dockerfile'ów (multi-stage, `node:20-alpine`):
+
+- **backend** (`moodflow-production.up.railway.app`) — `node dist/main`,
+- **client-frontend** — build Vite z build-argami `VITE_API_URL`/`VITE_ADMIN_URL` (wstrzykiwane do bundla), potem `nginx:alpine`; **uwaga operacyjna:** `railway.json` ma `startCommand: nginx -g 'daemon off;'`, który omija entrypoint obrazu nginx (envsubst szablonów) — dlatego `nginx.conf` jest kopiowany bezpośrednio do `conf.d/default.conf` z `listen 80`,
+- **admin-frontend** — build Next.js z build-argami `NEXT_PUBLIC_*`, `npm run start` na porcie 3001,
+- **Postgres** — usługa zarządzana Railway.
+
+Deploy: push na gałąź `eksperyment-multi-tenant` → automatyczny rebuild. TLS z platformy. Railway agresywnie cache'uje warstwy Dockera — cache-bust wymaga ARG użytego w RUN.
+
+### Zmienne środowiskowe
+
+Backend (wymagane, fail-fast): `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `CORS_ORIGIN`. Opcjonalne: `PORT`, `NODE_ENV`, `MAIL_HOST/PORT/USER/PASS/FROM`, `SEED_OWNER_EMAIL`, `SEED_OWNER_PASSWORD` (bez niej seed super-admina jest pomijany — żadne hasło nie jest zaszyte w kodzie ani repo).
+
+Frontendy (build-time): client — `VITE_API_URL`, `VITE_ADMIN_URL`; admin — `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_CLIENT_URL`.
+
+Szablon: `.env.example` (bez sekretów).
+
+---
+
+## 14. Testowanie
+
+- **Jednostkowe (backend):** `scoring.service.spec.ts` — 50 testów logiki scoringu (`npm test` w `backend-api/`),
+- **E2E (backend):** szkielet `test/app.e2e-spec.ts` (`npm run test:e2e`),
+- **Manualne scenariusze produkcyjne:** [TESTING.md](./TESTING.md) — pełny flow rejestracji firmy → zatwierdzenia → pracownika → testu → raportu HR; zweryfikowane na środowisku Railway (w tym handoff, autozapis draftu, nota prywatności, maskowanie k<5),
+- frontendy nie mają testów automatycznych (świadome ograniczenie zakresu MVP).
+
+---
+
+## 15. Kierunki rozwoju
+
+- pełne przejście na migracje TypeORM (wyłączenie `synchronize` na produkcji),
+- CSP enforce po okresie Report-Only,
+- `tokenVersion` — pełna rewokacja sesji,
+- cookies SameSite + CSRF dla panelu admina,
+- Redis: handoff store + cache agregatów analitycznych,
+- eksporty PDF/CSV, automatyczne przypomnienia, konfigurowalne progi alertów,
+- testy automatyczne frontendów i rozszerzenie testów e2e backendu.

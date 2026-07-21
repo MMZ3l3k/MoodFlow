@@ -1,18 +1,21 @@
 # Lista endpointów API — MoodFlow
 
-Wszystkie endpointy oprócz `/auth/*`, `/health` wymagają uwierzytelnienia
+Wszystkie endpointy poza `/auth/*` (bez `/auth/handoff`) i `/health` wymagają uwierzytelnienia
 (JWT w httpOnly cookie `mf_access` lub nagłówek `Authorization: Bearer`).
-Bazowy URL: `https://api.moodflow.pl` (prod) lub `http://localhost:4000` (dev).
+Backend nie używa globalnego prefixu — ścieżki są płaskie (`/auth`, `/users`, ...).
+Bazowy URL: `https://moodflow-production.up.railway.app` (prod) lub `http://localhost:4000` (dev).
 
 ## Auth
 
-| Metoda | Ścieżka | Rola | Opis | Rate limit |
+| Metoda | Ścieżka | Dostęp | Opis | Rate limit |
 |---|---|---|---|---|
 | POST | `/auth/register` | publiczny | Rejestracja użytkownika (legacy) | 5 / 15 min |
-| POST | `/auth/register-company` | publiczny | Rejestracja firmy + admin | 5 / 60 min |
+| POST | `/auth/register-company` | publiczny | Rejestracja firmy + konto admina | 5 / 60 min |
 | POST | `/auth/register-employee` | publiczny | Rejestracja pracownika z kodem zaproszenia | 5 / 15 min |
-| POST | `/auth/login` | publiczny | Logowanie, zwraca tokeny + ustawia cookies | 10 / 15 min |
-| POST | `/auth/refresh` | refresh JWT | Odświeżenie tokenu access | — |
+| POST | `/auth/login` | publiczny | Logowanie; zwraca tokeny + ustawia cookies | 10 / 15 min |
+| POST | `/auth/refresh` | refresh JWT | Odświeżenie tokenu; blokuje konta SUSPENDED/REJECTED | 30 / 15 min |
+| POST | `/auth/handoff` | JWT | Generuje jednorazowy kod przekazania sesji (TTL 60 s) | — |
+| POST | `/auth/handoff/exchange` | publiczny | Wymiana kodu na tokeny (jednorazowa) | 30 / 15 min |
 | POST | `/auth/logout` | dowolny | Wylogowanie + czyszczenie cookies | — |
 
 ## Users
@@ -23,13 +26,13 @@ Bazowy URL: `https://api.moodflow.pl` (prod) lub `http://localhost:4000` (dev).
 | PATCH | `/users/me/password` | dowolny | Zmiana hasła |
 | POST | `/users/me/change-password` | dowolny | Zmiana hasła (alias) |
 | DELETE | `/users/me` | dowolny | Usunięcie własnego konta |
-| GET | `/users` | ADMIN, HR, SUPER_ADMIN | Lista użytkowników (org filter) |
+| GET | `/users` | ADMIN, HR, SUPER_ADMIN | Lista użytkowników (filtr po organizacji) |
 | GET | `/users/pending` | ADMIN, SUPER_ADMIN | Konta oczekujące na zatwierdzenie |
-| POST | `/users` | ADMIN | Dodanie pracownika |
-| PATCH | `/users/:id` | ADMIN, SUPER_ADMIN | Aktualizacja danych |
+| POST | `/users` | ADMIN | Dodanie pracownika (bez możliwości nadania SUPER_ADMIN) |
+| PATCH | `/users/:id` | ADMIN, SUPER_ADMIN | Aktualizacja danych (walidacja roli — brak eskalacji) |
 | PATCH | `/users/:id/profile` | ADMIN, HR | Aktualizacja profilu |
 | PATCH | `/users/:id/status` | ADMIN, SUPER_ADMIN | Zmiana statusu (approve/reject/suspend) |
-| GET | `/users/departments` | ADMIN, HR | Lista działów |
+| GET | `/users/departments` | ADMIN, HR | Lista działów (widok users) |
 | PATCH | `/users/departments/rename` | ADMIN | Zmiana nazwy działu |
 
 ## Organizations
@@ -37,7 +40,10 @@ Bazowy URL: `https://api.moodflow.pl` (prod) lub `http://localhost:4000` (dev).
 | Metoda | Ścieżka | Rola | Opis |
 |---|---|---|---|
 | GET | `/organizations` | SUPER_ADMIN | Lista wszystkich firm |
-| GET | `/organizations/my` | ADMIN, HR | Dane swojej organizacji |
+| GET | `/organizations/pending` | SUPER_ADMIN | Firmy oczekujące na zatwierdzenie |
+| GET | `/organizations/my` | ADMIN, HR | Dane własnej organizacji |
+| GET | `/organizations/:id` | SUPER_ADMIN | Szczegóły firmy |
+| POST | `/organizations` | SUPER_ADMIN | Utworzenie firmy |
 | POST | `/organizations/:id/approve` | SUPER_ADMIN | Zatwierdzenie firmy |
 | POST | `/organizations/:id/reject` | SUPER_ADMIN | Odrzucenie firmy |
 | POST | `/organizations/:id/block` | SUPER_ADMIN | Zablokowanie firmy |
@@ -46,50 +52,72 @@ Bazowy URL: `https://api.moodflow.pl` (prod) lub `http://localhost:4000` (dev).
 
 | Metoda | Ścieżka | Rola | Opis |
 |---|---|---|---|
-| GET | `/departments` | dowolny | Działy w org. (z JWT) |
+| GET | `/departments` | ADMIN, HR | Działy organizacji |
 | POST | `/departments` | ADMIN | Tworzenie działu |
 | PATCH | `/departments/:id` | ADMIN | Edycja działu |
 | DELETE | `/departments/:id` | ADMIN | Usunięcie działu |
 
-## Assessments (testy)
+## Assessments (testy i przypisania)
 
 | Metoda | Ścieżka | Rola | Opis |
 |---|---|---|---|
 | GET | `/assessments` | dowolny | Katalog testów |
-| GET | `/assessments/:id` | dowolny | Szczegóły testu (pytania + odpowiedzi) |
-| GET | `/assessments/assigned` | EMPLOYEE | Testy przypisane do mnie |
-| GET | `/assessments/assignments` | ADMIN, HR | Wszystkie przypisania w org. |
-| POST | `/assessments/assignments` | ADMIN, HR | Tworzenie assignmentu |
-| DELETE | `/assessments/assignments/:id` | ADMIN, HR | Usunięcie assignmentu |
+| GET | `/assessments/assigned` | dowolny | Testy przypisane do zalogowanego |
+| GET | `/assessments/assignments` | ADMIN, HR | Wszystkie przypisania w organizacji |
+| POST | `/assessments/assignments` | ADMIN, HR | Utworzenie przypisania (firma/dział/pracownik + okno czasowe) |
+| DELETE | `/assessments/assignments/:id` | ADMIN, HR | Usunięcie przypisania |
+| GET | `/assessments/:id` | dowolny | Szczegóły testu (pytania + opcje odpowiedzi) |
 
-## Results (wyniki)
+## Responses (wypełnienie testu)
 
 | Metoda | Ścieżka | Rola | Opis |
 |---|---|---|---|
-| POST | `/results/submit` | EMPLOYEE | Zapis wyniku testu |
-| GET | `/results` | EMPLOYEE | Moje wyniki (lista) |
-| GET | `/results/wellbeing-index` | EMPLOYEE | Aktualny indeks dobrostanu |
-| GET | `/results/wellbeing-history` | EMPLOYEE | Historia indeksu (30 dni) |
+| POST | `/responses` | dowolny (EMPLOYEE) | Zapis wypełnionego testu; walidacja kompletności/zakresów/duplikatów; transakcyjny zapis odpowiedzi + wyniku |
 
-## Analytics (HR)
+## Results (wyniki własne)
 
-| Metoda | Ścieżka | Rola | Opis | Anonimizacja |
-|---|---|---|---|---|
-| GET | `/analytics/summary` | HR, ADMIN | KPI organizacji | nie |
-| GET | `/analytics/trends` | HR, ADMIN | Trendy w czasie | nie |
-| GET | `/analytics/severity-distribution` | HR, ADMIN | Rozkład nasilenia objawów | tak |
-| GET | `/analytics/participation` | HR, ADMIN | Uczestnictwo per test | nie |
-| GET | `/analytics/departments` | HR, ADMIN | Statystyki per dział | **tak** (k=5) |
-| GET | `/analytics/department-wellbeing-load` | HR, ADMIN | Indeks per dział | **tak** (k=5) |
-| GET | `/analytics/risk-report` | HR, ADMIN | Raport ryzyka | nie |
-| GET | `/analytics/critical-changes` | HR, ADMIN | Zmiany krytyczne | nie |
+| Metoda | Ścieżka | Rola | Opis |
+|---|---|---|---|
+| GET | `/results` | dowolny | Lista własnych wyników |
+| GET | `/results/wellbeing-index` | dowolny | Aktualny indeks dobrostanu |
+| GET | `/results/wellbeing-history` | dowolny | Historia indeksu |
+| GET | `/results/:id` | dowolny | Szczegóły własnego wyniku |
+
+## Analytics (HR/ADMIN — wyłącznie agregaty)
+
+Wszystkie endpointy z rolami HR, ADMIN. Kolumna „k=5" oznacza maskowanie/pomijanie grup poniżej `MIN_GROUP_SIZE = 5`.
+
+| Metoda | Ścieżka | Opis | k=5 |
+|---|---|---|---|
+| GET | `/analytics/summary` | KPI organizacji | — |
+| GET | `/analytics/trends` | Trendy w czasie (historia tygodniowa) | **tak** |
+| GET | `/analytics/severity-distribution` | Rozkład poziomów nasilenia per test | **tak** |
+| GET | `/analytics/participation` | Uczestnictwo per test | — |
+| GET | `/analytics/departments` | Statystyki per dział | **tak** |
+| GET | `/analytics/assessments` | Statystyki per test | — |
+| GET | `/analytics/hr-dashboard` | Dane zbiorcze dashboardu HR | **tak** |
+| GET | `/analytics/department-wellbeing-load` | Indeks dobrostanu per dział | **tak** |
+| GET | `/analytics/org-wellbeing-history` | Historia indeksu organizacji | **tak** |
+| GET | `/analytics/risk-report` | Raport ryzyka | — |
+| GET | `/analytics/critical-changes` | Zmiany krytyczne per dział (próg zmiany ≥8, krytyczna ≥15) | **tak** |
+
+## Notifications
+
+| Metoda | Ścieżka | Rola | Opis |
+|---|---|---|---|
+| GET | `/notifications` | dowolny | Lista powiadomień zalogowanego |
+| GET | `/notifications/unread-count` | dowolny | Licznik nieprzeczytanych |
+| POST | `/notifications/:id/read` | dowolny | Oznaczenie jako przeczytane |
+| POST | `/notifications/read-all` | dowolny | Oznaczenie wszystkich |
+| DELETE | `/notifications/:id` | dowolny | Usunięcie powiadomienia |
+| DELETE | `/notifications` | dowolny | Usunięcie wszystkich |
 
 ## Admin
 
 | Metoda | Ścieżka | Rola | Opis |
 |---|---|---|---|
-| GET | `/admin/overview` | ADMIN | Przegląd systemu |
-| GET | `/admin/activity-today` | ADMIN | Aktywność dzisiaj (godzinowo) |
+| GET | `/admin/overview` | ADMIN, HR | Przegląd systemu |
+| GET | `/admin/activity-today` | ADMIN, HR | Aktywność dzisiaj (godzinowo) |
 
 ## Audit
 
@@ -101,7 +129,7 @@ Bazowy URL: `https://api.moodflow.pl` (prod) lub `http://localhost:4000` (dev).
 
 | Metoda | Ścieżka | Rola | Opis |
 |---|---|---|---|
-| GET | `/health` | publiczny | Status aplikacji + DB |
+| GET | `/health` | publiczny | Status aplikacji + bazy danych |
 
 ## Format odpowiedzi
 
@@ -111,7 +139,7 @@ Bazowy URL: `https://api.moodflow.pl` (prod) lub `http://localhost:4000` (dev).
 { "id": 1, "...": "..." }
 ```
 
-### Błąd (NestJS standard)
+### Błąd (standard NestJS)
 
 ```json
 {
@@ -121,7 +149,7 @@ Bazowy URL: `https://api.moodflow.pl` (prod) lub `http://localhost:4000` (dev).
 }
 ```
 
-### Auth tokens (login response)
+### Tokeny (odpowiedź logowania)
 
 ```json
 {
@@ -130,6 +158,8 @@ Bazowy URL: `https://api.moodflow.pl` (prod) lub `http://localhost:4000` (dev).
 }
 ```
 
-W odpowiedzi również ustawiane są ciasteczka:
-- `mf_access` — HttpOnly, SameSite=Lax (Strict w prod), 15 min
-- `mf_refresh` — HttpOnly, SameSite=Lax (Strict w prod), 7 dni
+Dodatkowo ustawiane są ciasteczka httpOnly:
+- `mf_access` — 15 min,
+- `mf_refresh` — 7 dni.
+
+Klienci używają nagłówka `Authorization: Bearer` z automatycznym odświeżeniem po 401 (interceptor axios).

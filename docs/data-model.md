@@ -152,6 +152,25 @@ Dziennik akcji administracyjnych.
 
 **Indeksy:** `(actorUserId, createdAt)`, `(organizationId, createdAt)`, `(entityType, entityId)`.
 
+### notifications
+
+Powiadomienia in-app (dzwonek w panelach).
+
+| Pole | Typ | Opis |
+|---|---|---|
+| `id` | int PK | — |
+| `userId` | int | Adresat |
+| `type` | varchar(64) | `ASSIGNMENT_NEW`, `USER_APPROVED`, `ORGANIZATION_PENDING`, `RISK_ALERT` itd. |
+| `title` | varchar(200) | Tytuł |
+| `message` | text | Treść |
+| `link` | varchar(500) | Ścieżka w aplikacji (nullable) |
+| `data` | jsonb | Dodatkowy kontekst (nullable) |
+| `read` | bool | Domyślnie `false` |
+| `readAt` | timestamp | nullable |
+| `createdAt` | timestamp | — |
+
+**Indeks:** `(userId, read, createdAt)`.
+
 ## Algorytmy scoringu
 
 ### Wellbeing Index (Indeks dobrostanu)
@@ -176,6 +195,6 @@ Obliczany w `analytics.service.ts` i `results.service.ts` jako średnia ważona 
 
 ### Anonimizacja k-anonymity
 
-Próg `MIN_GROUP_SIZE = 5`. Dla działów z mniej niż 5 uczestnikami `avgScore` i `wellbeingIndex` są zwracane jako `null`, a obiekt ma `anonymized: true`.
+Próg `MIN_GROUP_SIZE = 5`. Grupy poniżej progu są maskowane (`avgScore`/`wellbeingIndex` = `null`, `anonymized: true`) lub pomijane. Od naprawy K5 próg obejmuje wszystkie agregaty HR: statystyki i indeks per dział, trendy/historię tygodniową, rozkład poziomów nasilenia i raport zmian krytycznych (szczegóły w [security.md](./security.md)).
 
 Zgodne z RULES.md pkt 12: dane HR muszą być zagregowane i niemożliwe do deanonimizacji.

@@ -14,8 +14,8 @@ Aplikacja webowa (PWA) zbudowana w architekturze multi-tenant.
 
 | Warstwa | Technologia |
 |---|---|
-| Frontend pracownika | React 18, Vite, Redux Toolkit, Tailwind CSS, vite-plugin-pwa |
-| Frontend admin/HR | Next.js 16, React 18, Tailwind CSS, recharts |
+| Frontend pracownika | React 19, Vite 8, Redux Toolkit, Tailwind CSS, vite-plugin-pwa |
+| Frontend admin/HR | Next.js 16 (App Router), React 19, Tailwind CSS, recharts |
 | Backend | NestJS 11, TypeORM, JWT, bcrypt, helmet, class-validator |
 | Baza danych | PostgreSQL 16 |
 | Mailing | Nodemailer + Gmail SMTP |
@@ -81,7 +81,9 @@ MoodFlow/
 | Pole | Wartość |
 |---|---|
 | Email | `owner@moodflow.pl` |
-| Hasło | `SuperAdmin1!` |
+| Hasło | wartość zmiennej `SEED_OWNER_PASSWORD` z `.env` |
+
+Seed konta właściciela wykonuje się tylko wtedy, gdy zmienna `SEED_OWNER_PASSWORD` jest ustawiona — repozytorium nie zawiera żadnego domyślnego hasła.
 
 ⚠️ **Zmień hasło przy pierwszym logowaniu w panelu Ustawień.**
 
@@ -131,7 +133,7 @@ Mechanizmy zaimplementowane:
 - Audit log akcji administracyjnych (USER_APPROVED, ORGANIZATION_*, ASSIGNMENT_*, LOGIN_*)
 - HTML escape w mailach
 - Multi-tenant izolacja przez `organizationId`
-- TypeORM `synchronize: false` w prod, migracje przez `migrationsRun: true`
+- Schemat bazy: `synchronize: true` (świadoma decyzja dla MVP — uzasadnienie i plan przejścia na migracje w [ARCHITECTURE.md](./ARCHITECTURE.md) §12)
 - Service Worker wyklucza `/auth/*` i `/users/me` z cache (brak wycieków po wylogowaniu)
 
 Szczegóły w [docs/security.md](./docs/security.md).

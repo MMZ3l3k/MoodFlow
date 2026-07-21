@@ -28,6 +28,9 @@ SUPER_ADMIN > ADMIN > HR > EMPLOYEE
 | Decorator | `@Roles(Role.ADMIN, Role.HR)` na poziomie metody |
 | Multi-tenant | `req.user.organizationId` filtruje wszystkie zapytania domenowe |
 | Cross-org access | Blokowany — admin firmy A nie widzi danych firmy B |
+| Brak eskalacji ról | Endpointy `POST /users` i `PATCH /users/:id` walidują docelową rolę — nie da się nadać `SUPER_ADMIN`; zmiana roli trafia do audit logu (`USER_ROLE_CHANGED`) |
+| Serializacja odpowiedzi | Globalny `ClassSerializerInterceptor` + `@Exclude()` na `passwordHash` — hash nigdy nie opuszcza API |
+| Seed super-admina | Wykonywany tylko przy ustawionym `SEED_OWNER_PASSWORD` — brak domyślnego hasła w kodzie i repo |
 
 ## Walidacja wejścia
 
@@ -43,6 +46,8 @@ SUPER_ADMIN > ADMIN > HR > EMPLOYEE
 | `POST /auth/register` | 5 / 15 min |
 | `POST /auth/register-employee` | 5 / 15 min |
 | `POST /auth/register-company` | 5 / 60 min |
+| `POST /auth/refresh` | 30 / 15 min |
+| `POST /auth/handoff/exchange` | 30 / 15 min |
 
 Implementacja: `@nestjs/throttler` z dekoratorem `@Throttle()` per endpoint.
 
@@ -70,11 +75,14 @@ Wymagane jawne ustawienie `CORS_ORIGIN` w env — fail-fast przy starcie.
 
 ## Anonimizacja danych HR (k-anonymity)
 
-Próg `MIN_GROUP_SIZE = 5` w `analytics.service.ts`. Dla działów z mniej niż 5
-uczestnikami `avgScore` i `wellbeingIndex` są maskowane (zwracane `null`),
-a obiekt ma `anonymized: true`.
+Próg `MIN_GROUP_SIZE = 5` w `analytics.service.ts`. Grupy poniżej progu są
+maskowane (`avgScore: null`, `anonymized: true`) lub pomijane w agregatach.
 
-**Gdzie:** `getDepartmentStats()`, `getDepartmentWellbeingLoad()`.
+**Gdzie (po naprawie K5 z audytu):** statystyki i indeks per dział
+(`getDepartmentStats()`, `getDepartmentWellbeingLoad()`), historia tygodniowa
+i indeks organizacji (`getTrends()`, `getOrgWellbeingHistory()`), rozkład
+poziomów nasilenia (`getSeverityDistribution()`), zmiany krytyczne
+(`getCriticalChanges()` — dodatkowo próg istotności zmiany ≥8, krytycznej ≥15).
 
 **Uzasadnienie:** RULES.md pkt 12 — dane HR muszą być zagregowane, niemożliwe
 do deanonimizacji w małych grupach.
@@ -115,9 +123,35 @@ Endpoint `GET /audit` (ADMIN, SUPER_ADMIN) — przegląd dziennika.
 - `/auth/login` zwraca jednolite „Nieprawidłowy email lub hasło" dla obu przypadków (zły email / złe hasło).
 - Rate limit utrudnia masowe sondowanie.
 
+## Handoff między panelami (H3)
+
+Logowanie kontem HR/ADMIN przez panel pracownika przekazuje sesję do panelu
+admina przez **jednorazowy kod** (`POST /auth/handoff` → `randomBytes(32)`,
+TTL 60 s, magazyn in-memory → `POST /auth/handoff/exchange`). Tokeny nigdy nie
+występują w URL (wcześniej szły we fragmencie URL — ryzyko wycieku przez
+historię/referrer).
+
+## Twardnienie refresh flow (H10 — częściowe)
+
+- Strategia `jwt-refresh` odrzuca konta `SUSPENDED`/`REJECTED` przy odświeżaniu,
+- rate limit 30/15 min na `/auth/refresh`,
+- interceptor axios (oba fronty) zapisuje nowe tokeny i odblokowuje kolejkę
+  żądań także przy nieudanym odświeżeniu (brak zawieszenia UI).
+
+## Nagłówki na frontendach (H2)
+
+- client (nginx): `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`,
+  `Referrer-Policy`, `Permissions-Policy`, **CSP w trybie Report-Only**
+  (enforce po okresie obserwacji),
+- admin (next.config): analogiczny zestaw nagłówków,
+- service worker admina cache'uje wyłącznie zasoby same-origin (K7).
+
 ## Niedopełnienia świadome (do dalszych iteracji)
 
+- **Pełna rewokacja sesji (`tokenVersion`)** — unieważnienie wszystkich sesji użytkownika przy zmianie hasła/zawieszeniu; obecnie działa kontrola statusu przy refresh (patrz wyżej).
 - **Refresh token rotation** — token revocation list w bazie, każde użycie refresh tokena unieważnia stary. Wymaga dodatkowej tabeli i state managementu, pominięte dla MVP.
+- **CSP enforce** — obecnie Report-Only na panelu pracownika.
+- **Cookies SameSite + CSRF dla panelu admina** — obecnie tokeny w localStorage z timeoutem bezczynności (15 min); wariant cookies wymaga wspólnej domeny lub proxy.
 - **2FA / TOTP** — przewidziane do przyszłych wersji.
 
 ## Procedura w razie incydentu

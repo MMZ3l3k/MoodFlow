@@ -9,7 +9,7 @@
 ### 2. Dane logowania
 | Rola | URL | Email | Hasło |
 |------|-----|-------|-------|
-| Super Admin (właściciel) | localhost:3001/super-admin/login | owner@moodflow.pl | SuperAdmin1! |
+| Super Admin (właściciel) | localhost:3001/super-admin/login | owner@moodflow.pl | wg `SEED_OWNER_PASSWORD` |
 | Admin / HR | localhost:3001/login | — | — |
 | Pracownik | localhost:3000/login | — | — |
 

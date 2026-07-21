@@ -52,16 +52,15 @@ MAIL_PASS=<gmail-app-password>
 
 **Plik `.env` jest w `.gitignore` — nie commituj.**
 
-## Krok 3 — Migracja schematu
+## Krok 3 — Schemat bazy
 
-Pierwsze uruchomienie wymaga uruchomienia migracji TypeORM (przy `synchronize: false` w prod):
+Schemat jest tworzony automatycznie przy pierwszym starcie backendu —
+runtime działa z `synchronize: true` (świadoma decyzja dla MVP; uzasadnienie
+i plan przejścia na migracje: ADR-005 w [decisions.md](./decisions.md)).
+Nie trzeba uruchamiać żadnych migracji ręcznie.
 
-```bash
-docker compose -f docker-compose.prod.yml run --rm backend-api npm run migration:run
-```
-
-W kolejnych deploy'ach migracje uruchomią się automatycznie dzięki `migrationsRun: true`
-przy `NODE_ENV=production`.
+Migracje TypeORM (`npm run migration:*`) są skonfigurowane w `data-source.ts`
+(CLI) i przewidziane jako docelowy mechanizm zmian schematu.
 
 ## Krok 4 — Start kontenerów
 
@@ -90,7 +89,7 @@ Na platformie chmurowej (Railway / Render / Fly.io):
 Domyślne konto super-admina jest tworzone przez seed (`src/seed/users.seed.ts`):
 
 - Email: `owner@moodflow.pl`
-- Hasło: `SuperAdmin1!`
+- Hasło: wartość zmiennej `SEED_OWNER_PASSWORD` (seed jest pomijany, jeśli zmienna nie jest ustawiona — hasło nie znajduje się w repozytorium)
 
 **WAŻNE: zmień hasło po pierwszym logowaniu w panelu Ustawień.**
 

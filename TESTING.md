@@ -14,7 +14,7 @@ Aplikacja wdrożona na Railway. Pełny flow do przetestowania w 15 minut.
 ## Konto super-admina
 
 - Email: `owner@moodflow.pl`
-- Hasło: `SuperAdmin1!`
+- Hasło: wartość zmiennej środowiskowej `SEED_OWNER_PASSWORD` ustawionej przy seedzie (nie jest przechowywane w repozytorium)
 
 ## Pełny flow testowy
 
