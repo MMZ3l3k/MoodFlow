@@ -48,5 +48,8 @@ postgres/
 # Local credentials
 CREDENTIALS.txt
 
-# Lokalne ustawienia Claude Code (zawiera lokalne sciezki i historie polecen)
-.claude/settings.local.json
+# Lokalne pliki narzędzi deweloperskich (ustawienia, notatki robocze)
+.claude/
+CLAUDE.md
+SESSION_NOTES.md
+Test.md

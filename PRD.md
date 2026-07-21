@@ -168,7 +168,7 @@ Format: aktor — cel — rezultat. Numeracja FR-x używana też w dokumentacji 
 
 ## 10. Założenia i ograniczenia
 
-- Kwestionariusze PHQ-9 i GAD-7 są publicznie dostępne; status licencyjny pełnych treści PSS-10 i skal nastroju należy zweryfikować przed komercjalizacją (w projekcie inżynierskim użyto struktur punktacji i parafraz — szczegóły w Test.md).
+- Kwestionariusze PHQ-9 i GAD-7 są publicznie dostępne; status licencyjny pełnych treści PSS-10 i skal nastroju należy zweryfikować przed komercjalizacją (w projekcie inżynierskim użyto struktur punktacji i parafraz pozycji).
 - System przechowuje dane wrażliwe (dobrostan psychiczny) — każda nowa funkcja musi przejść ocenę wpływu na prywatność (zasada z RULES.md §11–13).
 - Skala projektu: praca inżynierska / MVP — decyzje techniczne optymalizowane pod czytelność i obronę, nie pod skalę enterprise (RULES.md §9).
 
