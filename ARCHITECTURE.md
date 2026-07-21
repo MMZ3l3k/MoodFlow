@@ -293,5 +293,6 @@ Szablon: `.env.example` (bez sekretów).
 - `tokenVersion` — pełna rewokacja sesji,
 - cookies SameSite + CSRF dla panelu admina,
 - Redis: handoff store + cache agregatów analitycznych,
+- **silniejsza izolacja tenantów** — przejście z izolacji wierszowej (`organizationId`) na schema-per-tenant, a przy dalszej skali database-per-tenant (ścieżka opisana w ADR-006); obecne podejście jest adekwatne do skali MVP, a zmiana nie wymaga przebudowy logiki domenowej,
 - eksporty PDF/CSV, automatyczne przypomnienia, konfigurowalne progi alertów,
 - testy automatyczne frontendów i rozszerzenie testów e2e backendu.
