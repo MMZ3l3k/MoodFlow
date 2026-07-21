@@ -157,6 +157,7 @@ Po stronie admin-frontendu dodatkowa warstwa UX: kontrola roli względem trasy w
 2. backend wystawia **access token JWT (15 min)** i **refresh token JWT (7 dni)** — payload: `{ sub, email, role, organizationId }`,
 3. tokeny wracają w body oraz jako ciasteczka httpOnly (`mf_access`, `mf_refresh`); klienci używają nagłówka `Authorization: Bearer` z automatycznym odświeżaniem po 401 (interceptor axios zapisuje nowe tokeny i ponawia kolejkę żądań),
 4. `POST /auth/refresh` (strategia `jwt-refresh`) odświeża sesję; konta `SUSPENDED`/`REJECTED` są odrzucane przy odświeżaniu; endpoint ma własny rate limit (30/15 min),
+4a. **rewokacja sesji (H10):** payload tokenów zawiera `tokenVersion` porównywany z kolumną `users.tokenVersion` przy każdej walidacji — zmiana hasła lub zawieszenie konta podbija licznik i natychmiast unieważnia wszystkie wydane tokeny użytkownika,
 5. `POST /auth/logout` czyści ciasteczka.
 
 Sekrety JWT są walidowane przy starcie aplikacji (fail-fast): wymagane, min. 32 znaki, różne od siebie, bez trywialnych wartości.
@@ -217,7 +218,7 @@ Dodatkowo: nota prywatności na ekranie testu (H6), odpowiedź kryzysowa PHQ-9 Q
 - **PWA**: vite-plugin-pwa, manifest, service worker workbox — `NetworkOnly` dla `/auth/*`, `/users/me`, `/results`, `/admin`, `/analytics` (brak cache danych wrażliwych), `NetworkFirst` dla reszty API,
 - **ProtectedRoute** — trasy `/app/*` wymagają sesji,
 - **Autozapis draftu testu** (H5): odpowiedzi zapisywane w `sessionStorage` pod kluczem `mf_assessment_draft_<assignmentId>`, odtwarzane po odświeżeniu strony,
-- serwowany przez **nginx** z fallbackiem SPA i nagłówkami bezpieczeństwa (X-Frame-Options DENY, nosniff, Referrer-Policy, Permissions-Policy, CSP w trybie Report-Only).
+- serwowany przez **nginx** z fallbackiem SPA i nagłówkami bezpieczeństwa (X-Frame-Options DENY, nosniff, Referrer-Policy, Permissions-Policy, **CSP w trybie enforce** — wdrożone po okresie Report-Only bez naruszeń).
 
 ### admin-frontend (HR / admin / super-admin)
 
@@ -234,8 +235,6 @@ Każde z poniższych to udokumentowana decyzja, nie przeoczenie:
 | Temat | Stan | Uzasadnienie / plan |
 |---|---|---|
 | Schemat bazy | **`synchronize: true` w runtime**; migracja InitialSchema istnieje, ale nie jest uruchamiana | baza produkcyjna została zbudowana przez synchronize; przejście na wyłącznie-migracje to osobny krok operacyjny (ryzyko rozjazdu schematu przy „flipie" na żywej bazie); `data-source.ts` dla CLI ma już `synchronize: false` |
-| CSP | Report-Only (client nginx) | najpierw obserwacja raportów naruszeń, potem enforce — uniknięcie zepsucia produkcji |
-| Rewokacja sesji | częściowa (H10): status konta sprawdzany przy refresh + rate limit | pełny `tokenVersion` (unieważnienie wszystkich sesji użytkownika) w planie rozwoju |
 | Sesja admina | tokeny w localStorage (H1) | wariant cookies SameSite+CSRF odłożony świadomie — wymaga wspólnej domeny lub proxy; opisany jako przyszły rozwój |
 | Handoff store | in-memory, TTL 60 s | wystarczające dla 1 instancji; przy skalowaniu → Redis |
 | Prefix API | brak globalnego `/api/v1` | ścieżki płaskie (`/auth`, `/users`...); wersjonowanie odłożone do czasu pierwszego breaking change |
@@ -289,9 +288,7 @@ Szablon: `.env.example` (bez sekretów).
 ## 15. Kierunki rozwoju
 
 - pełne przejście na migracje TypeORM (wyłączenie `synchronize` na produkcji),
-- CSP enforce po okresie Report-Only,
-- `tokenVersion` — pełna rewokacja sesji,
-- cookies SameSite + CSRF dla panelu admina,
+- cookies SameSite + CSRF dla panelu admina; CSP także na panelu admina,
 - Redis: handoff store + cache agregatów analitycznych,
 - **silniejsza izolacja tenantów** — przejście z izolacji wierszowej (`organizationId`) na schema-per-tenant, a przy dalszej skali database-per-tenant (ścieżka opisana w ADR-006); obecne podejście jest adekwatne do skali MVP, a zmiana nie wymaga przebudowy logiki domenowej,
 - eksporty PDF/CSV, automatyczne przypomnienia, konfigurowalne progi alertów,

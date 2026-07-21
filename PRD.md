@@ -177,7 +177,7 @@ Format: aktor — cel — rezultat. Numeracja FR-x używana też w dokumentacji 
 ## 11. Przyszły rozwój (poza zakresem pracy)
 
 - eksporty PDF/CSV, przypomnienia automatyczne, konfigurowalne alerty,
-- pełna rewokacja sesji (tokenVersion), CSP w trybie enforce, cookies SameSite + CSRF,
+- cookies SameSite + CSRF dla panelu admina, refresh token rotation, 2FA,
 - migracje TypeORM jako jedyny mechanizm zmian schematu na produkcji,
 - silniejsza izolacja danych firm: schema-per-tenant, docelowo osobne bazy danych per firma (database-per-tenant) przy większej liczbie klientów — obecna izolacja wierszowa (`organizationId`) jest świadomym wyborem adekwatnym do skali MVP (ADR-006),
 - integracja SSO, analiza komentarzy, wielojęzyczność.

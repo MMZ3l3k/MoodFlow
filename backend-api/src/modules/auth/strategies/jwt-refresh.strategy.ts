@@ -28,11 +28,15 @@ export class JwtRefreshStrategy extends PassportStrategy(Strategy, 'jwt-refresh'
     });
   }
 
-  async validate(payload: { sub: number; email: string }) {
+  async validate(payload: { sub: number; email: string; tokenVersion?: number }) {
     const user = await this.usersService.findById(payload.sub);
     // H10: konto zawieszone/odrzucone NIE może odnawiać sesji (spójność z jwt.strategy).
     if (!user || user.status !== UserStatus.ACTIVE) {
       throw new UnauthorizedException('Konto nieaktywne lub nie istnieje');
+    }
+    // H10: refresh token sprzed podbicia tokenVersion nie odnowi sesji.
+    if ((payload.tokenVersion ?? 0) !== user.tokenVersion) {
+      throw new UnauthorizedException('Sesja została unieważniona — zaloguj się ponownie');
     }
     return user;
   }

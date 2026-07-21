@@ -131,26 +131,37 @@ TTL 60 s, magazyn in-memory → `POST /auth/handoff/exchange`). Tokeny nigdy nie
 występują w URL (wcześniej szły we fragmencie URL — ryzyko wycieku przez
 historię/referrer).
 
-## Twardnienie refresh flow (H10 — częściowe)
+## Rewokacja sesji — tokenVersion (H10)
 
-- Strategia `jwt-refresh` odrzuca konta `SUSPENDED`/`REJECTED` przy odświeżaniu,
-- rate limit 30/15 min na `/auth/refresh`,
-- interceptor axios (oba fronty) zapisuje nowe tokeny i odblokowuje kolejkę
-  żądań także przy nieudanym odświeżeniu (brak zawieszenia UI).
+Kolumna `users.tokenVersion` (default 0) jest osadzana w payloadzie każdego
+wydawanego tokenu (access i refresh). Obie strategie JWT porównują wartość
+z payloadu z wartością w bazie — niezgodność = 401 „Sesja została unieważniona".
+Ponieważ strategie i tak ładują użytkownika (kontrola statusu), porównanie nie
+dodaje żadnego zapytania.
+
+Licznik jest podbijany przy:
+- **zmianie hasła** (`UsersService.changePassword`) — unieważnia także sesję
+  ewentualnego atakującego znającego stare hasło,
+- **zawieszeniu/odrzuceniu konta** (`UsersService.updateStatus`) — natychmiastowe
+  odcięcie, bez czekania na wygaśnięcie access tokenu (15 min).
+
+Dodatkowo: strategia `jwt-refresh` odrzuca konta `SUSPENDED`/`REJECTED`,
+rate limit 30/15 min na `/auth/refresh`, interceptor axios (oba fronty)
+odblokowuje kolejkę żądań także przy nieudanym odświeżeniu.
 
 ## Nagłówki na frontendach (H2)
 
 - client (nginx): `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`,
-  `Referrer-Policy`, `Permissions-Policy`, **CSP w trybie Report-Only**
-  (enforce po okresie obserwacji),
+  `Referrer-Policy`, `Permissions-Policy`, **CSP w trybie enforce** (po okresie
+  Report-Only bez naruszeń; polityka: skrypty tylko `self`, style `self` +
+  Google Fonts, połączenia tylko `self` + API, `frame-ancestors 'none'`),
 - admin (next.config): analogiczny zestaw nagłówków,
 - service worker admina cache'uje wyłącznie zasoby same-origin (K7).
 
 ## Niedopełnienia świadome (do dalszych iteracji)
 
-- **Pełna rewokacja sesji (`tokenVersion`)** — unieważnienie wszystkich sesji użytkownika przy zmianie hasła/zawieszeniu; obecnie działa kontrola statusu przy refresh (patrz wyżej).
-- **Refresh token rotation** — token revocation list w bazie, każde użycie refresh tokena unieważnia stary. Wymaga dodatkowej tabeli i state managementu, pominięte dla MVP.
-- **CSP enforce** — obecnie Report-Only na panelu pracownika.
+- **Refresh token rotation** — token revocation list w bazie, każde użycie refresh tokena unieważnia stary. Wymaga dodatkowej tabeli i state managementu, pominięte dla MVP (rewokację per-użytkownik zapewnia `tokenVersion`).
+- **CSP na panelu admina** — nagłówki bezpieczeństwa są, pełna polityka CSP obecnie tylko na panelu pracownika.
 - **Cookies SameSite + CSRF dla panelu admina** — obecnie tokeny w localStorage z timeoutem bezczynności (15 min); wariant cookies wymaga wspólnej domeny lub proxy.
 - **2FA / TOTP** — przewidziane do przyszłych wersji.
 

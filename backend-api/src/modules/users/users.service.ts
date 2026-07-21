@@ -115,6 +115,10 @@ export class UsersService {
     }
     const previousStatus = user.status;
     user.status = dto.status;
+    // H10: zawieszenie/odrzucenie unieważnia natychmiast wszystkie wydane tokeny
+    if (dto.status === UserStatus.SUSPENDED || dto.status === UserStatus.REJECTED) {
+      user.tokenVersion = (user.tokenVersion ?? 0) + 1;
+    }
     const saved = await this.usersRepository.save(user);
 
     const actionMap: Record<string, AuditAction> = {
@@ -206,6 +210,9 @@ export class UsersService {
     const match = await bcrypt.compare(currentPassword, user.passwordHash);
     if (!match) throw new UnauthorizedException('Aktualne hasło jest nieprawidłowe');
     user.passwordHash = await bcrypt.hash(newPassword, 12);
+    // H10: zmiana hasła unieważnia wszystkie dotychczasowe sesje użytkownika
+    // (w tym ewentualną sesję atakującego znającego stare hasło).
+    user.tokenVersion = (user.tokenVersion ?? 0) + 1;
     await this.usersRepository.save(user);
     await this.auditService.log({
       action: AuditAction.PASSWORD_CHANGED,

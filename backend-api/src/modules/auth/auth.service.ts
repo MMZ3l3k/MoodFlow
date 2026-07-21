@@ -157,7 +157,7 @@ export class AuthService {
       organizationId: user.organizationId ?? null,
       metadata: { email: user.email, role: user.role },
     });
-    return this.generateTokens(user.id, user.email, user.role, user.organizationId ?? undefined);
+    return this.generateTokens(user.id, user.email, user.role, user.organizationId ?? undefined, user.tokenVersion);
   }
 
   async logout(authHeader: string): Promise<void> {
@@ -173,11 +173,11 @@ export class AuthService {
 
   async refresh(userId: number, email: string) {
     const user = await this.usersService.findById(userId);
-    return this.generateTokens(userId, email, user?.role, user?.organizationId ?? undefined);
+    return this.generateTokens(userId, email, user?.role, user?.organizationId ?? undefined, user?.tokenVersion ?? 0);
   }
 
-  private generateTokens(userId: number, email: string, role?: string, organizationId?: number) {
-    const payload = { sub: userId, email, role, organizationId };
+  private generateTokens(userId: number, email: string, role?: string, organizationId?: number, tokenVersion = 0) {
+    const payload = { sub: userId, email, role, organizationId, tokenVersion };
 
     const accessToken = this.jwtService.sign(payload, {
       secret: this.configService.get<string>('JWT_SECRET'),

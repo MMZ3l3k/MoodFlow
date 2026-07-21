@@ -58,6 +58,12 @@ export class User {
   @JoinColumn({ name: 'organizationId' })
   organization: Organization;
 
+  // H10: wersja tokenów użytkownika. Podbicie licznika unieważnia natychmiast
+  // wszystkie wcześniej wydane tokeny (access i refresh) — strategie JWT
+  // porównują wartość z payloadu z wartością w bazie.
+  @Column({ default: 0 })
+  tokenVersion: number;
+
   @Column({ default: false })
   isOnline: boolean;
 

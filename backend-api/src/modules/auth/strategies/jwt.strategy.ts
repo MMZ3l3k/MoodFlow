@@ -27,10 +27,15 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validate(payload: { sub: number; email: string; role?: string; organizationId?: number }) {
+  async validate(payload: { sub: number; email: string; role?: string; organizationId?: number; tokenVersion?: number }) {
     const user = await this.usersService.findById(payload.sub);
     if (!user || user.status !== UserStatus.ACTIVE) {
       throw new UnauthorizedException('Konto nieaktywne lub nie istnieje');
+    }
+    // H10: tokeny wydane przed podbiciem tokenVersion (zmiana hasła, zawieszenie)
+    // są odrzucane natychmiast. Starsze tokeny bez pola traktujemy jako wersję 0.
+    if ((payload.tokenVersion ?? 0) !== user.tokenVersion) {
+      throw new UnauthorizedException('Sesja została unieważniona — zaloguj się ponownie');
     }
     return user;
   }

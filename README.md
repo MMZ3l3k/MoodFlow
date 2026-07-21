@@ -125,6 +125,8 @@ Mechanizmy zaimplementowane:
 
 - bcrypt (12 rounds) dla haseł
 - JWT (HS256) z silnymi sekretami w env (fail-fast walidacja przy starcie)
+- Rewokacja sesji przez `tokenVersion` (zmiana hasła / zawieszenie konta unieważnia wszystkie tokeny)
+- CSP w trybie enforce na panelu pracownika
 - httpOnly cookies + Bearer fallback (auto-refresh przy 401)
 - Helmet (X-Frame-Options, HSTS, X-Content-Type-Options, Referrer-Policy)
 - CORS z jawnymi originami
