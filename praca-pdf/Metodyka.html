@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Metodyka</title>
+<style>
+  @page { size: A4; margin: 2.5cm 2cm 2.5cm 2.5cm; }
+  body {
+    font-family: Verdana, sans-serif;
+    font-size: 10pt;
+    line-height: 1.15;
+    color: #000;
+    text-align: justify;
+  }
+  h1 {
+    font-size: 12pt;
+    font-weight: bold;
+    margin-top: 0;
+    margin-bottom: 12pt;
+    page-break-after: avoid;
+  }
+  h2 {
+    font-size: 10pt;
+    font-weight: bold;
+    margin-top: 18pt;
+    margin-bottom: 8pt;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 10pt;
+    font-weight: bold;
+    margin-top: 14pt;
+    margin-bottom: 6pt;
+    page-break-after: avoid;
+  }
+  p {
+    margin: 0 0 8pt 0;
+    text-indent: 18pt;
+  }
+  p.no-indent { text-indent: 0; }
+  ul, ol {
+    margin: 4pt 0 8pt 0;
+    padding-left: 30pt;
+  }
+  li { margin-bottom: 3pt; line-height: 1.3; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 6pt 0 12pt 0;
+    page-break-inside: auto;
+    font-size: 9.5pt;
+  }
+  caption {
+    caption-side: top;
+    text-align: left;
+    font-weight: bold;
+    margin-bottom: 4pt;
+  }
+  th, td {
+    border: 1px solid #000;
+    padding: 4pt 6pt;
+    vertical-align: top;
+    text-align: left;
+  }
+  th {
+    background: #e8e8e8;
+    font-weight: bold;
+  }
+  strong { font-weight: bold; }
+  em { font-style: italic; }
+</style>
+</head>
+<body>
+
+<h1>3. Metodyka</h1>
+
+<p>W rozdziale przedstawiono metody zastosowane przy wytworzeniu platformy MoodFlow w oparciu o wymagania inżynierii oprogramowania oraz wybrane technologie informatyczne. Opisano metodyki projektowe, organizację pracy zespołu, wzorce architektoniczne, dobór technologii oraz narzędzia wspierające proces wytwarzania.</p>
+
+<h2>3.1. Metodyka pracy zespołowej</h2>
+
+<p>Wytwarzanie platformy oparto o iteracyjne podejście wywodzące się z filozofii Agile, ze szczególnym uwzględnieniem elementów metodyki <strong>Scrum</strong> oraz tablicy zadań w stylu <strong>Kanban</strong>. Wybór metodyki zwinnej był podyktowany kilkoma czynnikami. Po pierwsze, na początku projektu nie wszystkie wymagania były znane w sposób precyzyjny i pojawiała się konieczność ich uściślania w trakcie realizacji. Po drugie, zespół składał się z osób o różnych specjalizacjach, co wymagało regularnej komunikacji i transparentności postępów. Po trzecie, krótkie iteracje pozwalały na bieżącą walidację rozwiązań w kontekście wymagań pracy inżynierskiej oraz konsultacji z promotorem.</p>
+
+<p>Praca przebiegała w dwutygodniowych iteracjach. Na początku każdej iteracji ustalano zakres zadań do wykonania na podstawie listy <em>backlog</em>, w trakcie iteracji prowadzono krótkie spotkania synchronizacyjne, a na zakończenie weryfikowano efekty. Tablica zadań w narzędziu do zarządzania projektami obrazowała aktualny stan każdego zadania w pięciu kolumnach: <em>Backlog</em>, <em>To Do</em>, <em>In Progress</em>, <em>Review</em> oraz <em>Done</em>.</p>
+
+<p>Alternatywą rozważaną była metodyka <strong>Waterfall</strong>, jednak została odrzucona ze względu na ograniczenia wynikające z liniowej kolejności faz oraz brak elastyczności w przypadku zmiany wymagań w trakcie projektu. Charakter pracy inżynierskiej, w której wymagania funkcjonalne dojrzewały równolegle z postępami implementacji, wymagał podejścia adaptacyjnego.</p>
+
+<h2>3.2. Metodyka inżynierii wymagań</h2>
+
+<p>Specyfikację wymagań przeprowadzono zgodnie z dobrymi praktykami opisanymi w przewodniku Babok Guide 3.0, według którego wymaganie funkcjonalne stanowi „użyteczną reprezentację potrzeby oraz skupia się na wartości, jaką można dostarczyć, gdy wymaganie zostanie spełnione". Wymagania zostały podzielone na cztery poziomy: biznesowe (cel projektu), interesariuszy (oczekiwania ról), systemowe (funkcjonalne i niefunkcjonalne) oraz przejściowe (związane z wdrożeniem).</p>
+
+<p>Każde wymaganie spełniało zasadę <strong>SMART</strong> &mdash; było konkretne (Specific), mierzalne (Measurable), osiągalne (Achievable), istotne (Relevant) oraz określone w czasie (Time-bound). Wymagania funkcjonalne formułowano w postaci <em>user stories</em> według wzorca: „Jako [rola], chciałbym [czynność], aby [cel]", a następnie rozszerzano o opis, kryteria akceptacji oraz wykonawcę.</p>
+
+<p>Do priorytetyzacji wymagań zastosowano metodę <strong>MoSCoW</strong>, opisaną szczegółowo w rozdziale 2.1. Pozwoliła ona na jednoznaczne rozdzielenie funkcjonalności krytycznych (Must Have) od pomocniczych (Should Have, Could Have) oraz świadomie wykluczonych (Won&rsquo;t Have).</p>
+
+<p>Najbardziej krytyczne przepływy interakcji opisano w postaci <em>Use Case</em> w formie tabelarycznej, zawierającej pola: identyfikator i nazwę przypadku użycia, opis, aktorów, warunki początkowe (preconditions), wyzwalacz (trigger), główny przepływ zdarzeń (main flow), przepływy alternatywne (alternative flow), wyjątki (exceptions), warunki końcowe (postconditions) oraz powiązane wymagania.</p>
+
+<h2>3.3. Modelowanie systemu</h2>
+
+<p>Do modelowania systemu zastosowano notację <strong>UML</strong> (Unified Modeling Language) zgodnie z wymaganiami inżynierii oprogramowania. Diagramy przygotowano przy użyciu narzędzia Mermaid &mdash; języka opisu diagramów w formie tekstowej, dzięki czemu źródło każdego diagramu jest wersjonowane razem z kodem aplikacji w systemie kontroli wersji.</p>
+
+<p>W projekcie sporządzono następujące diagramy:</p>
+
+<ul>
+  <li><strong>Diagram przypadków użycia</strong> &mdash; przegląd interakcji aktorów (pracownik, HR, administrator firmy, właściciel platformy, system mailowy) z funkcjami systemu;</li>
+  <li><strong>Diagram klas</strong> &mdash; struktura modułów backendu z ich zależnościami i relacjami wstrzykiwania;</li>
+  <li><strong>Diagram ERD</strong> &mdash; relacyjny model bazy danych z dziesięcioma encjami głównymi (organizations, users, departments, assessments, questions, answer_options, assessment_assignments, assessment_results, user_responses, audit_logs, notifications);</li>
+  <li><strong>Diagram sekwencji</strong> &mdash; przepływ danych przy wypełnianiu testu psychologicznego, od pobrania definicji testu po zapis wyniku;</li>
+  <li><strong>Diagram maszyny stanów</strong> &mdash; cykl życia konta użytkownika (PENDING, ACTIVE, REJECTED, SUSPENDED) oraz organizacji (PENDING, ACTIVE, BLOCKED, REJECTED);</li>
+  <li><strong>Diagram komponentów</strong> &mdash; relacje pomiędzy komponentami systemu (backend, dwa frontendy, baza danych, system mailowy) z zaznaczeniem protokołów komunikacji (HTTPS, REST, TCP, SMTP);</li>
+  <li><strong>Diagram wdrożenia</strong> &mdash; rozmieszczenie komponentów na platformie chmurowej z zaznaczeniem zależności pomiędzy węzłami;</li>
+  <li><strong>Diagram BPMN</strong> &mdash; pełen proces biznesowy od rejestracji firmy, przez zatwierdzenie, dodanie pracownika, aż po wypełnienie pierwszego testu i analizę wyniku w panelu HR.</li>
+</ul>
+
+<h2>3.4. Architektura systemu</h2>
+
+<p>Platformę zaprojektowano jako <strong>monolit modularny</strong> w warstwowej architekturze typu <em>layered architecture</em>. Wybór tego wzorca uzasadniono trzema czynnikami: prostotą wdrożenia w porównaniu do mikrousług, dopasowaniem do skali projektu inżynierskiego oraz czytelnością kodu dla osób oceniających pracę.</p>
+
+<p>Backend zorganizowano w niezależne moduły domenowe (<em>auth</em>, <em>users</em>, <em>organizations</em>, <em>departments</em>, <em>assessments</em>, <em>responses</em>, <em>results</em>, <em>analytics</em>, <em>admin</em>, <em>notifications</em>, <em>audit</em>, <em>health</em>), z których każdy zawiera własny kontroler (warstwa prezentacji), serwis (warstwa logiki biznesowej), repozytoria (warstwa dostępu do danych) oraz definicje encji. Podejście to wynika z metodyki Domain-Driven Design w jej uproszczonej formie i pozwala na czytelne mapowanie kodu na obszary biznesowe.</p>
+
+<p>Architektura systemu jest <strong>wielodostępna (multi-tenant)</strong> w modelu <em>row-level multi-tenancy</em> &mdash; wszystkie dane wszystkich firm znajdują się w jednej bazie danych, a izolacja realizowana jest przez filtrowanie zapytań po identyfikatorze organizacji pobieranym z tokenu uwierzytelniającego. Alternatywne modele (osobna baza per firma, osobny schemat) odrzucono jako zbyt kosztowne operacyjnie dla skali projektu.</p>
+
+<p>Komunikacja między frontendami a backendem odbywa się przez <strong>REST API</strong> z formatem JSON, przy użyciu metod HTTP zgodnie z konwencją: GET (odczyt), POST (utworzenie), PATCH (modyfikacja), DELETE (usunięcie). Endpointy nazywane są zgodnie z konwencją zasobów w liczbie mnogiej, a zwracane odpowiedzi mają ujednoliconą strukturę.</p>
+
+<h2>3.5. Wybrane technologie informatyczne</h2>
+
+<p>Każda technologia została dobrana w oparciu o wymagania projektu, dojrzałość ekosystemu oraz wartość edukacyjną dla pracy inżynierskiej.</p>
+
+<h3>3.5.1. Język programowania &mdash; TypeScript</h3>
+
+<p>Cały kod aplikacji został napisany w języku <strong>TypeScript</strong> &mdash; nadbudowie nad JavaScriptem dodającej system typów statycznych weryfikowanych podczas kompilacji. Wybór tego języka zapewnia wykrywanie znacznej części błędów na etapie kompilacji, spójność typów end-to-end pomiędzy backendem a frontendami oraz zgodność z aktualnym standardem branżowym w nowoczesnym <em>web developmencie</em>.</p>
+
+<h3>3.5.2. Backend &mdash; Node.js i NestJS</h3>
+
+<p>Warstwa serwerowa zbudowana została w środowisku Node.js w wersji 20 z użyciem frameworka <strong>NestJS 11</strong>. NestJS wprowadza do ekosystemu JavaScript koncepcje znane z dojrzałych frameworków, takich jak modułowość, wstrzykiwanie zależności (<em>dependency injection</em>), dekoratory oraz wyraźny podział na warstwy. Ekosystem oficjalnych modułów (<code>@nestjs/jwt</code>, <code>@nestjs/passport</code>, <code>@nestjs/typeorm</code>, <code>@nestjs/throttler</code>) pozwolił na szybkie wdrożenie kluczowych funkcji bez korzystania z niesprawdzonych bibliotek zewnętrznych.</p>
+
+<h3>3.5.3. Trwałość danych &mdash; PostgreSQL z TypeORM</h3>
+
+<p>Jako system zarządzania bazą danych zastosowano <strong>PostgreSQL 16</strong>. Komunikacja z bazą realizowana jest poprzez <strong>TypeORM</strong> &mdash; bibliotekę typu Object-Relational Mapping zintegrowaną z NestJS. PostgreSQL wybrano ze względu na natywne wsparcie typu JSONB (wykorzystywanego dla tabel <em>audit_logs</em> i <em>assessment_results</em>), pełniejszą zgodność ze standardem SQL niż MySQL oraz dojrzałość i stabilność rozwijanego od ponad trzydziestu lat projektu.</p>
+
+<h3>3.5.4. Frontend pracownika &mdash; React i Vite</h3>
+
+<p>Aplikacja przeznaczona dla pracownika została zrealizowana w bibliotece <strong>React 18</strong> z wykorzystaniem narzędzia budującego <strong>Vite 8</strong>. Stan aplikacji zarządzany jest przez <strong>Redux Toolkit</strong>, a routing realizuje biblioteka <strong>React Router 6</strong>. Vite zapewnia czas startu serwera deweloperskiego poniżej sekundy oraz wsparcie dla budowania aplikacji jako Progressive Web App poprzez wtyczkę <code>vite-plugin-pwa</code>.</p>
+
+<h3>3.5.5. Frontend administracyjny &mdash; Next.js</h3>
+
+<p>Panele administracyjne (administrator firmy, HR, właściciel platformy) zostały zbudowane przy użyciu frameworka <strong>Next.js 16</strong> &mdash; nadbudowy nad Reactem rozwijanej przez firmę Vercel. Next.js wprowadza renderowanie po stronie serwera, automatyczne dzielenie kodu, routing oparty o strukturę folderów oraz model <em>App Router</em>.</p>
+
+<h3>3.5.6. Stylowanie interfejsu &mdash; Tailwind CSS</h3>
+
+<p>Wszystkie warstwy prezentacji aplikacji wykorzystują <strong>Tailwind CSS</strong> w wersji 4 &mdash; framework typu <em>utility-first</em>, w którym style są aplikowane jako klasy bezpośrednio w kodzie. Predefiniowane skale kolorów, marginesów i typografii eliminują niespójności wynikające z ręcznego pisania CSS. System tokenów CSS pozwolił na zaimplementowanie trybu jasnego i ciemnego z minimalną ingerencją w komponenty.</p>
+
+<h3>3.5.7. Wizualizacja danych &mdash; Recharts oraz SVG</h3>
+
+<p>W panelu HR wykresy (rozkład nasilenia objawów, trendy w czasie, statystyki działowe) zaimplementowano przy użyciu biblioteki <strong>Recharts</strong>. W aplikacji pracownika wykresy indeksu dobrostanu i historii wyników wykonano bezpośrednio w technologii <strong>SVG</strong>, co umożliwia precyzyjną kontrolę nad wyglądem (krzywe Beziera dla wygładzonej linii, gradienty pod krzywą, animowane wartości).</p>
+
+<h3>3.5.8. Progressive Web App</h3>
+
+<p>Aplikacja pracownika została zaimplementowana jako Progressive Web App z wykorzystaniem wtyczki <code>vite-plugin-pwa</code> opartej na bibliotece Workbox. Implementacja zawiera manifest aplikacji, ikony w formacie PNG (192&times;192, 512&times;512, 180&times;180 dla apple-touch-icon), Service Worker buforujący zasoby statyczne z polityką cache-first oraz mechanizm informowania użytkownika o dostępności nowej wersji.</p>
+
+<h3>3.5.9. Bezpieczeństwo aplikacji</h3>
+
+<p>W warstwie bezpieczeństwa wykorzystano zestaw sprawdzonych bibliotek branżowych: <strong>bcrypt</strong> z dwunastoma rundami soli do hashowania haseł, <strong>JSON Web Tokens</strong> z różnymi sekretami dla tokenów dostępu i odświeżania, <strong>Helmet</strong> dla nagłówków bezpieczeństwa HTTP, <strong>cookie-parser</strong> dla obsługi ciasteczek HttpOnly, <strong>class-validator</strong> dla walidacji danych wejściowych oraz <strong>@nestjs/throttler</strong> dla ograniczenia liczby prób logowania (10 prób na 15 minut) i rejestracji (5 prób na 15 minut).</p>
+
+<h3>3.5.10. Konteneryzacja i wdrożenie &mdash; Docker i Railway</h3>
+
+<p>Wszystkie komponenty systemu działają w izolowanych kontenerach <strong>Docker</strong>, a orkiestrację realizuje narzędzie <strong>Docker Compose</strong> w dwóch konfiguracjach &mdash; rozwojowej i produkcyjnej. Aplikacja produkcyjna została wdrożona na platformie chmurowej <strong>Railway</strong>, która zapewnia automatyczne udostępnianie certyfikatów TLS Let&rsquo;s Encrypt, managed PostgreSQL z dziennymi snapshotami oraz natywne wsparcie dla aplikacji w kontenerach Docker.</p>
+
+<h2>3.6. Narzędzia wspierające proces wytwarzania</h2>
+
+<p>Proces wytwarzania platformy wspierany był następującymi narzędziami:</p>
+
+<table>
+  <caption>Tabela 3.1 Narzędzia wspierające proces wytwarzania (źródło: opracowanie własne)</caption>
+  <thead>
+    <tr><th>Kategoria</th><th>Narzędzie</th><th>Zastosowanie</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Kontrola wersji</td><td>Git, GitHub</td><td>Wersjonowanie kodu, współpraca w zespole, przegląd zmian</td></tr>
+    <tr><td>Środowisko rozwojowe</td><td>Visual Studio Code</td><td>Edytor kodu z dodatkami ESLint, Prettier, Tailwind IntelliSense</td></tr>
+    <tr><td>Zarządzanie projektem</td><td>GitHub Projects</td><td>Tablica zadań, lista <em>backlog</em>, śledzenie postępów</td></tr>
+    <tr><td>Komunikacja zespołowa</td><td>Discord, Google Meet</td><td>Spotkania zespołowe, czat roboczy, rozmowy z promotorem</td></tr>
+    <tr><td>Diagramy</td><td>Mermaid</td><td>Tworzenie diagramów UML i BPMN w formacie tekstowym</td></tr>
+    <tr><td>Projektowanie UI</td><td>Pencil, Figma</td><td>Wstępne makiety interfejsu, system wizualny aplikacji</td></tr>
+    <tr><td>Testy ręczne API</td><td>Postman, Thunder Client</td><td>Weryfikacja endpointów REST w trakcie rozwoju</td></tr>
+    <tr><td>Środowisko pisania pracy</td><td>Microsoft Word, Google Docs</td><td>Redagowanie dokumentu pracy inżynierskiej</td></tr>
+    <tr><td>Konteneryzacja</td><td>Docker, Docker Compose</td><td>Izolowane środowisko uruchomieniowe</td></tr>
+    <tr><td>Hosting</td><td>Railway</td><td>Wdrożenie produkcyjne, hosting bazy danych</td></tr>
+  </tbody>
+</table>
+
+<h2>3.7. Procedury testowania</h2>
+
+<p>W ramach pracy zaplanowano dwa rodzaje testów. <strong>Testy klikalne</strong> (manualne) obejmowały weryfikację poprawności wprowadzania danych w formularzach (rejestracja, logowanie, zmiana hasła), kompletności wypełnienia testów psychologicznych, działania mechanizmu zatwierdzania kont, przypisywania testów oraz generowania raportów w panelu HR z uwzględnieniem progu anonimizacji k=5. Każdy z głównych przepływów aplikacji został przetestowany na trzech kontach o różnych rolach: pracownik, administrator firmy oraz właściciel platformy.</p>
+
+<p><strong>Testy nieklikalne</strong> obejmowały weryfikację interfejsu użytkownika pod kątem responsywności na trzech klasach urządzeń (telefon, tablet, komputer), zgodności trybu jasnego i ciemnego, czytelności komunikatów błędów oraz zachowania przy braku połączenia z serwerem. Sprawdzano również odpowiedź backendu na dane wejściowe niespełniające reguł walidacji oraz reakcję na próbę dostępu do zasobów bez wymaganych uprawnień.</p>
+
+<p>Procedury testowania prowadzono iteracyjnie w trakcie każdej dwutygodniowej iteracji, a wyniki testów stanowiły kryterium zamknięcia zadania.</p>
+
+<h2>3.8. Archiwizacja i bezpieczeństwo danych</h2>
+
+<p><strong>Archiwizacja danych</strong> realizowana jest przez managed PostgreSQL platformy Railway z mechanizmem automatycznych snapshotów wykonywanych raz na dobę. Snapshoty są przechowywane przez 30 dni, co umożliwia odtworzenie stanu bazy z dowolnego punktu w tym okresie. Wszystkie dane operacyjne (konta użytkowników, organizacje, wyniki testów, dziennik audytu, powiadomienia) przechowywane są w jednej bazie danych, w postaci znormalizowanej zgodnie z zasadami trzeciej postaci normalnej (3NF).</p>
+
+<p><strong>Bezpieczeństwo danych</strong> realizowane jest na kilku poziomach. Komunikacja sieciowa odbywa się wyłącznie przez szyfrowane połączenie HTTPS z certyfikatem TLS. Hasła użytkowników przechowywane są wyłącznie w postaci hashy bcrypt z dwunastoma rundami soli. Tokeny uwierzytelniające przekazywane są w ciasteczkach typu HttpOnly z atrybutami Secure i SameSite=Strict, co zabezpiecza przed atakami klasy XSS i CSRF. Dostęp do bazy danych jest możliwy wyłącznie z wewnętrznej sieci platformy chmurowej, bez publicznego adresu sieciowego. Dane wrażliwe dotyczące zdrowia psychicznego są dodatkowo anonimizowane na poziomie raportów według zasady k-anonymity z progiem k=5.</p>
+
+<p>Każda akcja administracyjna (zatwierdzenie konta, blokada, zmiana roli, próba logowania) rejestrowana jest w dzienniku audytu (<em>audit log</em>), co realizuje wymóg rozliczalności wynikający z RODO oraz umożliwia rekonstrukcję incydentów bezpieczeństwa.</p>
+
+</body>
+</html>

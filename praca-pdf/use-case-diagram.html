@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Diagram przypadków użycia</title>
+<style>
+  body {
+    font-family: Verdana, sans-serif;
+    margin: 0;
+    padding: 24px;
+    background: #fff;
+  }
+  h1 {
+    font-size: 14pt;
+    margin: 0 0 16px 0;
+    font-weight: bold;
+    text-align: center;
+  }
+  svg {
+    display: block;
+    margin: 0 auto;
+    background: #fff;
+  }
+  .actor-line { stroke: #000; stroke-width: 1.8; fill: none; }
+  .actor-label { font-family: Verdana, sans-serif; font-size: 13px; font-weight: bold; text-anchor: middle; fill: #000; }
+  .actor-role { font-family: Verdana, sans-serif; font-size: 11px; font-style: italic; text-anchor: middle; fill: #444; }
+  .uc { fill: #fff; stroke: #2E211C; stroke-width: 1.5; }
+  .uc-text { font-family: Verdana, sans-serif; font-size: 11px; text-anchor: middle; fill: #000; }
+  .uc-employee { fill: #fef3e9; }
+  .uc-hr { fill: #e9f4ff; }
+  .uc-admin { fill: #ecfdf5; }
+  .uc-super { fill: #f3eaff; }
+  .uc-shared { fill: #f5f5f5; }
+  .system-box { fill: none; stroke: #2E211C; stroke-width: 2; }
+  .system-label { font-family: Verdana, sans-serif; font-size: 13px; font-weight: bold; fill: #2E211C; }
+  .conn { stroke: #555; stroke-width: 1; fill: none; }
+  .conn-include { stroke: #C06226; stroke-width: 1; stroke-dasharray: 5,3; fill: none; }
+  .conn-label { font-family: Verdana, sans-serif; font-size: 9px; fill: #C06226; font-style: italic; }
+</style>
+</head>
+<body>
+
+<h1>Rysunek 3.1 Diagram przypadków użycia systemu MoodFlow (źródło: opracowanie własne)</h1>
+
+<svg width="1600" height="1100" viewBox="0 0 1600 1100" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- ─── SYSTEM BOX ─── -->
+  <rect class="system-box" x="280" y="60" width="1040" height="980" rx="8"/>
+  <text class="system-label" x="800" y="45" text-anchor="middle">System MoodFlow</text>
+
+  <!-- ─── AKTORZY LEWA STRONA ─── -->
+
+  <!-- Pracownik -->
+  <g transform="translate(120, 160)">
+    <circle cx="0" cy="0" r="16" class="actor-line"/>
+    <line x1="0" y1="16" x2="0" y2="56" class="actor-line"/>
+    <line x1="-22" y1="34" x2="22" y2="34" class="actor-line"/>
+    <line x1="0" y1="56" x2="-18" y2="86" class="actor-line"/>
+    <line x1="0" y1="56" x2="18" y2="86" class="actor-line"/>
+    <text class="actor-label" x="0" y="110">Pracownik</text>
+    <text class="actor-role" x="0" y="126">EMPLOYEE</text>
+  </g>
+
+  <!-- System mailowy -->
+  <g transform="translate(120, 880)">
+    <rect x="-50" y="-30" width="100" height="60" fill="#fff" stroke="#000" stroke-width="1.8"/>
+    <text x="0" y="-10" text-anchor="middle" font-family="Verdana" font-size="11" font-weight="bold">«system»</text>
+    <text class="actor-label" x="0" y="10">SMTP</text>
+    <text class="actor-role" x="0" y="60">System mailowy</text>
+    <text class="actor-role" x="0" y="76">(zewnętrzny)</text>
+  </g>
+
+  <!-- ─── AKTORZY PRAWA STRONA ─── -->
+
+  <!-- HR -->
+  <g transform="translate(1480, 160)">
+    <circle cx="0" cy="0" r="16" class="actor-line"/>
+    <line x1="0" y1="16" x2="0" y2="56" class="actor-line"/>
+    <line x1="-22" y1="34" x2="22" y2="34" class="actor-line"/>
+    <line x1="0" y1="56" x2="-18" y2="86" class="actor-line"/>
+    <line x1="0" y1="56" x2="18" y2="86" class="actor-line"/>
+    <text class="actor-label" x="0" y="110">HR</text>
+    <text class="actor-role" x="0" y="126">Human Resources</text>
+  </g>
+
+  <!-- Administrator firmy -->
+  <g transform="translate(1480, 500)">
+    <circle cx="0" cy="0" r="16" class="actor-line"/>
+    <line x1="0" y1="16" x2="0" y2="56" class="actor-line"/>
+    <line x1="-22" y1="34" x2="22" y2="34" class="actor-line"/>
+    <line x1="0" y1="56" x2="-18" y2="86" class="actor-line"/>
+    <line x1="0" y1="56" x2="18" y2="86" class="actor-line"/>
+    <text class="actor-label" x="0" y="110">Administrator</text>
+    <text class="actor-label" x="0" y="125">firmy</text>
+    <text class="actor-role" x="0" y="142">ADMIN</text>
+  </g>
+
+  <!-- Super-admin -->
+  <g transform="translate(1480, 880)">
+    <circle cx="0" cy="0" r="16" class="actor-line"/>
+    <line x1="0" y1="16" x2="0" y2="56" class="actor-line"/>
+    <line x1="-22" y1="34" x2="22" y2="34" class="actor-line"/>
+    <line x1="0" y1="56" x2="-18" y2="86" class="actor-line"/>
+    <line x1="0" y1="56" x2="18" y2="86" class="actor-line"/>
+    <text class="actor-label" x="0" y="110">Właściciel</text>
+    <text class="actor-label" x="0" y="125">platformy</text>
+    <text class="actor-role" x="0" y="142">SUPER_ADMIN</text>
+  </g>
+
+  <!-- ─── USE CASES ─── -->
+
+  <!-- WSPÓLNE (na górze systemu) -->
+  <ellipse class="uc uc-shared" cx="500" cy="120" rx="95" ry="28"/>
+  <text class="uc-text" x="500" y="124">Logowanie</text>
+
+  <ellipse class="uc uc-shared" cx="800" cy="120" rx="95" ry="28"/>
+  <text class="uc-text" x="800" y="116">Zmiana hasła /</text>
+  <text class="uc-text" x="800" y="130">edycja profilu</text>
+
+  <ellipse class="uc uc-shared" cx="1100" cy="120" rx="95" ry="28"/>
+  <text class="uc-text" x="1100" y="124">Wylogowanie</text>
+
+  <!-- PRACOWNIK -->
+  <ellipse class="uc uc-employee" cx="430" cy="240" rx="115" ry="28"/>
+  <text class="uc-text" x="430" y="244">Wypełnienie testu</text>
+
+  <ellipse class="uc uc-employee" cx="430" cy="320" rx="115" ry="28"/>
+  <text class="uc-text" x="430" y="316">Codzienny check-in</text>
+  <text class="uc-text" x="430" y="330">nastroju (MOOD10)</text>
+
+  <ellipse class="uc uc-employee" cx="430" cy="410" rx="115" ry="28"/>
+  <text class="uc-text" x="430" y="406">Przegląd własnych</text>
+  <text class="uc-text" x="430" y="420">wyników</text>
+
+  <ellipse class="uc uc-employee" cx="430" cy="500" rx="115" ry="28"/>
+  <text class="uc-text" x="430" y="496">Wgląd we Wskaźnik</text>
+  <text class="uc-text" x="430" y="510">Dobrostanu</text>
+
+  <!-- HR -->
+  <ellipse class="uc uc-hr" cx="1170" cy="240" rx="115" ry="28"/>
+  <text class="uc-text" x="1170" y="236">Przegląd panelu</text>
+  <text class="uc-text" x="1170" y="250">analitycznego HR</text>
+
+  <ellipse class="uc uc-hr" cx="1170" cy="320" rx="115" ry="28"/>
+  <text class="uc-text" x="1170" y="316">Filtrowanie raportów</text>
+  <text class="uc-text" x="1170" y="330">(dział, czas, test)</text>
+
+  <ellipse class="uc uc-hr" cx="1170" cy="410" rx="115" ry="28"/>
+  <text class="uc-text" x="1170" y="406">Analiza trendów</text>
+  <text class="uc-text" x="1170" y="420">w czasie</text>
+
+  <!-- ADMIN FIRMY -->
+  <ellipse class="uc uc-admin" cx="1170" cy="500" rx="115" ry="28"/>
+  <text class="uc-text" x="1170" y="496">Zatwierdzanie</text>
+  <text class="uc-text" x="1170" y="510">pracownika</text>
+
+  <ellipse class="uc uc-admin" cx="1170" cy="580" rx="115" ry="28"/>
+  <text class="uc-text" x="1170" y="576">Zarządzanie strukturą</text>
+  <text class="uc-text" x="1170" y="590">organizacyjną firmy</text>
+
+  <ellipse class="uc uc-admin" cx="1170" cy="660" rx="115" ry="28"/>
+  <text class="uc-text" x="1170" y="664">Przypisanie testu</text>
+
+  <ellipse class="uc uc-admin" cx="1170" cy="740" rx="115" ry="28"/>
+  <text class="uc-text" x="1170" y="736">Przegląd dziennika</text>
+  <text class="uc-text" x="1170" y="750">audytu firmy</text>
+
+  <!-- SUPER-ADMIN -->
+  <ellipse class="uc uc-super" cx="1170" cy="830" rx="115" ry="28"/>
+  <text class="uc-text" x="1170" y="826">Zatwierdzanie</text>
+  <text class="uc-text" x="1170" y="840">nowej firmy</text>
+
+  <ellipse class="uc uc-super" cx="1170" cy="910" rx="115" ry="28"/>
+  <text class="uc-text" x="1170" y="906">Blokowanie /</text>
+  <text class="uc-text" x="1170" y="920">odrzucanie firmy</text>
+
+  <ellipse class="uc uc-super" cx="1170" cy="990" rx="115" ry="28"/>
+  <text class="uc-text" x="1170" y="986">Globalny dziennik</text>
+  <text class="uc-text" x="1170" y="1000">audytu platformy</text>
+
+  <!-- SYSTEM MAILOWY (po lewej dolnej) -->
+  <ellipse class="uc uc-shared" cx="430" cy="900" rx="115" ry="28"/>
+  <text class="uc-text" x="430" y="896">Wysyłka powiadomienia</text>
+  <text class="uc-text" x="430" y="910">e-mail</text>
+
+  <ellipse class="uc uc-shared" cx="430" cy="780" rx="115" ry="28"/>
+  <text class="uc-text" x="430" y="776">Powiadomienie</text>
+  <text class="uc-text" x="430" y="790">in-app</text>
+
+  <!-- ─── POŁĄCZENIA AKTORÓW Z USE CASE'AMI ─── -->
+
+  <!-- Pracownik → use cases -->
+  <line class="conn" x1="155" y1="190" x2="335" y2="240"/>
+  <line class="conn" x1="155" y1="200" x2="335" y2="320"/>
+  <line class="conn" x1="155" y1="210" x2="335" y2="410"/>
+  <line class="conn" x1="155" y1="220" x2="335" y2="500"/>
+  <line class="conn" x1="155" y1="180" x2="405" y2="120"/> <!-- Logowanie -->
+  <line class="conn" x1="155" y1="170" x2="705" y2="120"/> <!-- Zmiana hasła -->
+  <line class="conn" x1="155" y1="160" x2="1005" y2="120"/> <!-- Wylogowanie -->
+  <line class="conn" x1="155" y1="240" x2="320" y2="780"/> <!-- Powiadomienie in-app -->
+
+  <!-- HR → use cases -->
+  <line class="conn" x1="1445" y1="180" x2="1285" y2="240"/>
+  <line class="conn" x1="1445" y1="190" x2="1285" y2="320"/>
+  <line class="conn" x1="1445" y1="200" x2="1285" y2="410"/>
+  <line class="conn" x1="1445" y1="170" x2="1195" y2="120"/> <!-- Logowanie -->
+  <line class="conn" x1="1445" y1="160" x2="895" y2="120"/> <!-- Zmiana hasła -->
+  <line class="conn" x1="1445" y1="150" x2="1195" y2="120"/> <!-- Wylogowanie -->
+  <line class="conn" x1="1445" y1="220" x2="1285" y2="740"/> <!-- Audyt -->
+
+  <!-- Admin firmy → use cases -->
+  <line class="conn" x1="1445" y1="500" x2="1285" y2="500"/>
+  <line class="conn" x1="1445" y1="520" x2="1285" y2="580"/>
+  <line class="conn" x1="1445" y1="540" x2="1285" y2="660"/>
+  <line class="conn" x1="1445" y1="560" x2="1285" y2="740"/>
+  <line class="conn" x1="1445" y1="480" x2="1285" y2="240"/> <!-- też panel HR -->
+  <line class="conn" x1="1445" y1="460" x2="1195" y2="120"/> <!-- Logowanie -->
+
+  <!-- Super-admin → use cases -->
+  <line class="conn" x1="1445" y1="860" x2="1285" y2="830"/>
+  <line class="conn" x1="1445" y1="880" x2="1285" y2="910"/>
+  <line class="conn" x1="1445" y1="900" x2="1285" y2="990"/>
+  <line class="conn" x1="1445" y1="840" x2="1195" y2="120"/> <!-- Logowanie -->
+
+  <!-- ─── INCLUDE / EXTEND RELATIONSHIPS ─── -->
+
+  <!-- Przypisanie testu «include» Wysyłka powiadomienia e-mail -->
+  <line class="conn-include" x1="1055" y1="660" x2="540" y2="900" marker-end="url(#arrow)"/>
+  <text class="conn-label" x="780" y="775">«include»</text>
+
+  <!-- Przypisanie testu «include» Powiadomienie in-app -->
+  <line class="conn-include" x1="1055" y1="650" x2="540" y2="780" marker-end="url(#arrow)"/>
+  <text class="conn-label" x="780" y="710">«include»</text>
+
+  <!-- System SMTP → Wysyłka powiadomienia (asocjacja) -->
+  <line class="conn" x1="170" y1="880" x2="320" y2="900"/>
+
+  <!-- Marker strzałki dla include -->
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#C06226"/>
+    </marker>
+  </defs>
+
+  <!-- ─── LEGENDA ─── -->
+  <g transform="translate(280, 1055)">
+    <text font-family="Verdana" font-size="10pt" font-weight="bold" x="0" y="0">Legenda:</text>
+    <rect x="80" y="-12" width="20" height="16" class="uc uc-employee"/>
+    <text font-family="Verdana" font-size="10pt" x="106" y="0">EMPLOYEE</text>
+    <rect x="220" y="-12" width="20" height="16" class="uc uc-hr"/>
+    <text font-family="Verdana" font-size="10pt" x="246" y="0">HR</text>
+    <rect x="300" y="-12" width="20" height="16" class="uc uc-admin"/>
+    <text font-family="Verdana" font-size="10pt" x="326" y="0">ADMIN</text>
+    <rect x="400" y="-12" width="20" height="16" class="uc uc-super"/>
+    <text font-family="Verdana" font-size="10pt" x="426" y="0">SUPER_ADMIN</text>
+    <rect x="560" y="-12" width="20" height="16" class="uc uc-shared"/>
+    <text font-family="Verdana" font-size="10pt" x="586" y="0">wspólne</text>
+    <line x1="660" y1="-4" x2="700" y2="-4" stroke="#C06226" stroke-width="1" stroke-dasharray="5,3"/>
+    <text font-family="Verdana" font-size="10pt" x="706" y="0">«include»</text>
+  </g>
+
+</svg>
+
+</body>
+</html>

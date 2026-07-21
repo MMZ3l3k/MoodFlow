@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Diagram przypadków użycia</title>
+<style>
+  body {
+    font-family: Verdana, sans-serif;
+    margin: 0;
+    padding: 28px 32px;
+    background: #fff;
+  }
+  h2.section {
+    font-size: 11pt;
+    font-weight: bold;
+    margin: 0 0 12px 0;
+  }
+  .diagram-wrap {
+    display: block;
+    margin: 0 auto;
+    max-width: 1700px;
+  }
+  .figure-caption {
+    text-align: center;
+    font-style: italic;
+    font-size: 10pt;
+    margin-top: 8px;
+  }
+  svg {
+    display: block;
+    margin: 0 auto;
+    background: #fff;
+  }
+  .system-bg { fill: #B8D8E8; stroke: #5A8FA8; stroke-width: 2; }
+  .system-label { font-family: Verdana, sans-serif; font-size: 13pt; font-weight: bold; fill: #1e3a4f; }
+  .actor-line { stroke: #000; stroke-width: 1.8; fill: none; }
+  .actor-label { font-family: Verdana, sans-serif; font-size: 11pt; font-weight: normal; text-anchor: middle; fill: #000; }
+  .uc {
+    fill: #fff;
+    stroke: #000;
+    stroke-width: 1.2;
+  }
+  .uc-text {
+    font-family: Verdana, sans-serif;
+    font-size: 9pt;
+    text-anchor: middle;
+    fill: #000;
+  }
+  .conn { stroke: #000; stroke-width: 1; fill: none; }
+  .conn-extend {
+    stroke: #000;
+    stroke-width: 1;
+    stroke-dasharray: 5,3;
+    fill: none;
+  }
+  .conn-label {
+    font-family: Verdana, sans-serif;
+    font-size: 8.5pt;
+    fill: #000;
+    font-style: italic;
+    text-anchor: middle;
+  }
+  .ext-point-text {
+    font-family: Verdana, sans-serif;
+    font-size: 7.5pt;
+    text-anchor: middle;
+    fill: #000;
+  }
+</style>
+</head>
+<body>
+
+<div class="diagram-wrap">
+
+<svg width="1640" height="1080" viewBox="0 0 1640 1080" xmlns="http://www.w3.org/2000/svg">
+
+  <defs>
+    <marker id="arrowDash" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="10" markerHeight="10" orient="auto">
+      <path d="M0,0 L12,6 L0,12 z" fill="#000"/>
+    </marker>
+  </defs>
+
+  <!-- ─── PROSTOKĄT SYSTEMU ─── -->
+  <rect class="system-bg" x="220" y="60" width="1200" height="980" rx="4"/>
+  <text class="system-label" x="240" y="85">Aplikacja MoodFlow</text>
+
+  <!-- ─── AKTORZY LEWA STRONA ─── -->
+
+  <!-- Pracownik -->
+  <g transform="translate(120, 160)">
+    <circle cx="0" cy="0" r="14" class="actor-line"/>
+    <line x1="0" y1="14" x2="0" y2="50" class="actor-line"/>
+    <line x1="-20" y1="28" x2="20" y2="28" class="actor-line"/>
+    <line x1="0" y1="50" x2="-15" y2="78" class="actor-line"/>
+    <line x1="0" y1="50" x2="15" y2="78" class="actor-line"/>
+    <text class="actor-label" x="0" y="100">Pracownik</text>
+  </g>
+
+  <!-- System mailowy (zewnętrzny) -->
+  <g transform="translate(120, 920)">
+    <circle cx="0" cy="0" r="14" class="actor-line"/>
+    <line x1="0" y1="14" x2="0" y2="50" class="actor-line"/>
+    <line x1="-20" y1="28" x2="20" y2="28" class="actor-line"/>
+    <line x1="0" y1="50" x2="-15" y2="78" class="actor-line"/>
+    <line x1="0" y1="50" x2="15" y2="78" class="actor-line"/>
+    <text class="actor-label" x="0" y="100">System</text>
+    <text class="actor-label" x="0" y="118">mailowy SMTP</text>
+  </g>
+
+  <!-- ─── AKTORZY PRAWA STRONA ─── -->
+
+  <!-- HR -->
+  <g transform="translate(1520, 200)">
+    <circle cx="0" cy="0" r="14" class="actor-line"/>
+    <line x1="0" y1="14" x2="0" y2="50" class="actor-line"/>
+    <line x1="-20" y1="28" x2="20" y2="28" class="actor-line"/>
+    <line x1="0" y1="50" x2="-15" y2="78" class="actor-line"/>
+    <line x1="0" y1="50" x2="15" y2="78" class="actor-line"/>
+    <text class="actor-label" x="0" y="100">HR</text>
+  </g>
+
+  <!-- Administrator firmy -->
+  <g transform="translate(1520, 540)">
+    <circle cx="0" cy="0" r="14" class="actor-line"/>
+    <line x1="0" y1="14" x2="0" y2="50" class="actor-line"/>
+    <line x1="-20" y1="28" x2="20" y2="28" class="actor-line"/>
+    <line x1="0" y1="50" x2="-15" y2="78" class="actor-line"/>
+    <line x1="0" y1="50" x2="15" y2="78" class="actor-line"/>
+    <text class="actor-label" x="0" y="100">Administrator</text>
+    <text class="actor-label" x="0" y="118">firmy</text>
+  </g>
+
+  <!-- Super-admin -->
+  <g transform="translate(1520, 880)">
+    <circle cx="0" cy="0" r="14" class="actor-line"/>
+    <line x1="0" y1="14" x2="0" y2="50" class="actor-line"/>
+    <line x1="-20" y1="28" x2="20" y2="28" class="actor-line"/>
+    <line x1="0" y1="50" x2="-15" y2="78" class="actor-line"/>
+    <line x1="0" y1="50" x2="15" y2="78" class="actor-line"/>
+    <text class="actor-label" x="0" y="100">Właściciel</text>
+    <text class="actor-label" x="0" y="118">platformy</text>
+  </g>
+
+  <!-- ─── USE CASES — wspólne (góra) ─── -->
+  <ellipse class="uc" cx="500" cy="160" rx="100" ry="30"/>
+  <text class="uc-text" x="500" y="164">Logowanie</text>
+
+  <ellipse class="uc" cx="820" cy="160" rx="100" ry="30"/>
+  <text class="uc-text" x="820" y="164">Wylogowanie</text>
+
+  <!-- USE CASE z extension points -->
+  <g>
+    <ellipse class="uc" cx="1140" cy="170" rx="130" ry="48"/>
+    <text class="uc-text" x="1140" y="158">Edytowanie profilu</text>
+    <line x1="1018" y1="172" x2="1262" y2="172" stroke="#000" stroke-width="0.7"/>
+    <text class="ext-point-text" x="1140" y="186" font-style="italic">extension points</text>
+    <text class="ext-point-text" x="1140" y="200">Zmiana hasła</text>
+  </g>
+
+  <!-- ─── USE CASES — Pracownik (lewa kolumna) ─── -->
+  <ellipse class="uc" cx="450" cy="280" rx="120" ry="30"/>
+  <text class="uc-text" x="450" y="284">Wypełnienie testu</text>
+
+  <ellipse class="uc" cx="450" cy="370" rx="120" ry="34"/>
+  <text class="uc-text" x="450" y="366">Codzienny check-in</text>
+  <text class="uc-text" x="450" y="380">nastroju (MOOD10)</text>
+
+  <ellipse class="uc" cx="450" cy="470" rx="120" ry="34"/>
+  <text class="uc-text" x="450" y="466">Przegląd własnych</text>
+  <text class="uc-text" x="450" y="480">wyników i historii</text>
+
+  <ellipse class="uc" cx="450" cy="570" rx="120" ry="34"/>
+  <text class="uc-text" x="450" y="566">Wgląd we Wskaźnik</text>
+  <text class="uc-text" x="450" y="580">Dobrostanu</text>
+
+  <!-- Powiadomienia (rozszerzenie wypełnienia testu) -->
+  <ellipse class="uc" cx="450" cy="780" rx="120" ry="30"/>
+  <text class="uc-text" x="450" y="784">Powiadomienie in-app</text>
+
+  <ellipse class="uc" cx="450" cy="870" rx="120" ry="30"/>
+  <text class="uc-text" x="450" y="874">Wysłanie e-maila</text>
+
+  <!-- ─── USE CASES — Środkowa kolumna (admin firmy / przypisanie testu) ─── -->
+  <g>
+    <ellipse class="uc" cx="820" cy="560" rx="160" ry="48"/>
+    <text class="uc-text" x="820" y="546">Przypisanie testu</text>
+    <line x1="668" y1="562" x2="972" y2="562" stroke="#000" stroke-width="0.7"/>
+    <text class="ext-point-text" x="820" y="576" font-style="italic">extension points</text>
+    <text class="ext-point-text" x="820" y="590">Powiadomienie pracowników</text>
+  </g>
+
+  <ellipse class="uc" cx="820" cy="680" rx="140" ry="34"/>
+  <text class="uc-text" x="820" y="676">Zatwierdzanie</text>
+  <text class="uc-text" x="820" y="690">pracownika</text>
+
+  <ellipse class="uc" cx="820" cy="780" rx="140" ry="34"/>
+  <text class="uc-text" x="820" y="776">Zarządzanie strukturą</text>
+  <text class="uc-text" x="820" y="790">organizacyjną firmy</text>
+
+  <ellipse class="uc" cx="820" cy="880" rx="140" ry="34"/>
+  <text class="uc-text" x="820" y="876">Przegląd dziennika</text>
+  <text class="uc-text" x="820" y="890">audytu firmy</text>
+
+  <!-- ─── USE CASES — Prawa kolumna (HR / super-admin) ─── -->
+  <ellipse class="uc" cx="1180" cy="280" rx="130" ry="34"/>
+  <text class="uc-text" x="1180" y="276">Przegląd panelu</text>
+  <text class="uc-text" x="1180" y="290">analitycznego HR</text>
+
+  <ellipse class="uc" cx="1180" cy="370" rx="130" ry="34"/>
+  <text class="uc-text" x="1180" y="366">Filtrowanie raportów</text>
+  <text class="uc-text" x="1180" y="380">(dział, czas, test)</text>
+
+  <ellipse class="uc" cx="1180" cy="470" rx="130" ry="34"/>
+  <text class="uc-text" x="1180" y="466">Analiza trendów</text>
+  <text class="uc-text" x="1180" y="480">w czasie</text>
+
+  <!-- Super-admin -->
+  <ellipse class="uc" cx="1180" cy="700" rx="130" ry="34"/>
+  <text class="uc-text" x="1180" y="696">Zatwierdzanie</text>
+  <text class="uc-text" x="1180" y="710">nowej firmy</text>
+
+  <ellipse class="uc" cx="1180" cy="800" rx="130" ry="34"/>
+  <text class="uc-text" x="1180" y="796">Blokowanie firmy</text>
+
+  <ellipse class="uc" cx="1180" cy="890" rx="130" ry="34"/>
+  <text class="uc-text" x="1180" y="886">Globalny dziennik</text>
+  <text class="uc-text" x="1180" y="900">audytu platformy</text>
+
+  <!-- ─── POŁĄCZENIA ASOCJACJI ─── -->
+
+  <!-- Pracownik → use cases -->
+  <line class="conn" x1="150" y1="180" x2="400" y2="160"/> <!-- Logowanie -->
+  <line class="conn" x1="150" y1="170" x2="720" y2="155"/> <!-- Wylogowanie -->
+  <line class="conn" x1="150" y1="160" x2="1010" y2="160"/> <!-- Edytowanie profilu -->
+  <line class="conn" x1="150" y1="200" x2="330" y2="280"/> <!-- Wypełnienie testu -->
+  <line class="conn" x1="150" y1="210" x2="330" y2="370"/> <!-- Check-in -->
+  <line class="conn" x1="150" y1="220" x2="330" y2="470"/> <!-- Wyniki -->
+  <line class="conn" x1="150" y1="230" x2="330" y2="570"/> <!-- Wskaźnik -->
+  <line class="conn" x1="150" y1="240" x2="330" y2="780"/> <!-- Powiadomienie in-app -->
+
+  <!-- HR → -->
+  <line class="conn" x1="1490" y1="220" x2="1310" y2="280"/>
+  <line class="conn" x1="1490" y1="230" x2="1310" y2="370"/>
+  <line class="conn" x1="1490" y1="240" x2="1310" y2="470"/>
+  <line class="conn" x1="1490" y1="200" x2="1240" y2="160"/> <!-- Logowanie -->
+  <line class="conn" x1="1490" y1="190" x2="900" y2="155"/> <!-- Wylogowanie -->
+  <line class="conn" x1="1490" y1="180" x2="1240" y2="160"/> <!-- Edytowanie profilu -->
+  <line class="conn" x1="1490" y1="260" x2="960" y2="560"/> <!-- Przypisanie testu -->
+
+  <!-- Administrator firmy → -->
+  <line class="conn" x1="1490" y1="540" x2="960" y2="560"/> <!-- Przypisanie testu -->
+  <line class="conn" x1="1490" y1="560" x2="960" y2="680"/> <!-- Zatwierdzanie pracownika -->
+  <line class="conn" x1="1490" y1="580" x2="960" y2="780"/> <!-- Struktura -->
+  <line class="conn" x1="1490" y1="600" x2="960" y2="880"/> <!-- Audyt -->
+  <line class="conn" x1="1490" y1="520" x2="1310" y2="280"/> <!-- Panel HR -->
+  <line class="conn" x1="1490" y1="500" x2="1240" y2="160"/> <!-- Logowanie -->
+
+  <!-- Super-admin → -->
+  <line class="conn" x1="1490" y1="900" x2="1310" y2="700"/> <!-- Zatwierdzanie firmy -->
+  <line class="conn" x1="1490" y1="910" x2="1310" y2="800"/> <!-- Blokowanie -->
+  <line class="conn" x1="1490" y1="920" x2="1310" y2="890"/> <!-- Globalny audyt -->
+  <line class="conn" x1="1490" y1="880" x2="1240" y2="160"/> <!-- Logowanie -->
+
+  <!-- System mailowy → wysłanie e-maila -->
+  <line class="conn" x1="150" y1="930" x2="330" y2="870"/>
+
+  <!-- ─── EXTEND RELATIONSHIPS ─── -->
+
+  <!-- Powiadomienie in-app «extend» Przypisanie testu -->
+  <line class="conn-extend" x1="570" y1="780" x2="660" y2="595" marker-end="url(#arrowDash)"/>
+  <text class="conn-label" x="630" y="700">«extend»</text>
+
+  <!-- Wysłanie e-maila «extend» Przypisanie testu -->
+  <line class="conn-extend" x1="570" y1="870" x2="660" y2="600" marker-end="url(#arrowDash)"/>
+  <text class="conn-label" x="630" y="780">«extend»</text>
+
+  <!-- Zmiana hasła «extend» Edytowanie profilu (pętla wewnątrz UC) -->
+  <!-- pominięta linia bo extension point już to pokazuje -->
+
+</svg>
+
+<p class="figure-caption">Rysunek 3.1 Diagram przypadków użycia aplikacji MoodFlow (źródło: opracowanie własne)</p>
+
+</div>
+
+</body>
+</html>

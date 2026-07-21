@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>1.4. Podział prac</title>
+<style>
+  @page { size: A4; margin: 2.5cm 2cm 2.5cm 2.5cm; }
+  body {
+    font-family: Verdana, sans-serif;
+    font-size: 10pt;
+    line-height: 1.15;
+    color: #000;
+    text-align: justify;
+  }
+  h2 {
+    font-size: 10pt;
+    font-weight: bold;
+    margin-top: 0;
+    margin-bottom: 8pt;
+    page-break-after: avoid;
+  }
+  p {
+    margin: 0 0 8pt 0;
+    text-indent: 18pt;
+  }
+  p.tab-caption {
+    font-weight: bold;
+    text-indent: 0;
+    margin: 12pt 0 4pt 0;
+    font-size: 10pt;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 12pt 0;
+    font-size: 9.5pt;
+  }
+  th, td {
+    border: 1px solid #000;
+    padding: 4pt 8pt;
+    vertical-align: top;
+    text-align: left;
+  }
+  th {
+    background: #e8e8e8;
+    font-weight: bold;
+  }
+  td.num, th.num { text-align: right; white-space: nowrap; width: 70pt; }
+</style>
+</head>
+<body>
+
+<h2>1.4. Podział prac</h2>
+
+<p>Projekt MoodFlow został zrealizowany przez dwuosobowy zespół autorski w ramach wieloautorskiej pracy inżynierskiej. Z uwagi na rozmiar aplikacji obejmującej warstwę serwerową, dwie odrębne aplikacje frontendowe (panel pracownika oraz panel administracyjny dla działu HR i właściciela platformy), bazę danych, infrastrukturę konteneryzacji oraz dokumentację techniczną, podział prac był koniecznością wynikającą z zakresu projektu. Jednocześnie obaj autorzy traktowali projekt jako sposób na doskonalenie swoich umiejętności w obszarze inżynierii oprogramowania oraz zdobycie doświadczenia w wytwarzaniu nowoczesnych aplikacji internetowych, w związku z czym wiele zadań realizowano wspólnie, w trybie programowania w parze (<em>pair programming</em>) lub wzajemnego przeglądu kodu (<em>code review</em>).</p>
+
+<p>Podział prac został zaprojektowany w sposób zapewniający równomierne obciążenie oraz pokrycie wszystkich obszarów projektu, jednocześnie pozwalający każdemu z autorów na zdobycie głębszej wiedzy w wybranej specjalizacji. Pierwszy autor pełnił rolę liderską w obszarze warstwy serwerowej, infrastruktury oraz bezpieczeństwa aplikacji, drugi autor &mdash; w obszarze warstwy prezentacji obu aplikacji frontendowych oraz testowania manualnego. Oba obszary były jednak współrealizowane &mdash; przy implementacji nowych funkcjonalności obejmujących pełen przepływ danych (np. wypełnienie testu, generowanie raportu) zadania były dzielone tak, aby każdy z autorów uczestniczył w pracach nad backendem i frontendem. Oba obszary dokumentacji oraz redakcji pracy inżynierskiej były realizowane wspólnie.</p>
+
+<p>Procentowy udział poszczególnych etapów pracy projektowej oraz wkład każdego z autorów przedstawia Tabela 1.1. Wartości zostały oszacowane na podstawie liczby tygodni poświęconych na poszczególne obszary, liczby commitów w systemie kontroli wersji oraz złożoności realizowanych zadań. Łączny udział każdego z autorów w projekcie wyniósł 50%.</p>
+
+<p class="tab-caption">Tabela 1.1 Podział zadań w projekcie z procentowym udziałem każdego z autorów (źródło: opracowanie własne)</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Etap pracy projektowej</th>
+      <th class="num">[Autor 1]</th>
+      <th class="num">[Autor 2]</th>
+      <th class="num">Razem</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Analiza dziedziny, badanie rynku, analiza SWOT, sporządzenie wymagań funkcjonalnych i niefunkcjonalnych metodą MoSCoW</td>
+      <td class="num">4%</td>
+      <td class="num">4%</td>
+      <td class="num">8%</td>
+    </tr>
+    <tr>
+      <td>Projektowanie architektury systemu, modelu danych (ERD), diagramów UML i BPMN, dobór stosu technologicznego</td>
+      <td class="num">5%</td>
+      <td class="num">2%</td>
+      <td class="num">7%</td>
+    </tr>
+    <tr>
+      <td>Implementacja warstwy serwerowej (NestJS, TypeORM, JWT, autoryzacja, multi-tenant, scoring testów psychologicznych, audit log)</td>
+      <td class="num">18%</td>
+      <td class="num">7%</td>
+      <td class="num">25%</td>
+    </tr>
+    <tr>
+      <td>Implementacja aplikacji pracownika (React, Vite, Redux Toolkit, Tailwind CSS, PWA, tryb jasny i ciemny)</td>
+      <td class="num">6%</td>
+      <td class="num">14%</td>
+      <td class="num">20%</td>
+    </tr>
+    <tr>
+      <td>Implementacja panelu administracyjnego dla HR, administratora firmy i właściciela platformy (Next.js, Tailwind CSS, Recharts)</td>
+      <td class="num">5%</td>
+      <td class="num">12%</td>
+      <td class="num">17%</td>
+    </tr>
+    <tr>
+      <td>Konfiguracja bazy danych PostgreSQL, modelowanie schematu, optymalizacja zapytań, anonimizacja agregatów</td>
+      <td class="num">3%</td>
+      <td class="num">1%</td>
+      <td class="num">4%</td>
+    </tr>
+    <tr>
+      <td>Procedury testowania manualnego (klikalne i nieklikalne), weryfikacja poprawności scoringu, anonimizacji oraz multi-tenant izolacji</td>
+      <td class="num">2%</td>
+      <td class="num">3%</td>
+      <td class="num">5%</td>
+    </tr>
+    <tr>
+      <td>Konteneryzacja (Docker, Docker Compose), konfiguracja środowiska produkcyjnego, wdrożenie na platformie chmurowej Railway, certyfikaty TLS</td>
+      <td class="num">5%</td>
+      <td class="num">1%</td>
+      <td class="num">6%</td>
+    </tr>
+    <tr>
+      <td>Sporządzenie dokumentacji technicznej oraz redakcja pracy inżynierskiej</td>
+      <td class="num">2%</td>
+      <td class="num">6%</td>
+      <td class="num">8%</td>
+    </tr>
+    <tr>
+      <td><strong>Razem</strong></td>
+      <td class="num"><strong>50%</strong></td>
+      <td class="num"><strong>50%</strong></td>
+      <td class="num"><strong>100%</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Do organizacji pracy oraz zarządzania kodem źródłowym wykorzystywano system kontroli wersji <strong>Git</strong> [1] z hostingiem repozytorium na platformie <strong>GitHub</strong> [2]. Każda zmiana była dokumentowana czytelnym komunikatem <em>commit</em>, a kluczowe decyzje techniczne wpisywane do dziennika decyzji architektonicznych w katalogu <code>docs/</code> repozytorium. Praca nad kodem odbywała się równolegle na osobnych gałęziach (<em>feature branches</em>), które po zakończeniu zadania były scalane do gałęzi głównej po wzajemnym przeglądzie kodu. Przyjęty model współpracy umożliwił zachowanie przejrzystości historii zmian oraz wzajemną weryfikację jakości kodu.</p>
+
+<p>Środowiskiem rozwojowym był edytor <strong>Visual Studio Code</strong> [3] z dodatkami ESLint, Prettier oraz Tailwind CSS IntelliSense. W pracy nad interfejsem aplikacji autorzy wspomagali się programem <strong>Pencil</strong> [4] dla głównych ekranów oraz narzędziem <strong>Figma</strong> [5] dla wybranych elementów wymagających szczegółowego prototypowania. Diagramy UML oraz BPMN zostały przygotowane w języku <strong>Mermaid</strong> [6], co pozwoliło na wersjonowanie ich razem z kodem aplikacji. Komunikacja w zespole oraz konsultacje z promotorem realizowane były z wykorzystaniem komunikatora <strong>Discord</strong> [7] oraz platformy <strong>Google Meet</strong> [8], a redakcja pracy inżynierskiej została przeprowadzona w środowisku <strong>Microsoft Word</strong> [9].</p>
+
+</body>
+</html>

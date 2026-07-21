@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>2.4. Zestawienie wymagań</title>
+<style>
+  @page { size: A4; margin: 2.5cm 2cm 2.5cm 2.5cm; }
+  body {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 12pt;
+    line-height: 1.4;
+    color: #000;
+    text-align: justify;
+  }
+  h1 {
+    font-size: 16pt;
+    font-weight: bold;
+    margin-top: 24pt;
+    margin-bottom: 12pt;
+    page-break-after: avoid;
+  }
+  h2 {
+    font-size: 13pt;
+    font-style: italic;
+    font-weight: bold;
+    margin-top: 22pt;
+    margin-bottom: 8pt;
+    page-break-after: avoid;
+  }
+  p { margin: 0 0 10pt 0; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 6pt 0 16pt 0;
+    page-break-inside: auto;
+    font-size: 11pt;
+  }
+  th, td {
+    border: 1px solid #000;
+    padding: 5pt 8pt;
+    vertical-align: middle;
+    text-align: left;
+  }
+  th {
+    background: #f0f0f0;
+    font-weight: bold;
+  }
+  td:first-child, th:first-child {
+    width: 50pt;
+    text-align: center;
+    font-weight: bold;
+    white-space: nowrap;
+  }
+  td:last-child, th:last-child {
+    width: 100pt;
+    text-align: center;
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+
+<h1>2.4. Zestawienie wymagań</h1>
+
+<p>W celu czytelnego podsumowania poniżej przedstawiono tabelaryczne zestawienie wszystkich wymagań funkcjonalnych i niefunkcjonalnych platformy MoodFlow wraz z przypisanymi priorytetami zgodnie z metodyką MoSCoW. Identyfikatory zachowują numerację z rozdziałów 2.2 oraz 2.3.</p>
+
+<h2>Wymagania funkcjonalne</h2>
+
+<table>
+  <thead>
+    <tr><th>ID</th><th>Wymaganie</th><th>Priorytet</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>F1</td><td>System logowania i autoryzacji użytkowników (4 role)</td><td>Must Have</td></tr>
+    <tr><td>F2</td><td>Architektura wielodostępna (multi-tenant)</td><td>Must Have</td></tr>
+    <tr><td>F3</td><td>Rejestracja firm i pracowników z weryfikacją</td><td>Must Have</td></tr>
+    <tr><td>F4</td><td>Wypełnianie walidowanych testów psychologicznych</td><td>Must Have</td></tr>
+    <tr><td>F5</td><td>Przechowywanie danych w bazie danych</td><td>Must Have</td></tr>
+    <tr><td>F6</td><td>Automatyczne obliczanie wyników testów</td><td>Must Have</td></tr>
+    <tr><td>F7</td><td>Anonimizacja danych w raportach HR</td><td>Must Have</td></tr>
+    <tr><td>F8</td><td>Panel raportowy dla działu HR</td><td>Must Have</td></tr>
+    <tr><td>F9</td><td>Dziennik akcji administracyjnych (audit log)</td><td>Must Have</td></tr>
+    <tr><td>F10</td><td>Indeks dobrostanu (Wellbeing Index)</td><td>Should Have</td></tr>
+    <tr><td>F11</td><td>Analiza trendów w czasie</td><td>Should Have</td></tr>
+    <tr><td>F12</td><td>Filtrowanie i grupowanie raportów</td><td>Should Have</td></tr>
+    <tr><td>F13</td><td>System powiadomień in-app</td><td>Should Have</td></tr>
+    <tr><td>F14</td><td>Powiadomienia e-mail o nowych testach</td><td>Should Have</td></tr>
+    <tr><td>F15</td><td>Panel właściciela platformy (super-admin)</td><td>Should Have</td></tr>
+    <tr><td>F16</td><td>Zarządzanie strukturą organizacyjną firmy</td><td>Should Have</td></tr>
+    <tr><td>F17</td><td>Aplikacja Progressive Web App (PWA)</td><td>Could Have</td></tr>
+    <tr><td>F18</td><td>Codzienny check-in nastroju (MOOD10)</td><td>Could Have</td></tr>
+    <tr><td>F19</td><td>Tryb jasny i ciemny interfejsu</td><td>Could Have</td></tr>
+    <tr><td>F20</td><td>Automatyczne odświeżanie sesji</td><td>Could Have</td></tr>
+    <tr><td>F21</td><td>Diagnostyka kliniczna i decyzje medyczne</td><td>Won&rsquo;t Have</td></tr>
+    <tr><td>F22</td><td>Aplikacje natywne na iOS i Androida</td><td>Won&rsquo;t Have</td></tr>
+    <tr><td>F23</td><td>Analiza komentarzy z wykorzystaniem AI/NLP</td><td>Won&rsquo;t Have</td></tr>
+    <tr><td>F24</td><td>Integracje z zewnętrznymi systemami HR</td><td>Won&rsquo;t Have</td></tr>
+    <tr><td>F25</td><td>Komunikacja w czasie rzeczywistym</td><td>Won&rsquo;t Have</td></tr>
+  </tbody>
+</table>
+
+<h2>Wymagania niefunkcjonalne</h2>
+
+<table>
+  <thead>
+    <tr><th>ID</th><th>Wymaganie</th><th>Priorytet</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>NF1</td><td>Uwierzytelnianie i autoryzacja (JWT, role)</td><td>Must Have</td></tr>
+    <tr><td>NF2</td><td>Bezpieczne przechowywanie haseł (bcrypt)</td><td>Must Have</td></tr>
+    <tr><td>NF3</td><td>Szyfrowanie komunikacji (HTTPS + HSTS)</td><td>Must Have</td></tr>
+    <tr><td>NF4</td><td>Tokeny JWT w ciasteczkach HttpOnly</td><td>Must Have</td></tr>
+    <tr><td>NF5</td><td>Nagłówki bezpieczeństwa HTTP (Helmet)</td><td>Must Have</td></tr>
+    <tr><td>NF6</td><td>Anonimizacja danych w raportach (k=5)</td><td>Must Have</td></tr>
+    <tr><td>NF7</td><td>Zgodność z RODO</td><td>Must Have</td></tr>
+    <tr><td>NF8</td><td>Multi-tenant izolacja danych</td><td>Must Have</td></tr>
+    <tr><td>NF9</td><td>Czytelny i intuicyjny interfejs</td><td>Must Have</td></tr>
+    <tr><td>NF10</td><td>Czas odpowiedzi API poniżej 1 sekundy</td><td>Should Have</td></tr>
+    <tr><td>NF11</td><td>Obsługa wielu użytkowników jednocześnie</td><td>Should Have</td></tr>
+    <tr><td>NF12</td><td>Horyzontalna skalowalność architektury</td><td>Should Have</td></tr>
+    <tr><td>NF13</td><td>Konteneryzacja środowiska (Docker)</td><td>Should Have</td></tr>
+    <tr><td>NF14</td><td>Responsywność mobilna (mobile-first)</td><td>Should Have</td></tr>
+    <tr><td>NF15</td><td>Rate limiting logowania i rejestracji</td><td>Should Have</td></tr>
+    <tr><td>NF16</td><td>Dziennik audytu akcji administracyjnych</td><td>Should Have</td></tr>
+    <tr><td>NF17</td><td>Healthcheck endpoint i polityka restartu</td><td>Should Have</td></tr>
+    <tr><td>NF18</td><td>Dostępność jako Progressive Web App (PWA)</td><td>Could Have</td></tr>
+    <tr><td>NF19</td><td>Tryb jasny i ciemny interfejsu</td><td>Could Have</td></tr>
+    <tr><td>NF20</td><td>Buforowanie zasobów (Service Worker)</td><td>Could Have</td></tr>
+    <tr><td>NF21</td><td>Internacjonalizacja interfejsu (i18n)</td><td>Could Have</td></tr>
+    <tr><td>NF22</td><td>Obsługa milionów użytkowników</td><td>Won&rsquo;t Have</td></tr>
+    <tr><td>NF23</td><td>Certyfikacja ISO 27001 / SOC 2</td><td>Won&rsquo;t Have</td></tr>
+    <tr><td>NF24</td><td>Wysoka dostępność wieloregionowa</td><td>Won&rsquo;t Have</td></tr>
+    <tr><td>NF25</td><td>Pełen system monitoringu (APM)</td><td>Won&rsquo;t Have</td></tr>
+    <tr><td>NF26</td><td>Pełne procedury audytowe i prawne</td><td>Won&rsquo;t Have</td></tr>
+  </tbody>
+</table>
+
+</body>
+</html>

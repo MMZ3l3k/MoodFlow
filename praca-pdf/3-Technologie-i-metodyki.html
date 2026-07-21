@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>3. Technologie i metodyki wykorzystane w projekcie</title>
+<style>
+  @page { size: A4; margin: 2.5cm 2cm 2.5cm 2.5cm; }
+  body {
+    font-family: "Times New Roman", Times, serif;
+    font-size: 12pt;
+    line-height: 1.5;
+    color: #000;
+    text-align: justify;
+  }
+  h1 {
+    font-size: 16pt;
+    font-weight: bold;
+    margin-top: 24pt;
+    margin-bottom: 12pt;
+    page-break-after: avoid;
+  }
+  h2 {
+    font-size: 14pt;
+    font-weight: bold;
+    margin-top: 22pt;
+    margin-bottom: 10pt;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 12.5pt;
+    font-weight: bold;
+    font-style: italic;
+    margin-top: 14pt;
+    margin-bottom: 6pt;
+    page-break-after: avoid;
+  }
+  p { margin: 0 0 10pt 0; }
+  ul { margin: 6pt 0 12pt 0; padding-left: 24pt; }
+  li { margin-bottom: 4pt; line-height: 1.45; }
+  strong { font-weight: bold; }
+  em { font-style: italic; }
+  code {
+    font-family: "Courier New", Courier, monospace;
+    font-size: 11pt;
+    background: #f0f0f0;
+    padding: 0 3pt;
+    border-radius: 2pt;
+  }
+</style>
+</head>
+<body>
+
+<h1>3. Technologie i metodyki wykorzystane w projekcie</h1>
+
+<p>W rozdziale opisano dobór technologii oraz metodyk projektowych zastosowanych przy budowie platformy MoodFlow. Każda decyzja techniczna została skonfrontowana z trzema kryteriami: spełnieniem wymagań projektu (rozdziały 2.2 i 2.3), adekwatnością do skali projektu inżynierskiego oraz możliwością merytorycznego uzasadnienia w pracy. Pominięto technologie eksperymentalne i takie, których wybór byłby trudny do obrony przed komisją.</p>
+
+<h2>3.1. Założenia metodyczne</h2>
+
+<p>U podstaw projektu leży kilka założeń metodycznych, które wpłynęły na całą architekturę systemu.</p>
+
+<h3>Architektura modularna w stylu DDD-light</h3>
+<p>Backend zorganizowano w niezależne moduły domenowe (<em>auth</em>, <em>users</em>, <em>organizations</em>, <em>assessments</em>, <em>results</em>, <em>analytics</em>, <em>notifications</em>, <em>audit</em>, <em>health</em>), z których każdy zawiera własny kontroler, serwis, repozytoria oraz definicje encji. Podejście to wynika z metodyki DDD (Domain-Driven Design) w jej uproszczonej formie i pozwala na czytelne mapowanie kodu na obszary biznesowe systemu.</p>
+
+<h3>Wzorzec architektury wielodostępnej (multi-tenant)</h3>
+<p>Zastosowano model <em>row-level multi-tenancy</em> &mdash; wszystkie dane wszystkich firm znajdują się w jednej bazie danych, a izolacja jest realizowana przez filtrowanie zapytań po identyfikatorze organizacji pobieranym z tokenu uwierzytelniającego. Alternatywne modele (osobna baza per firma, osobny schemat) odrzucono jako zbyt kosztowne operacyjnie dla tej skali projektu.</p>
+
+<h3>Priorytetyzacja wymagań metodyką MoSCoW</h3>
+<p>Wymagania funkcjonalne i niefunkcjonalne zostały skategoryzowane zgodnie z metodyką MoSCoW (rozdziały 2.1&ndash;2.4), co umożliwiło świadome rozdzielenie funkcjonalności krytycznych od pomocniczych oraz uzasadnienie elementów świadomie wykluczonych z bieżącej wersji.</p>
+
+<h3>Anonimizacja danych metodą k-anonymity</h3>
+<p>Dla raportów dla działu HR przyjęto regułę <em>k-anonymity</em> z progiem k=5 &mdash; agregaty są ukrywane dla grup mniejszych niż pięć osób. Metoda ta jest uznanym standardem w przetwarzaniu danych medycznych i pozwala zachować równowagę pomiędzy użytecznością analityczną a ochroną prywatności.</p>
+
+<h2>3.2. Język programowania &mdash; TypeScript</h2>
+
+<p>Cały kod aplikacji &mdash; zarówno backend, jak i oba frontendy &mdash; został napisany w języku <strong>TypeScript</strong>. Jest to nadbudowa nad JavaScriptem rozwijana przez firmę Microsoft, dodająca do języka system typów statycznych weryfikowanych podczas kompilacji.</p>
+
+<p>Wybór TypeScriptu wynikał z następujących przesłanek:</p>
+
+<ul>
+  <li><strong>Bezpieczeństwo typowe</strong> &mdash; znaczna część błędów programistycznych (np. próba odczytu właściwości z <code>undefined</code>) jest wykrywana na etapie kompilacji, a nie w działającej aplikacji. W kontekście danych dotyczących zdrowia psychicznego minimalizacja ryzyka błędów ma znaczenie krytyczne.</li>
+  <li><strong>Spójność typów end-to-end</strong> &mdash; ten sam typ użytkownika lub wyniku testu może być współdzielony pomiędzy backendem a frontendem, co eliminuje rozbieżności w kontraktach API.</li>
+  <li><strong>Wsparcie nowoczesnych frameworków</strong> &mdash; NestJS, Next.js, Vite oraz Redux Toolkit traktują TypeScript jako pierwszorzędny język, co przekłada się na lepszą jakość dokumentacji i ekosystemu bibliotek.</li>
+  <li><strong>Wartość edukacyjna i zawodowa</strong> &mdash; TypeScript jest standardem branżowym w nowoczesnym <em>web developmencie</em>, a praca napisana w tym języku łatwiej spełnia wymagania utrzymania w przyszłości.</li>
+</ul>
+
+<h2>3.3. Backend &mdash; Node.js i NestJS</h2>
+
+<p>Warstwa serwerowa aplikacji została zbudowana w środowisku <strong>Node.js 20</strong> z użyciem frameworka <strong>NestJS</strong> w wersji 11. NestJS wprowadza do ekosystemu JavaScript koncepcje znane z dojrzałych frameworków takich jak Spring (Java) lub Angular &mdash; modułowość, wstrzykiwanie zależności (<em>dependency injection</em>), dekoratory oraz wyraźny podział na warstwy.</p>
+
+<p>Uzasadnienie wyboru NestJS:</p>
+
+<ul>
+  <li><strong>Modularna struktura kodu</strong> &mdash; każdy obszar domenowy aplikacji (np. testy, użytkownicy, audyt) jest niezależnym modułem z jasno określonymi zależnościami, co odpowiada wymogowi czytelnej architektury opisanemu w pracy inżynierskiej.</li>
+  <li><strong>Wbudowane mechanizmy bezpieczeństwa</strong> &mdash; system <em>Guards</em> umożliwia deklaratywne zabezpieczenie endpointów rolami użytkownika, a globalny <code>ValidationPipe</code> automatycznie waliduje dane wejściowe na podstawie definicji DTO.</li>
+  <li><strong>Pierwszorzędne wsparcie TypeScript</strong> &mdash; framework wykorzystuje dekoratory i metadata reflection, dzięki czemu typowanie kodu jest ścisłe i czytelne.</li>
+  <li><strong>Bogaty ekosystem oficjalnych modułów</strong> &mdash; <code>@nestjs/jwt</code>, <code>@nestjs/passport</code>, <code>@nestjs/typeorm</code>, <code>@nestjs/throttler</code> pozwoliły na szybkie wdrożenie kluczowych funkcji bez poszukiwania niesprawdzonych bibliotek zewnętrznych.</li>
+</ul>
+
+<p>Alternatywą rozważaną był framework Express (minimalistyczny). Został odrzucony, ponieważ wymagałby ręcznego budowania wszystkich abstrakcji (modularność, walidacja, autoryzacja), co rozszerzyłoby zakres pracy bez wartości merytorycznej. Z kolei Fastify, choć technicznie wydajniejszy, ma uboższy ekosystem i mniejszą bazę dokumentacji w języku polskim.</p>
+
+<h2>3.4. Trwałość danych &mdash; PostgreSQL i TypeORM</h2>
+
+<p>Jako system zarządzania bazą danych wybrano <strong>PostgreSQL 16</strong> &mdash; relacyjną bazę danych z otwartym kodem źródłowym. Komunikacja z bazą odbywa się poprzez <strong>TypeORM</strong> &mdash; bibliotekę typu ORM (Object-Relational Mapping) ściśle zintegrowaną z NestJS.</p>
+
+<p>Uzasadnienie wyboru PostgreSQL:</p>
+
+<ul>
+  <li><strong>Natywne wsparcie dla typu JSONB</strong> &mdash; wykorzystywanego przez tabele <code>audit_logs</code> (metadane akcji) oraz <code>assessment_results</code> (snapshot odpowiedzi). Wsparcie indeksów GIN umożliwia efektywne zapytania po polach JSON.</li>
+  <li><strong>Pełniejsza zgodność ze standardem SQL</strong> &mdash; window functions, CTE (Common Table Expressions), typy ENUM i CHECK constraints są przydatne w analityce HR.</li>
+  <li><strong>Dojrzałość i stabilność</strong> &mdash; PostgreSQL ma ponad 30-letnią historię rozwoju i jest obsługiwany przez wszystkich znaczących dostawców chmurowych (AWS RDS, Google Cloud SQL, Azure Database, Railway, Neon, Supabase).</li>
+  <li><strong>Otwarta licencja</strong> &mdash; brak kosztów licencyjnych zarówno na etapie projektu, jak i przy ewentualnym wdrożeniu komercyjnym.</li>
+</ul>
+
+<p>Alternatywą rozważaną był MySQL (sugerowany w pierwotnym PRD), jednak po analizie potrzeb projektu (typ JSONB, audit log, anonimizacja agregatów) zdecydowano o zmianie na PostgreSQL. Decyzja ta została udokumentowana jako jedna z architektonicznych (ADR-002).</p>
+
+<p>TypeORM wybrano zamiast alternatyw (Prisma, Sequelize, Knex.js) z uwagi na pełną integrację z NestJS, wsparcie dla dekoratorów typescriptowych oraz natywne mechanizmy migracji.</p>
+
+<h2>3.5. Frontend pracownika &mdash; React i Vite</h2>
+
+<p>Aplikacja przeznaczona dla pracownika została zrealizowana w bibliotece <strong>React 18</strong> z wykorzystaniem narzędzia budującego <strong>Vite 8</strong>. Stan aplikacji zarządzany jest przez <strong>Redux Toolkit</strong>, a routing realizuje biblioteka <strong>React Router</strong>.</p>
+
+<p>Uzasadnienie:</p>
+
+<ul>
+  <li><strong>React</strong> &mdash; najczęściej stosowana biblioteka do budowy interfejsów webowych, z bogatym ekosystemem komponentów oraz dużą społecznością. Komponentowy model programowania ułatwia ponowne wykorzystanie elementów (np. <code>StatCard</code>, <code>ClientCard</code>) i jest zgodny z zasadą rozdzielenia odpowiedzialności.</li>
+  <li><strong>Vite</strong> &mdash; nowoczesne narzędzie budujące zastępujące starsze rozwiązania (Webpack, Create React App). Czas startu serwera deweloperskiego w typowym projekcie wynosi poniżej sekundy, a hot module replacement działa niemal natychmiastowo. Vite oferuje również wsparcie dla budowania PWA poprzez <code>vite-plugin-pwa</code>.</li>
+  <li><strong>Redux Toolkit</strong> &mdash; oficjalna, opinionated wersja Reduksa eliminująca dawne problemy boilerplate'u. Zarządza stanem uwierzytelnienia oraz wynikami zapytań do API. Dla aplikacji średniej skali Redux Toolkit zapewnia balans pomiędzy strukturą a prostotą.</li>
+  <li><strong>React Router 6</strong> &mdash; standard de facto dla routingu w aplikacjach React.</li>
+</ul>
+
+<p>Alternatywami rozważanymi były Vue.js i Svelte. React wybrano z uwagi na rozmiar ekosystemu, wsparcie dla TypeScriptu oraz wartość edukacyjną &mdash; jest to najbardziej rozpoznawana biblioteka w polskich ofertach pracy w 2025 roku.</p>
+
+<h2>3.6. Frontend administracyjny &mdash; Next.js</h2>
+
+<p>Panele administracyjne (administrator firmy, HR, właściciel platformy) zostały zbudowane przy użyciu frameworka <strong>Next.js 16</strong> &mdash; nadbudowy nad Reactem rozwijanej przez firmę Vercel. Next.js wprowadza renderowanie po stronie serwera (SSR), automatyczne dzielenie kodu (<em>code splitting</em>), routing oparty o strukturę folderów oraz model <em>App Router</em> z wsparciem dla React Server Components.</p>
+
+<p>Uzasadnienie wyboru:</p>
+
+<ul>
+  <li><strong>SEO i wydajność wstępnego renderu</strong> &mdash; choć panele administracyjne nie są publiczne, SSR przyspiesza pierwszy render i poprawia odbiór aplikacji.</li>
+  <li><strong>Routing oparty o pliki</strong> &mdash; struktura folderów <code>app/</code> bezpośrednio odzwierciedla strukturę URL, co jest szczególnie przydatne przy wielu zagnieżdżonych panelach (administracyjnym, HR, super-admina).</li>
+  <li><strong>Wsparcie dla TypeScriptu</strong> oraz integracja z bibliotekami React (Recharts, Framer Motion).</li>
+  <li><strong>Świadome rozdzielenie aplikacji pracownika i administracyjnej</strong> &mdash; każda ma inne wymagania (PWA dla pracownika, bogata analityka dla admina), więc wybór różnych frameworków pozwolił na optymalizację pod konkretny przypadek użycia.</li>
+</ul>
+
+<h2>3.7. Stylowanie i komponenty UI &mdash; Tailwind CSS</h2>
+
+<p>Wszystkie warstwy prezentacji aplikacji wykorzystują <strong>Tailwind CSS</strong> &mdash; framework typu <em>utility-first</em>, w którym style są aplikowane bezpośrednio jako klasy w kodzie HTML/JSX. W projekcie zastosowano wersję 4.</p>
+
+<p>Uzasadnienie:</p>
+
+<ul>
+  <li><strong>Spójność wizualna</strong> &mdash; predefiniowane skale kolorów, marginesów i typografii eliminują niespójności wynikające z ręcznego pisania CSS.</li>
+  <li><strong>Mała wielkość finalnej paczki</strong> &mdash; Tailwind generuje wyłącznie te klasy, które zostały faktycznie użyte w kodzie, dzięki czemu rozmiar arkusza stylów w produkcji jest minimalny.</li>
+  <li><strong>Łatwość modyfikacji motywu</strong> &mdash; system tokenów CSS (<code>--bg-page</code>, <code>--text-base</code>, itd.) pozwolił na zaimplementowanie trybu jasnego i ciemnego z minimalną ingerencją w komponenty.</li>
+  <li><strong>Mobile-first</strong> &mdash; wbudowane modyfikatory <code>sm:</code>, <code>md:</code>, <code>lg:</code> wymuszają projektowanie zaczynając od urządzeń mobilnych, co odpowiada wymogom NF14.</li>
+</ul>
+
+<p>Alternatywą rozważaną był system styled-components (CSS-in-JS), odrzucony z uwagi na większy <em>runtime overhead</em> oraz mniejsze wsparcie dla statycznej analizy.</p>
+
+<h2>3.8. Wizualizacja danych &mdash; Recharts oraz SVG</h2>
+
+<p>W panelu HR oraz na pulpicie pracownika prezentowane są wykresy: trendy w czasie, rozkłady wyników, indeks dobrostanu. Wykorzystano dwa podejścia:</p>
+
+<ul>
+  <li><strong>Recharts</strong> &mdash; biblioteka komponentów wykresów dla Reacta, oparta na D3.js. Wykorzystywana w panelu HR (Bar Chart aktywności, Line Chart trendów, Pie Chart rozkładu nasilenia objawów). Recharts oferuje wbudowaną responsywność oraz spójną stylistykę.</li>
+  <li><strong>Wykresy SVG własnego autorstwa</strong> &mdash; w aplikacji pracownika wykresy indeksu dobrostanu i historii wyników zostały zaimplementowane bez zewnętrznej biblioteki, z użyciem natywnych elementów SVG. Pozwala to na precyzyjną kontrolę nad wyglądem (krzywa Beziera dla wygładzonej linii, gradient pod krzywą, animowane wartości).</li>
+</ul>
+
+<p>Recharts wybrano nad alternatywami (Chart.js, ApexCharts) z uwagi na natywną integrację z React (komponenty zamiast imperatywnego API canvas) oraz lekki rozmiar.</p>
+
+<h2>3.9. Progressive Web App</h2>
+
+<p>Aplikacja pracownika została zaimplementowana jako <strong>Progressive Web App (PWA)</strong> z wykorzystaniem wtyczki <code>vite-plugin-pwa</code> opartej na bibliotece <strong>Workbox</strong> (Google).</p>
+
+<p>Implementacja zawiera:</p>
+
+<ul>
+  <li><strong>Manifest aplikacji</strong> (<code>manifest.webmanifest</code>) &mdash; opisuje nazwę, opis, kolor motywu, ikony oraz tryb wyświetlania (<em>standalone</em>);</li>
+  <li><strong>Ikony w formatach PNG</strong> dla iOS i Androida (192&times;192, 512&times;512, 180&times;180 dla <em>apple-touch-icon</em>);</li>
+  <li><strong>Service Worker</strong> &mdash; buforuje zasoby statyczne (kod JavaScript, arkusze stylów, czcionki) z polityką <em>cache-first</em>, dzięki czemu kolejne uruchomienia są niemal natychmiastowe;</li>
+  <li><strong>Strategie wykluczenia cache</strong> &mdash; endpointy autoryzacji (<code>/auth/*</code>, <code>/users/me</code>, <code>/results</code>) są wykluczone z buforowania, aby zapobiec wyciekowi danych po wylogowaniu;</li>
+  <li><strong>Mechanizm powiadamiania o nowych wersjach</strong> &mdash; tryb <code>registerType: 'prompt'</code> pokazuje użytkownikowi banner z propozycją odświeżenia, dzięki czemu nigdy nie traci on niezapisanych danych formularza.</li>
+</ul>
+
+<p>Wybór PWA jako alternatywy dla aplikacji natywnych iOS/Android pozwolił zachować pojedynczą bazę kodu i wyeliminować konieczność dystrybucji przez sklepy Apple App Store i Google Play.</p>
+
+<h2>3.10. Bezpieczeństwo aplikacji</h2>
+
+<p>W warstwie bezpieczeństwa wykorzystano zestaw sprawdzonych bibliotek branżowych:</p>
+
+<ul>
+  <li><strong>bcrypt</strong> &mdash; hashowanie haseł z 12 rundami soli;</li>
+  <li><strong>JSON Web Tokens (JWT)</strong> &mdash; tokeny dostępu (15 minut) oraz odświeżania (7 dni), podpisywane algorytmem HS256 z różnymi sekretami;</li>
+  <li><strong>Helmet</strong> &mdash; automatyczne dołączanie nagłówków bezpieczeństwa HTTP (X-Frame-Options, X-Content-Type-Options, HSTS, Referrer-Policy);</li>
+  <li><strong>cookie-parser</strong> &mdash; parsowanie ciasteczek HttpOnly z tokenami JWT;</li>
+  <li><strong>class-validator</strong> i <strong>class-transformer</strong> &mdash; walidacja danych wejściowych w DTO z deklaratywnymi dekoratorami (<code>@IsEmail</code>, <code>@MinLength</code>, <code>@IsString</code>);</li>
+  <li><strong>@nestjs/throttler</strong> &mdash; ograniczenie liczby żądań na endpointy uwierzytelniające (login: 10 prób na 15 minut, rejestracja: 5 prób na 15 minut).</li>
+</ul>
+
+<p>Szczegółowy opis każdego z mechanizmów bezpieczeństwa został zawarty w rozdziale poświęconym bezpieczeństwu aplikacji.</p>
+
+<h2>3.11. Konteneryzacja i wdrożenie</h2>
+
+<h3>Docker oraz Docker Compose</h3>
+<p>Wszystkie komponenty aplikacji (backend, dwa frontendy, baza danych) działają w izolowanych kontenerach <strong>Docker</strong>. Orkiestrację realizuje narzędzie <strong>Docker Compose</strong> w dwóch konfiguracjach: <code>docker-compose.yml</code> dla środowiska rozwojowego (z <em>hot reload</em>, narzędziem Adminer dla bazy danych, bind-mount wolumenów źródłowych) oraz <code>docker-compose.prod.yml</code> dla środowiska produkcyjnego (z <em>health checkami</em>, polityką restartu <code>unless-stopped</code>, bazą danych dostępną tylko wewnętrznie).</p>
+
+<p>Konteneryzacja zapewnia identyczne środowisko uruchomieniowe na różnych platformach (lokalnie, na chmurze, w CI/CD) i jest standardem branżowym w nowoczesnych aplikacjach webowych.</p>
+
+<h3>Platforma chmurowa Railway</h3>
+<p>Aplikacja produkcyjna została wdrożona na platformie <strong>Railway</strong> &mdash; nowoczesnym dostawcy chmurowym typu PaaS (Platform as a Service), zorientowanym na deweloperów. Railway integruje się z repozytorium GitHub i automatycznie wdraża zmiany po każdym <em>push</em>'u do gałęzi produkcyjnej.</p>
+
+<p>Wybór Railway:</p>
+
+<ul>
+  <li>Natywne wsparcie dla aplikacji w kontenerach Docker oraz dla plików <code>docker-compose.yml</code>;</li>
+  <li>Automatyczne udostępnianie certyfikatów TLS (Let's Encrypt) dla każdej domeny;</li>
+  <li>Managed PostgreSQL z dziennymi snapshotami i wewnętrznym DNS (<code>postgres.railway.internal</code>) niedostępnym z internetu;</li>
+  <li>Wbudowane narzędzia obserwowalności (logi, metryki) i healthchecki;</li>
+  <li>Hobby tier z 5 USD kredytów miesięcznie wystarczający na potrzeby projektu inżynierskiego.</li>
+</ul>
+
+<p>Alternatywami rozważanymi były Render, Fly.io oraz wirtualny serwer prywatny (VPS) z konfiguracją od zera. Railway wybrano z uwagi na najprostszy proces wdrażania monorepo z wieloma serwisami oraz dobrą dokumentację.</p>
+
+<h2>3.12. Narzędzia wspierające proces tworzenia</h2>
+
+<h3>Git i GitHub</h3>
+<p>Cały kod projektu utrzymywany jest w systemie kontroli wersji <strong>Git</strong>, w repozytorium hostowanym na <strong>GitHub</strong>. Każda istotna zmiana jest dokumentowana czytelnym komunikatem <em>commit</em>, a krytyczne decyzje techniczne wpisywane są do dziennika decyzji architektonicznych w katalogu <code>docs/</code>.</p>
+
+<h3>Visual Studio Code</h3>
+<p>Środowiskiem rozwojowym był <strong>Visual Studio Code</strong> z dodatkami: ESLint, Prettier, TypeScript Vue Plugin, Tailwind CSS IntelliSense, GitLens.</p>
+
+<h3>Mermaid &mdash; diagramy w formacie tekstowym</h3>
+<p>Wszystkie diagramy projektowe (use case, klas, sekwencji, ERD, komponentów, wdrożenia, BPMN) zostały opisane składnią <strong>Mermaid</strong> &mdash; językiem do generowania diagramów z opisu tekstowego. Mermaid jest natywnie renderowany w plikach Markdown na GitHub i większości nowoczesnych edytorów. Dzięki temu diagramy są wersjonowane razem z kodem i można je modyfikować w sposób kontrolowany przez <em>code review</em>.</p>
+
+<h3>Postman / Thunder Client</h3>
+<p>Testy ręczne API w trakcie rozwoju realizowane były przy użyciu klienta REST (<strong>Postman</strong> oraz wbudowany <strong>Thunder Client</strong> w VS Code).</p>
+
+<h3>Pencil i Figma &mdash; projektowanie interfejsu</h3>
+<p>Wstępne makiety interfejsu zostały przygotowane w narzędziach do projektowania UI &mdash; <strong>Pencil</strong> (formaty <code>.pen</code>) oraz dla wybranych ekranów w <strong>Figma</strong>. Stanowiły one bazę referencyjną dla finalnej implementacji w Tailwind CSS.</p>
+
+<h2>Podsumowanie doboru technologii</h2>
+
+<p>Stos technologiczny projektu MoodFlow został zaprojektowany pod kątem trzech celów:</p>
+
+<ol>
+  <li><strong>Spełnienia wymagań projektu</strong> &mdash; każda technologia odpowiada konkretnym wymaganiom funkcjonalnym lub niefunkcjonalnym opisanym w rozdziale 2.</li>
+  <li><strong>Adekwatności do skali projektu inżynierskiego</strong> &mdash; preferowano rozwiązania popularne, dobrze udokumentowane, możliwe do obrony na obronie pracy bez konieczności tłumaczenia eksperymentalnych decyzji.</li>
+  <li><strong>Aktualności rynkowej</strong> &mdash; wszystkie wybrane technologie są standardem branżowym w 2025 roku, co zwiększa wartość edukacyjną i zawodową projektu.</li>
+</ol>
+
+<p>Pełen stos technologiczny przedstawia się następująco: <strong>TypeScript</strong> jako język programowania, <strong>NestJS + TypeORM + PostgreSQL</strong> w warstwie backendowej, <strong>React + Vite + Redux Toolkit</strong> dla aplikacji pracownika, <strong>Next.js</strong> dla aplikacji administracyjnej, <strong>Tailwind CSS</strong> jako system stylowania, <strong>Recharts</strong> i SVG do wizualizacji danych, <strong>vite-plugin-pwa + Workbox</strong> dla funkcji PWA, <strong>Docker + Docker Compose</strong> dla konteneryzacji oraz <strong>Railway</strong> jako platforma chmurowa.</p>
+
+</body>
+</html>

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>3.1. Metodyka pracy zespołowej</title>
+<style>
+  @page { size: A4 landscape; margin: 1.5cm 1.5cm 1.5cm 1.5cm; }
+  @page :first { size: A4; margin: 2.5cm 2cm 2.5cm 2.5cm; }
+  body {
+    font-family: Verdana, sans-serif;
+    font-size: 10pt;
+    line-height: 1.15;
+    color: #000;
+    text-align: justify;
+  }
+  h1 {
+    font-size: 12pt;
+    font-weight: bold;
+    margin-top: 0;
+    margin-bottom: 12pt;
+    page-break-after: avoid;
+  }
+  h2 {
+    font-size: 10pt;
+    font-weight: bold;
+    margin-top: 18pt;
+    margin-bottom: 8pt;
+    page-break-after: avoid;
+  }
+  p {
+    margin: 0 0 8pt 0;
+    text-indent: 18pt;
+  }
+  p.no-indent { text-indent: 0; }
+  p.tab-caption {
+    font-weight: bold;
+    text-indent: 0;
+    margin: 12pt 0 4pt 0;
+    font-size: 10pt;
+  }
+  /* Wykres Gantta — tabela 36 tygodni × 7 faz */
+  .gantt-page { page-break-before: always; }
+  table.gantt {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 7.5pt;
+    line-height: 1;
+    margin: 4pt 0;
+  }
+  table.gantt th, table.gantt td {
+    border: 0.5px solid #999;
+    padding: 0;
+    height: 14pt;
+    vertical-align: middle;
+    text-align: center;
+    overflow: hidden;
+  }
+  table.gantt th.task-col, table.gantt td.task-col {
+    width: 165pt;
+    text-align: left;
+    padding: 2pt 4pt;
+    font-size: 8pt;
+    line-height: 1.15;
+  }
+  table.gantt th.month-hdr {
+    background: #2E211C;
+    color: #fff;
+    font-weight: bold;
+    font-size: 8pt;
+    padding: 3pt 0;
+  }
+  table.gantt th.week-hdr {
+    background: #f0f0f0;
+    font-size: 6.5pt;
+    color: #555;
+  }
+  table.gantt tr.phase-row td {
+    background: #2E211C;
+    color: #fff;
+    font-weight: bold;
+    text-align: left;
+    padding: 3pt 6pt;
+    font-size: 8pt;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  table.gantt tr.milestone-row td {
+    background: #fff;
+    color: #C06226;
+    font-weight: bold;
+    text-align: left;
+    padding: 3pt 6pt;
+    font-size: 8pt;
+    border-top: 1px solid #C06226;
+  }
+  /* Bary kolorów */
+  .bar-1  { background: #8b5cf6; } /* fioletowy — analiza, planowanie */
+  .bar-2  { background: #6366f1; } /* indygo — infrastruktura */
+  .bar-3  { background: #10b981; } /* zielony — autoryzacja, użytkownicy */
+  .bar-4  { background: #06b6d4; } /* cyjan — UI logowania */
+  .bar-5  { background: #475569; } /* slate — bezpieczeństwo */
+  .bar-6  { background: #16a34a; } /* zielony ciemny — testy, scoring */
+  .bar-7  { background: #0ea5e9; } /* niebieski — UI testów */
+  .bar-8  { background: #22c55e; } /* zielony jasny — analityka */
+  .bar-9  { background: #38bdf8; } /* niebieski jasny — dashboardy */
+  .bar-10 { background: #f59e0b; } /* pomarańczowy — testy QA */
+  .bar-11 { background: #64748b; } /* slate ciemny — audit */
+  .bar-12 { background: #14b8a6; } /* turkusowy — wdrożenie */
+  .bar-13 { background: #a78bfa; } /* fiolet jasny — dokumentacja, pisanie */
+  .legend-box {
+    display: inline-block;
+    width: 12pt;
+    height: 8pt;
+    margin-right: 4pt;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+
+<h1>3.1. Metodyka pracy zespołowej</h1>
+
+<p>Wytwarzanie platformy oparto o iteracyjne podejście wywodzące się z filozofii Agile, ze szczególnym uwzględnieniem elementów metodyki Scrum oraz tablicy zadań w stylu Kanban. Wybór metodyki zwinnej był podyktowany kilkoma czynnikami. Po pierwsze, na początku projektu nie wszystkie wymagania były znane w sposób precyzyjny i pojawiała się konieczność ich uściślania w trakcie realizacji. Po drugie, zespół składał się z osób o różnych specjalizacjach, co wymagało regularnej komunikacji i transparentności postępów. Po trzecie, krótkie iteracje pozwalały na bieżącą walidację rozwiązań w kontekście wymagań pracy inżynierskiej oraz konsultacji z promotorem.</p>
+
+<p>Praca przebiegała w dwutygodniowych iteracjach. Na początku każdej iteracji ustalano zakres zadań do wykonania na podstawie listy backlog, w trakcie iteracji prowadzono krótkie spotkania synchronizacyjne, a na zakończenie weryfikowano efekty. Tablica zadań w narzędziu do zarządzania projektami obrazowała aktualny stan każdego zadania w pięciu kolumnach: Backlog, To Do, In Progress, Review oraz Done.</p>
+
+<p>Alternatywą rozważaną była metodyka Waterfall, jednak została odrzucona ze względu na ograniczenia wynikające z liniowej kolejności faz oraz brak elastyczności w przypadku zmiany wymagań w trakcie projektu. Charakter pracy inżynierskiej, w której wymagania funkcjonalne dojrzewały równolegle z postępami implementacji, wymagał podejścia adaptacyjnego.</p>
+
+<p>Cały proces wytwarzania platformy MoodFlow zaplanowano i zrealizowano w okresie dziewięciu miesięcy, od października 2025 do czerwca 2026. Pracę podzielono na siedem następujących po sobie faz, z których każda zakończona została kamieniem milowym (<em>milestone</em>) potwierdzającym osiągnięcie konkretnego rezultatu cząstkowego. Część zadań realizowana była równolegle, ze względu na specjalizację członków zespołu (warstwa backendu, dwa frontendy, dokumentacja). Szczegółowy harmonogram prac w ujęciu tygodniowym przedstawiono na wykresie Gantta na kolejnej stronie.</p>
+
+<p>Każda z siedmiu faz odpowiadała innemu obszarowi systemu. Faza pierwsza obejmowała analizę dziedziny i planowanie projektu, w tym wybór tematu, analizę istniejących rozwiązań rynkowych, analizę SWOT, sporządzenie wymagań funkcjonalnych i niefunkcjonalnych metodą MoSCoW oraz wybór stosu technologicznego. Faza druga to przygotowanie infrastruktury &mdash; repozytorium Git, konfiguracji konteneryzacji Docker, schematu bazy danych PostgreSQL oraz szkieletów aplikacji backendowej i obu frontendów. Faza trzecia objęła implementację warstwy uwierzytelniania, ról oraz wielodostępności (multi-tenant), wraz z zatwierdzaniem użytkowników i organizacji. W fazie czwartej zaimplementowano walidowane testy psychologiczne, scoring oraz indeks dobrostanu &mdash; rdzeń wartości merytorycznej platformy. Faza piąta dotyczyła dashboardów i analityki HR, z anonimizacją k-anonymity dla raportów. W fazie szóstej dodano powiadomienia in-app i e-mail, dziennik audytu, PWA oraz tryb jasny i ciemny, a także przeprowadzono testy ręczne. Ostatnia, siódma faza obejmowała przygotowanie diagramów UML i BPMN, wdrożenie produkcyjne na platformę chmurową Railway, redakcję pracy inżynierskiej oraz przygotowanie do obrony.</p>
+
+<p class="tab-caption">Tabela 3.1 Harmonogram prac projektowych w ujęciu tygodniowym (źródło: opracowanie własne)</p>
+
+<div class="gantt-page">
+
+<table class="gantt">
+  <colgroup>
+    <col style="width:165pt">
+    <col span="36">
+  </colgroup>
+  <thead>
+    <tr>
+      <th class="task-col" rowspan="2">Zadanie</th>
+      <th class="month-hdr" colspan="4">Październik 2025</th>
+      <th class="month-hdr" colspan="4">Listopad 2025</th>
+      <th class="month-hdr" colspan="4">Grudzień 2025</th>
+      <th class="month-hdr" colspan="4">Styczeń 2026</th>
+      <th class="month-hdr" colspan="4">Luty 2026</th>
+      <th class="month-hdr" colspan="4">Marzec 2026</th>
+      <th class="month-hdr" colspan="4">Kwiecień 2026</th>
+      <th class="month-hdr" colspan="4">Maj 2026</th>
+      <th class="month-hdr" colspan="4">Czerwiec 2026</th>
+    </tr>
+    <tr>
+      <th class="week-hdr">T1</th><th class="week-hdr">T2</th><th class="week-hdr">T3</th><th class="week-hdr">T4</th>
+      <th class="week-hdr">T5</th><th class="week-hdr">T6</th><th class="week-hdr">T7</th><th class="week-hdr">T8</th>
+      <th class="week-hdr">T9</th><th class="week-hdr">T10</th><th class="week-hdr">T11</th><th class="week-hdr">T12</th>
+      <th class="week-hdr">T13</th><th class="week-hdr">T14</th><th class="week-hdr">T15</th><th class="week-hdr">T16</th>
+      <th class="week-hdr">T17</th><th class="week-hdr">T18</th><th class="week-hdr">T19</th><th class="week-hdr">T20</th>
+      <th class="week-hdr">T21</th><th class="week-hdr">T22</th><th class="week-hdr">T23</th><th class="week-hdr">T24</th>
+      <th class="week-hdr">T25</th><th class="week-hdr">T26</th><th class="week-hdr">T27</th><th class="week-hdr">T28</th>
+      <th class="week-hdr">T29</th><th class="week-hdr">T30</th><th class="week-hdr">T31</th><th class="week-hdr">T32</th>
+      <th class="week-hdr">T33</th><th class="week-hdr">T34</th><th class="week-hdr">T35</th><th class="week-hdr">T36</th>
+    </tr>
+  </thead>
+  <tbody>
+
+    <!-- FAZA 1 -->
+    <tr class="phase-row"><td colspan="37">Faza 1 &mdash; Analiza i planowanie projektu</td></tr>
+    <tr><td class="task-col">Wybór tematu i analiza rynku</td>
+      <td class="bar-1"></td><td class="bar-1"></td><td class="bar-1"></td><td></td>
+      <td colspan="32"></td></tr>
+    <tr><td class="task-col">Analiza SWOT, persony użytkowników</td>
+      <td></td><td></td><td class="bar-1"></td><td class="bar-1"></td>
+      <td colspan="32"></td></tr>
+    <tr><td class="task-col">Wymagania funkcjonalne i niefunkcjonalne (MoSCoW)</td>
+      <td></td><td></td><td></td><td class="bar-1"></td>
+      <td class="bar-1"></td><td class="bar-1"></td><td></td><td></td>
+      <td colspan="28"></td></tr>
+    <tr><td class="task-col">Wybór stosu technologicznego</td>
+      <td></td><td></td><td class="bar-1"></td><td class="bar-1"></td>
+      <td class="bar-1"></td><td></td><td></td><td></td>
+      <td colspan="28"></td></tr>
+    <tr><td class="task-col">Diagramy UML wstępne, ERD</td>
+      <td colspan="4"></td>
+      <td></td><td class="bar-1"></td><td class="bar-1"></td><td class="bar-1"></td>
+      <td colspan="28"></td></tr>
+    <tr><td class="task-col">Karta pracy dyplomowej, akceptacja przez promotora</td>
+      <td colspan="6"></td>
+      <td class="bar-1"></td><td class="bar-1"></td>
+      <td colspan="28"></td></tr>
+    <tr class="milestone-row"><td colspan="37">&#9670; Kamień milowy: Zatwierdzony zakres projektu i temat pracy</td></tr>
+
+    <!-- FAZA 2 -->
+    <tr class="phase-row"><td colspan="37">Faza 2 &mdash; Infrastruktura i fundamenty techniczne</td></tr>
+    <tr><td class="task-col">Repozytorium Git, struktura monorepo</td>
+      <td colspan="6"></td>
+      <td class="bar-2"></td><td class="bar-2"></td>
+      <td colspan="28"></td></tr>
+    <tr><td class="task-col">Docker, Docker Compose, środowisko dev</td>
+      <td colspan="7"></td>
+      <td class="bar-2"></td><td class="bar-2"></td>
+      <td colspan="27"></td></tr>
+    <tr><td class="task-col">Baza danych PostgreSQL, TypeORM</td>
+      <td colspan="7"></td>
+      <td class="bar-2"></td><td class="bar-2"></td><td class="bar-2"></td>
+      <td colspan="26"></td></tr>
+    <tr><td class="task-col">Szkielet backendu (NestJS), modularność</td>
+      <td colspan="8"></td>
+      <td class="bar-2"></td><td class="bar-2"></td>
+      <td colspan="26"></td></tr>
+    <tr><td class="task-col">Szkielet frontendów (React+Vite, Next.js)</td>
+      <td colspan="8"></td>
+      <td class="bar-2"></td><td class="bar-2"></td><td class="bar-2"></td>
+      <td colspan="25"></td></tr>
+    <tr class="milestone-row"><td colspan="37">&#9670; Kamień milowy: Środowisko gotowe do implementacji</td></tr>
+
+    <!-- FAZA 3 -->
+    <tr class="phase-row"><td colspan="37">Faza 3 &mdash; Autoryzacja, użytkownicy, role, multi-tenant</td></tr>
+    <tr><td class="task-col">Moduł auth (JWT, bcrypt, Passport)</td>
+      <td colspan="10"></td>
+      <td class="bar-3"></td><td class="bar-3"></td><td class="bar-3"></td>
+      <td colspan="23"></td></tr>
+    <tr><td class="task-col">Moduł users (profil, role, statusy)</td>
+      <td colspan="11"></td>
+      <td class="bar-3"></td><td class="bar-3"></td><td class="bar-3"></td>
+      <td colspan="22"></td></tr>
+    <tr><td class="task-col">Multi-tenant (organizacje, działy)</td>
+      <td colspan="12"></td>
+      <td class="bar-3"></td><td class="bar-3"></td>
+      <td colspan="22"></td></tr>
+    <tr><td class="task-col">Zatwierdzanie użytkowników i firm</td>
+      <td colspan="13"></td>
+      <td class="bar-3"></td><td class="bar-3"></td>
+      <td colspan="21"></td></tr>
+    <tr><td class="task-col">UI logowania, rejestracji, panele dostępu</td>
+      <td colspan="11"></td>
+      <td class="bar-4"></td><td class="bar-4"></td><td class="bar-4"></td><td class="bar-4"></td>
+      <td colspan="21"></td></tr>
+    <tr><td class="task-col">Bezpieczeństwo (CORS, Helmet, rate limit)</td>
+      <td colspan="13"></td>
+      <td class="bar-5"></td><td class="bar-5"></td>
+      <td colspan="21"></td></tr>
+    <tr class="milestone-row"><td colspan="37">&#9670; Kamień milowy: Logowanie i role działają w trzech panelach</td></tr>
+
+    <!-- FAZA 4 -->
+    <tr class="phase-row"><td colspan="37">Faza 4 &mdash; Testy psychologiczne, scoring, wyniki</td></tr>
+    <tr><td class="task-col">Szablony ankiet i pytania (PHQ-9, GAD-7, WHO-5, PSS-10, MOOD10)</td>
+      <td colspan="14"></td>
+      <td class="bar-6"></td><td class="bar-6"></td><td class="bar-6"></td>
+      <td colspan="19"></td></tr>
+    <tr><td class="task-col">Zapis odpowiedzi (responses), snapshot</td>
+      <td colspan="15"></td>
+      <td class="bar-6"></td><td class="bar-6"></td>
+      <td colspan="19"></td></tr>
+    <tr><td class="task-col">Scoring i klasyfikacja nasilenia (severity)</td>
+      <td colspan="16"></td>
+      <td class="bar-6"></td><td class="bar-6"></td>
+      <td colspan="18"></td></tr>
+    <tr><td class="task-col">Indeks dobrostanu (Wellbeing Index)</td>
+      <td colspan="17"></td>
+      <td class="bar-6"></td><td class="bar-6"></td>
+      <td colspan="17"></td></tr>
+    <tr><td class="task-col">UI wypełniania testów (mobile-first)</td>
+      <td colspan="15"></td>
+      <td class="bar-7"></td><td class="bar-7"></td><td class="bar-7"></td>
+      <td colspan="18"></td></tr>
+    <tr><td class="task-col">UI wyników, historii, wykresy</td>
+      <td colspan="17"></td>
+      <td class="bar-7"></td><td class="bar-7"></td><td class="bar-7"></td>
+      <td colspan="16"></td></tr>
+    <tr class="milestone-row"><td colspan="37">&#9670; Kamień milowy: Core MVP &mdash; testy działają end-to-end</td></tr>
+
+    <!-- FAZA 5 -->
+    <tr class="phase-row"><td colspan="37">Faza 5 &mdash; Dashboardy, analityka HR, panel administratora</td></tr>
+    <tr><td class="task-col">Analityka (agregacja, anonimizacja k=5)</td>
+      <td colspan="19"></td>
+      <td class="bar-8"></td><td class="bar-8"></td><td class="bar-8"></td>
+      <td colspan="14"></td></tr>
+    <tr><td class="task-col">Dashboard pracownika (Wellbeing Index)</td>
+      <td colspan="20"></td>
+      <td class="bar-9"></td><td class="bar-9"></td>
+      <td colspan="14"></td></tr>
+    <tr><td class="task-col">Panel raportowy HR (wykresy, filtry)</td>
+      <td colspan="20"></td>
+      <td class="bar-9"></td><td class="bar-9"></td><td class="bar-9"></td>
+      <td colspan="13"></td></tr>
+    <tr><td class="task-col">Panel administracyjny firmy</td>
+      <td colspan="21"></td>
+      <td class="bar-9"></td><td class="bar-9"></td>
+      <td colspan="13"></td></tr>
+    <tr><td class="task-col">Panel właściciela platformy (super-admin)</td>
+      <td colspan="22"></td>
+      <td class="bar-9"></td><td class="bar-9"></td>
+      <td colspan="12"></td></tr>
+    <tr class="milestone-row"><td colspan="37">&#9670; Kamień milowy: Wszystkie panele i widoki gotowe</td></tr>
+
+    <!-- FAZA 6 -->
+    <tr class="phase-row"><td colspan="37">Faza 6 &mdash; Powiadomienia, audyt, PWA, testy</td></tr>
+    <tr><td class="task-col">Powiadomienia in-app (bell, dropdown)</td>
+      <td colspan="24"></td>
+      <td class="bar-3"></td><td class="bar-3"></td>
+      <td colspan="11"></td></tr>
+    <tr><td class="task-col">Powiadomienia e-mail (SMTP, Helmet escape)</td>
+      <td colspan="25"></td>
+      <td class="bar-3"></td><td class="bar-3"></td>
+      <td colspan="9"></td></tr>
+    <tr><td class="task-col">Audit logging (akcje administracyjne)</td>
+      <td colspan="24"></td>
+      <td class="bar-11"></td><td class="bar-11"></td>
+      <td colspan="11"></td></tr>
+    <tr><td class="task-col">PWA, ikony, Service Worker, offline</td>
+      <td colspan="25"></td>
+      <td class="bar-2"></td><td class="bar-2"></td><td class="bar-2"></td>
+      <td colspan="9"></td></tr>
+    <tr><td class="task-col">Tryb jasny i ciemny (theme switcher)</td>
+      <td colspan="26"></td>
+      <td class="bar-2"></td><td class="bar-2"></td>
+      <td colspan="9"></td></tr>
+    <tr><td class="task-col">Testy klikalne (manualne) i nieklikalne</td>
+      <td colspan="24"></td>
+      <td class="bar-10"></td><td class="bar-10"></td><td class="bar-10"></td><td class="bar-10"></td>
+      <td colspan="9"></td></tr>
+    <tr class="milestone-row"><td colspan="37">&#9670; Kamień milowy: Aplikacja przetestowana, zabezpieczenia ukończone</td></tr>
+
+    <!-- FAZA 7 -->
+    <tr class="phase-row"><td colspan="37">Faza 7 &mdash; Diagramy, dokumentacja, wdrożenie, finalizacja pracy</td></tr>
+    <tr><td class="task-col">Diagramy UML i BPMN (use case, klas, sekwencji)</td>
+      <td colspan="27"></td>
+      <td class="bar-1"></td><td class="bar-1"></td><td class="bar-1"></td>
+      <td colspan="7"></td></tr>
+    <tr><td class="task-col">Wdrożenie produkcyjne (Railway, HTTPS)</td>
+      <td colspan="27"></td>
+      <td class="bar-12"></td><td class="bar-12"></td>
+      <td colspan="8"></td></tr>
+    <tr><td class="task-col">Dokumentacja techniczna (docs/)</td>
+      <td colspan="27"></td>
+      <td class="bar-13"></td><td class="bar-13"></td><td class="bar-13"></td>
+      <td colspan="7"></td></tr>
+    <tr><td class="task-col">Pisanie pracy inżynierskiej</td>
+      <td colspan="27"></td>
+      <td class="bar-13"></td><td class="bar-13"></td><td class="bar-13"></td><td class="bar-13"></td><td class="bar-13"></td><td class="bar-13"></td>
+      <td colspan="3"></td></tr>
+    <tr><td class="task-col">Korekta językowa, kontrola antyplagiatowa</td>
+      <td colspan="33"></td>
+      <td class="bar-13"></td><td class="bar-13"></td>
+      <td colspan="1"></td></tr>
+    <tr><td class="task-col">Przygotowanie prezentacji obrony</td>
+      <td colspan="34"></td>
+      <td class="bar-1"></td><td class="bar-1"></td>
+      </tr>
+    <tr class="milestone-row"><td colspan="37">&#9670; Kamień milowy: Praca inżynierska oddana, projekt gotowy do obrony</td></tr>
+
+  </tbody>
+</table>
+
+<p class="no-indent" style="margin-top:12pt;font-size:8.5pt;">
+<strong>Legenda kolorów:</strong>
+<span class="legend-box bar-1"></span>analiza i planowanie /diagramy
+<span class="legend-box bar-2"></span>infrastruktura
+<span class="legend-box bar-3"></span>backend (auth, users, notifications)
+<span class="legend-box bar-4"></span>UI logowania
+<span class="legend-box bar-5"></span>bezpieczeństwo
+<span class="legend-box bar-6"></span>scoring testów
+<span class="legend-box bar-7"></span>UI testów
+<span class="legend-box bar-8"></span>analityka i agregacja
+<span class="legend-box bar-9"></span>dashboardy
+<span class="legend-box bar-10"></span>testy QA
+<span class="legend-box bar-11"></span>audit logging
+<span class="legend-box bar-12"></span>wdrożenie produkcyjne
+<span class="legend-box bar-13"></span>dokumentacja i pisanie pracy
+</p>
+
+</div>
+
+</body>
+</html>

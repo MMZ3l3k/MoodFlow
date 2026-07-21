@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Diagram ERD — MoodFlow</title>
+<style>
+  body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    margin: 0;
+    padding: 30px 40px;
+    background: #fff;
+  }
+  .figure-caption {
+    text-align: center;
+    font-style: italic;
+    font-size: 13pt;
+    margin-top: 20px;
+    color: #333;
+    font-family: Verdana, sans-serif;
+  }
+  svg { display: block; margin: 0 auto; background: #fff; }
+</style>
+</head>
+<body>
+
+<svg width="2200" height="1280" viewBox="0 180 2200 1280" xmlns="http://www.w3.org/2000/svg">
+
+  <defs>
+    <!-- Crow's foot: many -->
+    <marker id="many" viewBox="0 0 16 16" refX="15" refY="8" markerWidth="18" markerHeight="18" orient="auto">
+      <path d="M0,8 L14,2 M0,8 L14,8 M0,8 L14,14" stroke="#7a7a7a" stroke-width="1.5" fill="none"/>
+    </marker>
+    <!-- One: pojedyncza kreska prostopadła + kółko -->
+    <marker id="one" viewBox="0 0 16 16" refX="15" refY="8" markerWidth="18" markerHeight="18" orient="auto">
+      <line x1="10" y1="2" x2="10" y2="14" stroke="#7a7a7a" stroke-width="1.5"/>
+      <circle cx="4" cy="8" r="2.5" fill="#fff" stroke="#7a7a7a" stroke-width="1.5"/>
+    </marker>
+  </defs>
+
+  <style>
+    .tbl-border { fill: #fff; stroke: #b8b8b8; stroke-width: 1; }
+    .tbl-hdr    { fill: #b3d4f0; stroke: #b8b8b8; stroke-width: 1; }
+    .tbl-name   { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 13pt; font-weight: bold; fill: #1a1a1a; text-anchor: middle; }
+    .row-line   { stroke: #d0d0d0; stroke-width: 1; }
+    .col-line   { stroke: #d0d0d0; stroke-width: 1; }
+    .key-bg     { fill: #eaf2f9; }
+    .key-text   { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 10pt; font-weight: bold; fill: #1a1a1a; text-anchor: middle; }
+    .field-name-pk { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 10.5pt; fill: #1a1a1a; font-weight: bold; text-decoration: underline; }
+    .field-name    { font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 10.5pt; fill: #1a1a1a; }
+    .rel-line   { stroke: #7a7a7a; stroke-width: 1.5; fill: none; }
+  </style>
+
+  <!-- ================= TABELA: organizations ================= -->
+  <!-- pos: x=40 y=420  |  width=260  | header 32 + 7 wierszy * 28 -->
+  <g>
+    <!-- ramka -->
+    <rect class="tbl-border" x="40" y="420" width="260" height="228"/>
+    <!-- header -->
+    <rect class="tbl-hdr" x="40" y="420" width="260" height="32"/>
+    <text class="tbl-name" x="170" y="442">organizations</text>
+    <!-- pionowa linia kolumny key (60px) -->
+    <line class="col-line" x1="100" y1="452" x2="100" y2="648"/>
+    <!-- wiersze -->
+    <!-- row 1: PK id -->
+    <rect class="key-bg" x="40" y="452" width="60" height="28"/>
+    <text class="key-text" x="70" y="470">PK</text>
+    <text class="field-name-pk" x="112" y="470">id</text>
+    <line class="row-line" x1="40" y1="480" x2="300" y2="480"/>
+    <!-- row 2: name -->
+    <text class="field-name" x="112" y="498">name</text>
+    <line class="row-line" x1="40" y1="508" x2="300" y2="508"/>
+    <!-- row 3: nip -->
+    <text class="field-name" x="112" y="526">nip</text>
+    <line class="row-line" x1="40" y1="536" x2="300" y2="536"/>
+    <!-- row 4: status -->
+    <text class="field-name" x="112" y="554">status</text>
+    <line class="row-line" x1="40" y1="564" x2="300" y2="564"/>
+    <!-- row 5: inviteCode -->
+    <text class="field-name" x="112" y="582">inviteCode</text>
+    <line class="row-line" x1="40" y1="592" x2="300" y2="592"/>
+    <!-- row 6: FK adminUserId -->
+    <rect class="key-bg" x="40" y="592" width="60" height="28"/>
+    <text class="key-text" x="70" y="610">FK</text>
+    <text class="field-name" x="112" y="610">adminUserId</text>
+    <line class="row-line" x1="40" y1="620" x2="300" y2="620"/>
+    <!-- row 7: createdAt -->
+    <text class="field-name" x="112" y="638">createdAt</text>
+  </g>
+
+  <!-- ================= TABELA: departments ================= -->
+  <g>
+    <rect class="tbl-border" x="40" y="740" width="260" height="144"/>
+    <rect class="tbl-hdr" x="40" y="740" width="260" height="32"/>
+    <text class="tbl-name" x="170" y="762">departments</text>
+    <line class="col-line" x1="100" y1="772" x2="100" y2="884"/>
+
+    <rect class="key-bg" x="40" y="772" width="60" height="28"/>
+    <text class="key-text" x="70" y="790">PK</text>
+    <text class="field-name-pk" x="112" y="790">id</text>
+    <line class="row-line" x1="40" y1="800" x2="300" y2="800"/>
+
+    <text class="field-name" x="112" y="818">name</text>
+    <line class="row-line" x1="40" y1="828" x2="300" y2="828"/>
+
+    <rect class="key-bg" x="40" y="828" width="60" height="28"/>
+    <text class="key-text" x="70" y="846">FK</text>
+    <text class="field-name" x="112" y="846">organizationId</text>
+    <line class="row-line" x1="40" y1="856" x2="300" y2="856"/>
+
+    <text class="field-name" x="112" y="874">createdAt</text>
+  </g>
+
+  <!-- ================= TABELA: audit_logs ================= -->
+  <g>
+    <rect class="tbl-border" x="40" y="980" width="260" height="200"/>
+    <rect class="tbl-hdr" x="40" y="980" width="260" height="32"/>
+    <text class="tbl-name" x="170" y="1002">audit_logs</text>
+    <line class="col-line" x1="100" y1="1012" x2="100" y2="1180"/>
+
+    <rect class="key-bg" x="40" y="1012" width="60" height="28"/>
+    <text class="key-text" x="70" y="1030">PK</text>
+    <text class="field-name-pk" x="112" y="1030">id</text>
+    <line class="row-line" x1="40" y1="1040" x2="300" y2="1040"/>
+
+    <rect class="key-bg" x="40" y="1040" width="60" height="28"/>
+    <text class="key-text" x="70" y="1058">FK</text>
+    <text class="field-name" x="112" y="1058">actorUserId</text>
+    <line class="row-line" x1="40" y1="1068" x2="300" y2="1068"/>
+
+    <rect class="key-bg" x="40" y="1068" width="60" height="28"/>
+    <text class="key-text" x="70" y="1086">FK</text>
+    <text class="field-name" x="112" y="1086">organizationId</text>
+    <line class="row-line" x1="40" y1="1096" x2="300" y2="1096"/>
+
+    <text class="field-name" x="112" y="1114">action</text>
+    <line class="row-line" x1="40" y1="1124" x2="300" y2="1124"/>
+
+    <text class="field-name" x="112" y="1142">entityType</text>
+    <line class="row-line" x1="40" y1="1152" x2="300" y2="1152"/>
+
+    <text class="field-name" x="112" y="1170">metadata</text>
+  </g>
+
+  <!-- ================= TABELA: notifications ================= -->
+  <g>
+    <rect class="tbl-border" x="40" y="1240" width="260" height="172"/>
+    <rect class="tbl-hdr" x="40" y="1240" width="260" height="32"/>
+    <text class="tbl-name" x="170" y="1262">notifications</text>
+    <line class="col-line" x1="100" y1="1272" x2="100" y2="1412"/>
+
+    <rect class="key-bg" x="40" y="1272" width="60" height="28"/>
+    <text class="key-text" x="70" y="1290">PK</text>
+    <text class="field-name-pk" x="112" y="1290">id</text>
+    <line class="row-line" x1="40" y1="1300" x2="300" y2="1300"/>
+
+    <rect class="key-bg" x="40" y="1300" width="60" height="28"/>
+    <text class="key-text" x="70" y="1318">FK</text>
+    <text class="field-name" x="112" y="1318">userId</text>
+    <line class="row-line" x1="40" y1="1328" x2="300" y2="1328"/>
+
+    <text class="field-name" x="112" y="1346">type</text>
+    <line class="row-line" x1="40" y1="1356" x2="300" y2="1356"/>
+
+    <text class="field-name" x="112" y="1374">title</text>
+    <line class="row-line" x1="40" y1="1384" x2="300" y2="1384"/>
+
+    <text class="field-name" x="112" y="1402">read</text>
+  </g>
+
+  <!-- ================= TABELA: users (kolumna 2) ================= -->
+  <g>
+    <rect class="tbl-border" x="500" y="380" width="280" height="340"/>
+    <rect class="tbl-hdr" x="500" y="380" width="280" height="32"/>
+    <text class="tbl-name" x="640" y="402">users</text>
+    <line class="col-line" x1="560" y1="412" x2="560" y2="720"/>
+
+    <rect class="key-bg" x="500" y="412" width="60" height="28"/>
+    <text class="key-text" x="530" y="430">PK</text>
+    <text class="field-name-pk" x="572" y="430">id</text>
+    <line class="row-line" x1="500" y1="440" x2="780" y2="440"/>
+
+    <text class="field-name" x="572" y="458">email</text>
+    <line class="row-line" x1="500" y1="468" x2="780" y2="468"/>
+
+    <text class="field-name" x="572" y="486">passwordHash</text>
+    <line class="row-line" x1="500" y1="496" x2="780" y2="496"/>
+
+    <text class="field-name" x="572" y="514">firstName</text>
+    <line class="row-line" x1="500" y1="524" x2="780" y2="524"/>
+
+    <text class="field-name" x="572" y="542">lastName</text>
+    <line class="row-line" x1="500" y1="552" x2="780" y2="552"/>
+
+    <text class="field-name" x="572" y="570">role</text>
+    <line class="row-line" x1="500" y1="580" x2="780" y2="580"/>
+
+    <text class="field-name" x="572" y="598">status</text>
+    <line class="row-line" x1="500" y1="608" x2="780" y2="608"/>
+
+    <rect class="key-bg" x="500" y="608" width="60" height="28"/>
+    <text class="key-text" x="530" y="626">FK</text>
+    <text class="field-name" x="572" y="626">organizationId</text>
+    <line class="row-line" x1="500" y1="636" x2="780" y2="636"/>
+
+    <rect class="key-bg" x="500" y="636" width="60" height="28"/>
+    <text class="key-text" x="530" y="654">FK</text>
+    <text class="field-name" x="572" y="654">departmentId</text>
+    <line class="row-line" x1="500" y1="664" x2="780" y2="664"/>
+
+    <text class="field-name" x="572" y="682">isOnline</text>
+    <line class="row-line" x1="500" y1="692" x2="780" y2="692"/>
+
+    <text class="field-name" x="572" y="710">createdAt</text>
+  </g>
+
+  <!-- ================= TABELA: assessments (kolumna 2 dół) ================= -->
+  <g>
+    <rect class="tbl-border" x="500" y="800" width="280" height="200"/>
+    <rect class="tbl-hdr" x="500" y="800" width="280" height="32"/>
+    <text class="tbl-name" x="640" y="822">assessments</text>
+    <line class="col-line" x1="560" y1="832" x2="560" y2="1000"/>
+
+    <rect class="key-bg" x="500" y="832" width="60" height="28"/>
+    <text class="key-text" x="530" y="850">PK</text>
+    <text class="field-name-pk" x="572" y="850">id</text>
+    <line class="row-line" x1="500" y1="860" x2="780" y2="860"/>
+
+    <text class="field-name" x="572" y="878">code</text>
+    <line class="row-line" x1="500" y1="888" x2="780" y2="888"/>
+
+    <text class="field-name" x="572" y="906">name</text>
+    <line class="row-line" x1="500" y1="916" x2="780" y2="916"/>
+
+    <text class="field-name" x="572" y="934">questionCount</text>
+    <line class="row-line" x1="500" y1="944" x2="780" y2="944"/>
+
+    <text class="field-name" x="572" y="962">isAnonymousForHR</text>
+    <line class="row-line" x1="500" y1="972" x2="780" y2="972"/>
+
+    <text class="field-name" x="572" y="990">isActive</text>
+  </g>
+
+  <!-- ================= TABELA: questions (kolumna 2 niżej) ================= -->
+  <g>
+    <rect class="tbl-border" x="500" y="1080" width="280" height="172"/>
+    <rect class="tbl-hdr" x="500" y="1080" width="280" height="32"/>
+    <text class="tbl-name" x="640" y="1102">questions</text>
+    <line class="col-line" x1="560" y1="1112" x2="560" y2="1252"/>
+
+    <rect class="key-bg" x="500" y="1112" width="60" height="28"/>
+    <text class="key-text" x="530" y="1130">PK</text>
+    <text class="field-name-pk" x="572" y="1130">id</text>
+    <line class="row-line" x1="500" y1="1140" x2="780" y2="1140"/>
+
+    <rect class="key-bg" x="500" y="1140" width="60" height="28"/>
+    <text class="key-text" x="530" y="1158">FK</text>
+    <text class="field-name" x="572" y="1158">assessmentId</text>
+    <line class="row-line" x1="500" y1="1168" x2="780" y2="1168"/>
+
+    <text class="field-name" x="572" y="1186">order</text>
+    <line class="row-line" x1="500" y1="1196" x2="780" y2="1196"/>
+
+    <text class="field-name" x="572" y="1214">text</text>
+    <line class="row-line" x1="500" y1="1224" x2="780" y2="1224"/>
+
+    <text class="field-name" x="572" y="1242">reverseScored</text>
+  </g>
+
+  <!-- ================= TABELA: answer_options (kolumna 2 najniżej) ================= -->
+  <g>
+    <rect class="tbl-border" x="500" y="1300" width="280" height="116"/>
+    <rect class="tbl-hdr" x="500" y="1300" width="280" height="32"/>
+    <text class="tbl-name" x="640" y="1322">answer_options</text>
+    <line class="col-line" x1="560" y1="1332" x2="560" y2="1416"/>
+
+    <rect class="key-bg" x="500" y="1332" width="60" height="28"/>
+    <text class="key-text" x="530" y="1350">PK</text>
+    <text class="field-name-pk" x="572" y="1350">id</text>
+    <line class="row-line" x1="500" y1="1360" x2="780" y2="1360"/>
+
+    <rect class="key-bg" x="500" y="1360" width="60" height="28"/>
+    <text class="key-text" x="530" y="1378">FK</text>
+    <text class="field-name" x="572" y="1378">assessmentId</text>
+    <line class="row-line" x1="500" y1="1388" x2="780" y2="1388"/>
+
+    <text class="field-name" x="572" y="1406">label / value</text>
+  </g>
+
+  <!-- ================= TABELA: assessment_assignments (kolumna 3 góra) ================= -->
+  <g>
+    <rect class="tbl-border" x="980" y="200" width="300" height="256"/>
+    <rect class="tbl-hdr" x="980" y="200" width="300" height="32"/>
+    <text class="tbl-name" x="1130" y="222">assessment_assignments</text>
+    <line class="col-line" x1="1040" y1="232" x2="1040" y2="456"/>
+
+    <rect class="key-bg" x="980" y="232" width="60" height="28"/>
+    <text class="key-text" x="1010" y="250">PK</text>
+    <text class="field-name-pk" x="1052" y="250">id</text>
+    <line class="row-line" x1="980" y1="260" x2="1280" y2="260"/>
+
+    <rect class="key-bg" x="980" y="260" width="60" height="28"/>
+    <text class="key-text" x="1010" y="278">FK</text>
+    <text class="field-name" x="1052" y="278">assessmentId</text>
+    <line class="row-line" x1="980" y1="288" x2="1280" y2="288"/>
+
+    <text class="field-name" x="1052" y="306">targetType</text>
+    <line class="row-line" x1="980" y1="316" x2="1280" y2="316"/>
+
+    <rect class="key-bg" x="980" y="316" width="60" height="28"/>
+    <text class="key-text" x="1010" y="334">FK</text>
+    <text class="field-name" x="1052" y="334">targetUserId</text>
+    <line class="row-line" x1="980" y1="344" x2="1280" y2="344"/>
+
+    <text class="field-name" x="1052" y="362">targetDepartment</text>
+    <line class="row-line" x1="980" y1="372" x2="1280" y2="372"/>
+
+    <text class="field-name" x="1052" y="390">availableFrom</text>
+    <line class="row-line" x1="980" y1="400" x2="1280" y2="400"/>
+
+    <text class="field-name" x="1052" y="418">availableTo</text>
+    <line class="row-line" x1="980" y1="428" x2="1280" y2="428"/>
+
+    <rect class="key-bg" x="980" y="428" width="60" height="28"/>
+    <text class="key-text" x="1010" y="446">FK</text>
+    <text class="field-name" x="1052" y="446">organizationId</text>
+  </g>
+
+  <!-- ================= TABELA: assessment_results (kolumna 3 środek) ================= -->
+  <g>
+    <rect class="tbl-border" x="980" y="560" width="300" height="256"/>
+    <rect class="tbl-hdr" x="980" y="560" width="300" height="32"/>
+    <text class="tbl-name" x="1130" y="582">assessment_results</text>
+    <line class="col-line" x1="1040" y1="592" x2="1040" y2="816"/>
+
+    <rect class="key-bg" x="980" y="592" width="60" height="28"/>
+    <text class="key-text" x="1010" y="610">PK</text>
+    <text class="field-name-pk" x="1052" y="610">id</text>
+    <line class="row-line" x1="980" y1="620" x2="1280" y2="620"/>
+
+    <rect class="key-bg" x="980" y="620" width="60" height="28"/>
+    <text class="key-text" x="1010" y="638">FK</text>
+    <text class="field-name" x="1052" y="638">userId</text>
+    <line class="row-line" x1="980" y1="648" x2="1280" y2="648"/>
+
+    <rect class="key-bg" x="980" y="648" width="60" height="28"/>
+    <text class="key-text" x="1010" y="666">FK</text>
+    <text class="field-name" x="1052" y="666">assignmentId</text>
+    <line class="row-line" x1="980" y1="676" x2="1280" y2="676"/>
+
+    <rect class="key-bg" x="980" y="676" width="60" height="28"/>
+    <text class="key-text" x="1010" y="694">FK</text>
+    <text class="field-name" x="1052" y="694">assessmentId</text>
+    <line class="row-line" x1="980" y1="704" x2="1280" y2="704"/>
+
+    <text class="field-name" x="1052" y="722">rawScore</text>
+    <line class="row-line" x1="980" y1="732" x2="1280" y2="732"/>
+
+    <text class="field-name" x="1052" y="750">normalizedScore</text>
+    <line class="row-line" x1="980" y1="760" x2="1280" y2="760"/>
+
+    <text class="field-name" x="1052" y="778">severity</text>
+    <line class="row-line" x1="980" y1="788" x2="1280" y2="788"/>
+
+    <text class="field-name" x="1052" y="806">riskFlags</text>
+  </g>
+
+  <!-- ================= TABELA: user_responses (kolumna 3 dół) ================= -->
+  <g>
+    <rect class="tbl-border" x="980" y="930" width="300" height="172"/>
+    <rect class="tbl-hdr" x="980" y="930" width="300" height="32"/>
+    <text class="tbl-name" x="1130" y="952">user_responses</text>
+    <line class="col-line" x1="1040" y1="962" x2="1040" y2="1102"/>
+
+    <rect class="key-bg" x="980" y="962" width="60" height="28"/>
+    <text class="key-text" x="1010" y="980">PK</text>
+    <text class="field-name-pk" x="1052" y="980">id</text>
+    <line class="row-line" x1="980" y1="990" x2="1280" y2="990"/>
+
+    <rect class="key-bg" x="980" y="990" width="60" height="28"/>
+    <text class="key-text" x="1010" y="1008">FK</text>
+    <text class="field-name" x="1052" y="1008">resultId</text>
+    <line class="row-line" x1="980" y1="1018" x2="1280" y2="1018"/>
+
+    <rect class="key-bg" x="980" y="1018" width="60" height="28"/>
+    <text class="key-text" x="1010" y="1036">FK</text>
+    <text class="field-name" x="1052" y="1036">questionId</text>
+    <line class="row-line" x1="980" y1="1046" x2="1280" y2="1046"/>
+
+    <text class="field-name" x="1052" y="1064">selectedValue</text>
+    <line class="row-line" x1="980" y1="1074" x2="1280" y2="1074"/>
+
+    <text class="field-name" x="1052" y="1092">answeredAt</text>
+  </g>
+
+  <!-- ================= LEGENDA (prawy górny róg) ================= -->
+  <g>
+    <rect x="1500" y="200" width="640" height="240" fill="#fafafa" stroke="#b8b8b8" stroke-width="1"/>
+    <rect x="1500" y="200" width="640" height="34" fill="#b3d4f0" stroke="#b8b8b8" stroke-width="1"/>
+    <text x="1820" y="223" font-family="'Helvetica Neue', Arial, sans-serif" font-size="13pt" font-weight="bold" fill="#1a1a1a" text-anchor="middle">Legenda</text>
+
+    <!-- PK -->
+    <rect class="key-bg" x="1520" y="254" width="60" height="28" stroke="#d0d0d0" stroke-width="1"/>
+    <text class="key-text" x="1550" y="272">PK</text>
+    <text x="1600" y="272" font-family="'Helvetica Neue', Arial, sans-serif" font-size="11pt" fill="#1a1a1a">— klucz główny (Primary Key)</text>
+
+    <!-- FK -->
+    <rect class="key-bg" x="1520" y="294" width="60" height="28" stroke="#d0d0d0" stroke-width="1"/>
+    <text class="key-text" x="1550" y="312">FK</text>
+    <text x="1600" y="312" font-family="'Helvetica Neue', Arial, sans-serif" font-size="11pt" fill="#1a1a1a">— klucz obcy (Foreign Key)</text>
+
+    <!-- pole zwykłe -->
+    <text x="1530" y="352" font-family="'Helvetica Neue', Arial, sans-serif" font-size="11pt" fill="#1a1a1a">name</text>
+    <text x="1600" y="352" font-family="'Helvetica Neue', Arial, sans-serif" font-size="11pt" fill="#1a1a1a">— pole zwykłe</text>
+
+    <!-- relacja 1:N -->
+    <line x1="1520" y1="395" x2="1680" y2="395" class="rel-line" marker-start="url(#one)" marker-end="url(#many)"/>
+    <text x="1700" y="399" font-family="'Helvetica Neue', Arial, sans-serif" font-size="11pt" fill="#1a1a1a">— relacja jeden-do-wielu (1 : N)</text>
+  </g>
+
+  <!-- ================= LINIE RELACJI ================= -->
+  <!-- Wszystkie z prostokątnym routingiem; wychodzą z prawej krawędzi (300/780/1280) lub lewej (40/500/980) -->
+
+  <!-- organizations (430:rect-y=420 width 260) → users.organizationId (y=626) -->
+  <!-- right edge x=300 y=480 (id row) → users left edge x=500 y=626 -->
+  <path class="rel-line" d="M 300 466 L 400 466 L 400 626 L 500 626"
+        marker-start="url(#one)" marker-end="url(#many)"/>
+
+  <!-- organizations → departments (id na górze do FK organizationId) -->
+  <path class="rel-line" d="M 170 648 L 170 740"
+        marker-start="url(#one)" marker-end="url(#many)"/>
+
+  <!-- departments → users.departmentId (id row → FK departmentId y=654) -->
+  <path class="rel-line" d="M 300 786 L 420 786 L 420 654 L 500 654"
+        marker-start="url(#one)" marker-end="url(#many)"/>
+
+  <!-- users → notifications.userId (left out z users id-row y=426 → notifications) -->
+  <path class="rel-line" d="M 500 426 L 380 426 L 380 1318 L 300 1318"
+        marker-start="url(#one)" marker-end="url(#many)"/>
+
+  <!-- users → audit_logs.actorUserId  -->
+  <path class="rel-line" d="M 500 440 L 360 440 L 360 1058 L 300 1058"
+        marker-start="url(#one)" marker-end="url(#many)"/>
+
+  <!-- users → assessment_assignments.targetUserId (users id-row y=426 right → assignments y=334) -->
+  <path class="rel-line" d="M 780 426 L 880 426 L 880 334 L 980 334"
+        marker-start="url(#one)" marker-end="url(#many)"/>
+
+  <!-- users → assessment_results.userId  (users id row right → results userId y=638) -->
+  <path class="rel-line" d="M 780 440 L 900 440 L 900 638 L 980 638"
+        marker-start="url(#one)" marker-end="url(#many)"/>
+
+  <!-- assessments → assessment_assignments.assessmentId  (assessments id-row y=846 right → assignments y=278) -->
+  <path class="rel-line" d="M 780 846 L 920 846 L 920 278 L 980 278"
+        marker-start="url(#one)" marker-end="url(#many)"/>
+
+  <!-- assessments → assessment_results.assessmentId (assessments id-row right → results y=694) -->
+  <path class="rel-line" d="M 780 860 L 880 860 L 880 694 L 980 694"
+        marker-start="url(#one)" marker-end="url(#many)"/>
+
+  <!-- assessments → questions.assessmentId (id-row na dole tabeli assessments y=846 → questions FK y=1158) -->
+  <path class="rel-line" d="M 640 1000 L 640 1080"
+        marker-start="url(#one)" marker-end="url(#many)"/>
+
+  <!-- assessments → answer_options.assessmentId  -->
+  <path class="rel-line" d="M 700 1000 L 700 1260 L 700 1300"
+        marker-start="url(#one)" marker-end="url(#many)"/>
+
+  <!-- assessment_assignments → assessment_results.assignmentId (id row top right → results y=666 left) -->
+  <path class="rel-line" d="M 1130 456 L 1130 560"
+        marker-start="url(#one)" marker-end="url(#many)"/>
+
+  <!-- assessment_results → user_responses.resultId -->
+  <path class="rel-line" d="M 1130 816 L 1130 930"
+        marker-start="url(#one)" marker-end="url(#many)"/>
+
+  <!-- questions → user_responses.questionId (questions id row right → responses questionId y=1036 left) -->
+  <path class="rel-line" d="M 780 1130 L 880 1130 L 880 1036 L 980 1036"
+        marker-start="url(#one)" marker-end="url(#many)"/>
+
+</svg>
+
+<p class="figure-caption">Rysunek 3.2 Diagram ERD bazy danych aplikacji MoodFlow (źródło: opracowanie własne)</p>
+
+</body>
+</html>
