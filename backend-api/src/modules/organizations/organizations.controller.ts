@@ -4,6 +4,7 @@ import {
 } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
 import { CreateOrganizationDto } from './dto/create-organization.dto';
+import { RejectOrganizationDto } from './dto/reject-organization.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -61,8 +62,8 @@ export class OrganizationsController {
   @Post(':id/reject')
   @Roles(Role.SUPER_ADMIN)
   @HttpCode(HttpStatus.OK)
-  reject(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
-    return this.organizationsService.reject(id, req.user.id);
+  reject(@Param('id', ParseIntPipe) id: number, @Request() req: any, @Body() dto: RejectOrganizationDto) {
+    return this.organizationsService.reject(id, req.user.id, dto.reason);
   }
 
   // Super Admin — blokuje firmę

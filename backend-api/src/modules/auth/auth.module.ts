@@ -9,12 +9,14 @@ import { JwtRefreshStrategy } from './strategies/jwt-refresh.strategy';
 import { UsersModule } from '../users/users.module';
 import { OrganizationsModule } from '../organizations/organizations.module';
 import { AuditModule } from '../audit/audit.module';
+import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [
     UsersModule,
     OrganizationsModule,
     AuditModule,
+    NotificationsModule,
     PassportModule,
     JwtModule.register({}),
   ],

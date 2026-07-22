@@ -13,6 +13,7 @@ import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/entities/audit-log.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '../notifications/entities/notification.entity';
+import { MailService } from '../notifications/mail.service';
 
 @Injectable()
 export class UsersService {
@@ -21,6 +22,7 @@ export class UsersService {
     private usersRepository: Repository<User>,
     private auditService: AuditService,
     private notifications: NotificationsService,
+    private mailService: MailService,
   ) {}
 
   async create(data: Partial<User>): Promise<User> {
@@ -146,6 +148,8 @@ export class UsersService {
         message: 'Możesz teraz w pełni korzystać z platformy MoodFlow.',
         link: '/app/home',
       });
+      // PU-16: e-mail o aktywacji konta
+      await this.mailService.sendAccountApproved(user.email, user.firstName);
     } else if (auditAction === AuditAction.USER_REJECTED) {
       await this.notifications.create({
         userId: user.id,

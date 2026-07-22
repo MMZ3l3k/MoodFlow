@@ -1,13 +1,16 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Department } from './entities/department.entity';
+import { User } from '../users/entities/user.entity';
 
 @Injectable()
 export class DepartmentsService {
   constructor(
     @InjectRepository(Department)
     private departmentsRepository: Repository<Department>,
+    @InjectRepository(User)
+    private usersRepository: Repository<User>,
   ) {}
 
   async create(name: string, organizationId: number): Promise<Department> {
@@ -41,6 +44,14 @@ export class DepartmentsService {
     const dept = await this.findById(id);
     if (dept.organizationId !== organizationId) {
       throw new ForbiddenException('Brak dostępu do tego działu');
+    }
+    // PU-19: nie można usunąć działu z przypisanymi pracownikami —
+    // najpierw trzeba ich przenieść (ochrona przed „osieroceniem" kont).
+    const assignedUsers = await this.usersRepository.count({ where: { departmentId: id } });
+    if (assignedUsers > 0) {
+      throw new ConflictException(
+        `Nie można usunąć działu — przypisanych jest do niego ${assignedUsers} pracowników. Najpierw przenieś ich do innego działu.`,
+      );
     }
     await this.departmentsRepository.delete(id);
   }

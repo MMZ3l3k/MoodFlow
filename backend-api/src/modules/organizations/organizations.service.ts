@@ -8,6 +8,7 @@ import { UserStatus } from '../../common/enums/user-status.enum';
 import { User } from '../users/entities/user.entity';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/entities/audit-log.entity';
+import { MailService } from '../notifications/mail.service';
 
 @Injectable()
 export class OrganizationsService {
@@ -17,6 +18,7 @@ export class OrganizationsService {
     @InjectRepository(User)
     private usersRepository: Repository<User>,
     private auditService: AuditService,
+    private mailService: MailService,
   ) {}
 
   async create(dto: CreateOrganizationDto): Promise<Organization> {
@@ -72,11 +74,19 @@ export class OrganizationsService {
       metadata: { name: org.name, nip: org.nip },
     });
 
+    // PU-22: e-mail do administratora firmy o zatwierdzeniu rejestracji
+    if (org.adminUserId) {
+      const admin = await this.usersRepository.findOne({ where: { id: org.adminUserId } });
+      if (admin) {
+        await this.mailService.sendOrganizationDecision(admin.email, admin.firstName, org.name, true);
+      }
+    }
+
     return org;
   }
 
-  // Właściciel platformy odrzuca firmę
-  async reject(id: number, actorUserId?: number): Promise<Organization> {
+  // Właściciel platformy odrzuca firmę (z opcjonalnym uzasadnieniem)
+  async reject(id: number, actorUserId?: number, reason?: string): Promise<Organization> {
     const org = await this.findById(id);
     org.status = OrganizationStatus.REJECTED;
     await this.organizationsRepository.save(org);
@@ -91,8 +101,16 @@ export class OrganizationsService {
       organizationId: org.id,
       entityType: 'organization',
       entityId: org.id,
-      metadata: { name: org.name },
+      metadata: { name: org.name, reason: reason ?? null },
     });
+
+    // PU-22: e-mail do administratora firmy o odrzuceniu (z uzasadnieniem)
+    if (org.adminUserId) {
+      const admin = await this.usersRepository.findOne({ where: { id: org.adminUserId } });
+      if (admin) {
+        await this.mailService.sendOrganizationDecision(admin.email, admin.firstName, org.name, false, reason);
+      }
+    }
 
     return org;
   }
@@ -102,6 +120,10 @@ export class OrganizationsService {
     const org = await this.findById(id);
     org.status = OrganizationStatus.BLOCKED;
     await this.organizationsRepository.save(org);
+
+    // PU-23: blokada firmy natychmiast unieważnia sesje wszystkich jej użytkowników
+    // (podbicie tokenVersion odrzuca wydane tokeny przy najbliższej walidacji).
+    await this.usersRepository.increment({ organizationId: id }, 'tokenVersion', 1);
 
     await this.auditService.log({
       action: AuditAction.ORGANIZATION_SUSPENDED,

@@ -19,6 +19,7 @@ import { OrganizationStatus } from '../../common/enums/organization-status.enum'
 import { Role } from '../../common/enums/role.enum';
 import { AuditService } from '../audit/audit.service';
 import { AuditAction } from '../audit/entities/audit-log.entity';
+import { MailService } from '../notifications/mail.service';
 
 @Injectable()
 export class AuthService {
@@ -28,6 +29,7 @@ export class AuthService {
     private jwtService: JwtService,
     private configService: ConfigService,
     private auditService: AuditService,
+    private mailService: MailService,
   ) {}
 
   // Stara rejestracja — zachowana dla backward compat
@@ -112,6 +114,9 @@ export class AuthService {
       departmentId: dto.departmentId ?? null,
     });
 
+    // PU-2: e-mail potwierdzający utworzenie konta i oczekiwanie na akceptację
+    await this.mailService.sendRegistrationPending(user.email, user.firstName);
+
     return {
       message: 'Rejestracja zakończona sukcesem. Konto oczekuje na zatwierdzenie przez administratora firmy.',
       userId: user.id,
@@ -148,6 +153,20 @@ export class AuthService {
     }
     if (user.status === UserStatus.SUSPENDED) {
       throw new UnauthorizedException('Konto zostało zawieszone');
+    }
+
+    // PU-14: użytkownicy zablokowanej organizacji nie mogą się logować
+    if (user.organizationId) {
+      const organization = await this.organizationsService.findById(user.organizationId).catch(() => null);
+      if (organization?.status === OrganizationStatus.BLOCKED) {
+        await this.auditService.log({
+          action: AuditAction.LOGIN_FAILED,
+          actorUserId: user.id,
+          organizationId: user.organizationId,
+          metadata: { email: dto.email, reason: 'organization_blocked' },
+        });
+        throw new UnauthorizedException('Konto firmowe zostało zablokowane');
+      }
     }
 
     await this.usersService.setOnline(user.id, true);

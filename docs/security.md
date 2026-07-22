@@ -144,7 +144,10 @@ Licznik jest podbijany przy:
 - **zmianie hasła** (`UsersService.changePassword`) — unieważnia także sesję
   ewentualnego atakującego znającego stare hasło,
 - **zawieszeniu/odrzuceniu konta** (`UsersService.updateStatus`) — natychmiastowe
-  odcięcie, bez czekania na wygaśnięcie access tokenu (15 min).
+  odcięcie, bez czekania na wygaśnięcie access tokenu (15 min),
+- **blokadzie organizacji** (`OrganizationsService.block`) — masowe podbicie dla
+  wszystkich użytkowników firmy; dodatkowo logowanie użytkowników zablokowanej
+  organizacji jest odrzucane (audit `LOGIN_FAILED` / `organization_blocked`).
 
 Dodatkowo: strategia `jwt-refresh` odrzuca konta `SUSPENDED`/`REJECTED`,
 rate limit 30/15 min na `/auth/refresh`, interceptor axios (oba fronty)

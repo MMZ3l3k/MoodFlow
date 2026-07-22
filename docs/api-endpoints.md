@@ -45,7 +45,7 @@ Bazowy URL: `https://moodflow-production.up.railway.app` (prod) lub `http://loca
 | GET | `/organizations/:id` | SUPER_ADMIN | Szczegóły firmy |
 | POST | `/organizations` | SUPER_ADMIN | Utworzenie firmy |
 | POST | `/organizations/:id/approve` | SUPER_ADMIN | Zatwierdzenie firmy |
-| POST | `/organizations/:id/reject` | SUPER_ADMIN | Odrzucenie firmy |
+| POST | `/organizations/:id/reject` | SUPER_ADMIN | Odrzucenie firmy (body: opcjonalne `reason` — trafia do audit logu i e-maila) |
 | POST | `/organizations/:id/block` | SUPER_ADMIN | Zablokowanie firmy |
 
 ## Departments
@@ -55,7 +55,7 @@ Bazowy URL: `https://moodflow-production.up.railway.app` (prod) lub `http://loca
 | GET | `/departments` | ADMIN, HR | Działy organizacji |
 | POST | `/departments` | ADMIN | Tworzenie działu |
 | PATCH | `/departments/:id` | ADMIN | Edycja działu |
-| DELETE | `/departments/:id` | ADMIN | Usunięcie działu |
+| DELETE | `/departments/:id` | ADMIN | Usunięcie działu (409, gdy przypisani są pracownicy) |
 
 ## Assessments (testy i przypisania)
 
