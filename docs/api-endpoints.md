@@ -116,6 +116,7 @@ Wszystkie endpointy z rolami HR, ADMIN. Kolumna „k=5" oznacza maskowanie/pomij
 
 | Metoda | Ścieżka | Rola | Opis |
 |---|---|---|---|
+| GET | `/admin/platform-stats` | SUPER_ADMIN | Globalne metryki platformy (firmy, aktywni pracownicy, wypełnione testy) |
 | GET | `/admin/overview` | ADMIN, HR | Przegląd systemu |
 | GET | `/admin/activity-today` | ADMIN, HR | Aktywność dzisiaj (godzinowo) |
 

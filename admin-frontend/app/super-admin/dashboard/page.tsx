@@ -15,6 +15,13 @@ interface Organization {
   createdAt: string;
 }
 
+interface PlatformStats {
+  organizations: { total: number; active: number; pending: number };
+  activeEmployees: number;
+  totalActiveUsers: number;
+  completedTests: number;
+}
+
 const STATUS_LABEL: Record<string, string> = {
   pending: 'Oczekuje',
   active: 'Aktywna',
@@ -32,6 +39,7 @@ const STATUS_COLOR: Record<string, string> = {
 export default function SuperAdminDashboardPage() {
   const router = useRouter();
   const [orgs, setOrgs] = useState<Organization[]>([]);
+  const [stats, setStats] = useState<PlatformStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [tab, setTab] = useState<'pending' | 'all'>('pending');
@@ -50,6 +58,13 @@ export default function SuperAdminDashboardPage() {
     try {
       const { data } = await axiosClient.get<Organization[]>('/organizations');
       setOrgs(data);
+      // PU-24: globalne metryki platformy (pracownicy, testy) — niekrytyczne, brak nie blokuje widoku
+      try {
+        const { data: statsData } = await axiosClient.get<PlatformStats>('/admin/platform-stats');
+        setStats(statsData);
+      } catch {
+        setStats(null);
+      }
     } catch {
       router.replace('/super-admin/login');
     } finally {
@@ -118,11 +133,15 @@ export default function SuperAdminDashboardPage() {
       <div style={{ maxWidth: 900, margin: '0 auto', padding: '32px 24px' }}>
 
         {/* Stats */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 32 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 16, marginBottom: 32 }}>
           {[
             { label: 'Wszystkie firmy', value: orgs.length, color: '#6366f1' },
             { label: 'Oczekują na akceptację', value: pendingCount, color: '#f59e0b' },
             { label: 'Aktywne firmy', value: orgs.filter(o => o.status === 'active').length, color: '#22c55e' },
+            ...(stats ? [
+              { label: 'Aktywni pracownicy', value: stats.activeEmployees, color: '#0ea5e9' },
+              { label: 'Wypełnione testy', value: stats.completedTests, color: '#8b5cf6' },
+            ] : []),
           ].map((s) => (
             <div key={s.label} style={{
               background: 'rgba(255,255,255,0.9)', borderRadius: 16,

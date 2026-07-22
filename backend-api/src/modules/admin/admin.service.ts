@@ -3,7 +3,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, MoreThanOrEqual } from 'typeorm';
 import { User } from '../users/entities/user.entity';
 import { AssessmentResult } from '../results/entities/assessment-result.entity';
+import { Organization } from '../organizations/entities/organization.entity';
 import { UserStatus } from '../../common/enums/user-status.enum';
+import { OrganizationStatus } from '../../common/enums/organization-status.enum';
 import { Role } from '../../common/enums/role.enum';
 
 @Injectable()
@@ -13,7 +15,39 @@ export class AdminService {
     private userRepo: Repository<User>,
     @InjectRepository(AssessmentResult)
     private resultRepo: Repository<AssessmentResult>,
+    @InjectRepository(Organization)
+    private organizationRepo: Repository<Organization>,
   ) {}
+
+  // PU-24: globalne metryki platformy dla właściciela (SUPER_ADMIN)
+  async getPlatformStats() {
+    const [
+      totalOrganizations,
+      activeOrganizations,
+      pendingOrganizations,
+      activeEmployees,
+      totalActiveUsers,
+      completedTests,
+    ] = await Promise.all([
+      this.organizationRepo.count(),
+      this.organizationRepo.count({ where: { status: OrganizationStatus.ACTIVE } }),
+      this.organizationRepo.count({ where: { status: OrganizationStatus.PENDING } }),
+      this.userRepo.count({ where: { status: UserStatus.ACTIVE, role: Role.EMPLOYEE } }),
+      this.userRepo.count({ where: { status: UserStatus.ACTIVE } }),
+      this.resultRepo.count(),
+    ]);
+
+    return {
+      organizations: {
+        total: totalOrganizations,
+        active: activeOrganizations,
+        pending: pendingOrganizations,
+      },
+      activeEmployees,
+      totalActiveUsers,
+      completedTests,
+    };
+  }
 
   async getOverview(organizationId: number) {
     const now = new Date();

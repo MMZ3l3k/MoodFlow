@@ -11,6 +11,14 @@ import { Role } from '../../common/enums/role.enum';
 export class AdminController {
   constructor(private adminService: AdminService) {}
 
+  // PU-24: globalne metryki platformy — wyłącznie właściciel platformy
+  // (dekorator na metodzie nadpisuje klasowe ADMIN/HR — RolesGuard używa getAllAndOverride)
+  @Get('platform-stats')
+  @Roles(Role.SUPER_ADMIN)
+  getPlatformStats() {
+    return this.adminService.getPlatformStats();
+  }
+
   @Get('overview')
   getOverview(@Request() req: any) {
     return this.adminService.getOverview(req.user.organizationId);
