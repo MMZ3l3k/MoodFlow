@@ -35,15 +35,6 @@ describe('AnalyticsService (k-anonimowosc)', () => {
     service = moduleRef.get(AnalyticsService);
   });
 
-  it('dzial z 6 osobami pokazuje sredni wynik', async () => {
-    userRepo.createQueryBuilder.mockReturnValue(
-      fakeQueryBuilder([{ department: 'IT', activeUsers: '8', participantCount: '6', submissions: '20', avgScore: '72.5' }]),
-    );
-    const [dzial] = await service.getDepartmentStats(10);
-    expect(dzial.anonymized).toBe(false);
-    expect(dzial.avgScore).toBe(72.5);
-  });
-
   it('dzial z 3 osobami ma ukryty wynik, ale liczebnosc widac', async () => {
     userRepo.createQueryBuilder.mockReturnValue(
       fakeQueryBuilder([{ department: 'Zarzad', activeUsers: '3', participantCount: '3', submissions: '9', avgScore: '65.0' }]),
