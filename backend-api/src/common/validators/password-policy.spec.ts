@@ -17,7 +17,7 @@ async function isValid(password: string): Promise<boolean> {
   return errors.length === 0;
 }
 
-describe('IsSecurePassword (polityka haseł NF2)', () => {
+describe('IsSecurePassword - polityka hasel', () => {
   it.each([
     'Bezpieczne1',
     'mocneHaslo7',

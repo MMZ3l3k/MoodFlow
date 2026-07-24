@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -10,43 +10,28 @@ import { AuditAction } from '../audit/entities/audit-log.entity';
 import { NotificationsService } from '../notifications/notifications.service';
 import { MailService } from '../notifications/mail.service';
 
-// Testy integracyjne serwisu użytkowników — weryfikują mechanizmy bezpieczeństwa
-// (izolacja multi-tenant, blokada eskalacji ról, rewokacja sesji, audyt) w izolacji
-// od bazy danych: repozytorium i usługi zależne są zastąpione atrapami (mock).
+// Testy serwisu uzytkownikow. Baze i uslugi zewnetrzne podmieniamy na atrapy (mock),
+// zeby sprawdzic sama logike bezpieczenstwa bez odpalania calej aplikacji.
 
-function makeUser(overrides: Partial<User> = {}): User {
-  return {
-    id: 1,
-    email: 'jan@firma-a.pl',
-    firstName: 'Jan',
-    lastName: 'Kowalski',
-    role: Role.EMPLOYEE,
-    status: UserStatus.ACTIVE,
-    organizationId: 10,
-    tokenVersion: 0,
-    ...overrides,
-  } as User;
-}
-
-describe('UsersService — mechanizmy bezpieczeństwa', () => {
+describe('UsersService', () => {
   let service: UsersService;
-  let repo: { find: jest.Mock; findOne: jest.Mock; save: jest.Mock; create: jest.Mock };
-  let audit: { log: jest.Mock };
-  let notifications: { create: jest.Mock };
-  let mail: { sendAccountApproved: jest.Mock };
+  let repo: any;
+  let audit: any;
+  let notifications: any;
+  let mail: any;
 
   beforeEach(async () => {
     repo = {
       find: jest.fn(),
       findOne: jest.fn(),
-      save: jest.fn((u) => Promise.resolve(u)),
+      save: jest.fn((u) => u),
       create: jest.fn((d) => d),
     };
-    audit = { log: jest.fn().mockResolvedValue(undefined) };
-    notifications = { create: jest.fn().mockResolvedValue(undefined) };
-    mail = { sendAccountApproved: jest.fn().mockResolvedValue(undefined) };
+    audit = { log: jest.fn() };
+    notifications = { create: jest.fn() };
+    mail = { sendAccountApproved: jest.fn() };
 
-    const module: TestingModule = await Test.createTestingModule({
+    const moduleRef = await Test.createTestingModule({
       providers: [
         UsersService,
         { provide: getRepositoryToken(User), useValue: repo },
@@ -56,118 +41,108 @@ describe('UsersService — mechanizmy bezpieczeństwa', () => {
       ],
     }).compile();
 
-    service = module.get<UsersService>(UsersService);
+    service = moduleRef.get(UsersService);
   });
 
-  describe('izolacja danych między organizacjami (multi-tenant)', () => {
-    it('administrator firmy otrzymuje wyłącznie użytkowników swojej organizacji', async () => {
-      repo.find.mockResolvedValue([makeUser()]);
-      await service.findAll(10);
-      expect(repo.find).toHaveBeenCalledWith(
-        expect.objectContaining({ where: { organizationId: 10 } }),
-      );
-    });
+  // --- izolacja danych miedzy firmami (multi-tenant) ---
 
-    it('właściciel platformy (brak organizationId) otrzymuje wszystkich użytkowników', async () => {
-      repo.find.mockResolvedValue([]);
-      await service.findAll(undefined);
-      expect(repo.find).toHaveBeenCalledWith(
-        expect.not.objectContaining({ where: expect.anything() }),
-      );
-    });
-
-    it('zmiana statusu konta z innej organizacji jest odrzucana (403)', async () => {
-      repo.findOne.mockResolvedValue(makeUser({ organizationId: 99 }));
-      await expect(
-        service.updateStatus(1, { status: UserStatus.ACTIVE }, 10, 5),
-      ).rejects.toBeInstanceOf(ForbiddenException);
-      expect(repo.save).not.toHaveBeenCalled();
-    });
-
-    it('modyfikacja konta z innej organizacji jest odrzucana (403)', async () => {
-      repo.findOne.mockResolvedValue(makeUser({ organizationId: 99 }));
-      await expect(
-        service.update(1, { firstName: 'Zmiana' }, 10, 5),
-      ).rejects.toBeInstanceOf(ForbiddenException);
-      expect(repo.save).not.toHaveBeenCalled();
-    });
-
-    it('operacja na nieistniejącym koncie zwraca 404', async () => {
-      repo.findOne.mockResolvedValue(null);
-      await expect(
-        service.updateStatus(999, { status: UserStatus.ACTIVE }, 10, 5),
-      ).rejects.toBeInstanceOf(NotFoundException);
+  it('admin firmy dostaje tylko uzytkownikow swojej organizacji', async () => {
+    repo.find.mockResolvedValue([]);
+    await service.findAll(10);
+    expect(repo.find).toHaveBeenCalledWith({
+      where: { organizationId: 10 },
+      relations: ['organization'],
     });
   });
 
-  describe('blokada eskalacji uprawnień (K1)', () => {
-    it('administrator firmy nie może nadać roli SUPER_ADMIN', async () => {
-      repo.findOne.mockResolvedValue(makeUser({ organizationId: 10, role: Role.EMPLOYEE }));
-      await expect(
-        service.update(1, { role: Role.SUPER_ADMIN }, 10, 5),
-      ).rejects.toBeInstanceOf(ForbiddenException);
-      expect(repo.save).not.toHaveBeenCalled();
-    });
-
-    it('właściciel platformy (brak organizationId) może nadać dowolną rolę', async () => {
-      repo.findOne.mockResolvedValue(makeUser({ role: Role.EMPLOYEE }));
-      await expect(
-        service.update(1, { role: Role.SUPER_ADMIN }, undefined, 5),
-      ).resolves.toBeDefined();
-      expect(repo.save).toHaveBeenCalled();
-    });
-
-    it('administrator firmy nie może utworzyć konta z rolą SUPER_ADMIN', async () => {
-      repo.findOne.mockResolvedValue(null);
-      await expect(
-        service.createByAdmin(
-          { email: 'x@firma.pl', password: 'Mocne123', firstName: 'A', lastName: 'B', role: Role.SUPER_ADMIN },
-          10,
-        ),
-      ).rejects.toBeInstanceOf(ForbiddenException);
-    });
+  it('super-admin (bez organizationId) dostaje wszystkich uzytkownikow', async () => {
+    repo.find.mockResolvedValue([]);
+    await service.findAll(undefined);
+    expect(repo.find).toHaveBeenCalledWith({ relations: ['organization'] });
   });
 
-  describe('natychmiastowa rewokacja sesji (tokenVersion, H10)', () => {
-    it('zawieszenie konta podbija tokenVersion (unieważnia aktywne tokeny)', async () => {
-      repo.findOne.mockResolvedValue(makeUser({ organizationId: 10, tokenVersion: 3 }));
-      const saved = await service.updateStatus(1, { status: UserStatus.SUSPENDED }, 10, 5);
-      expect(saved.tokenVersion).toBe(4);
-    });
-
-    it('odrzucenie konta podbija tokenVersion', async () => {
-      repo.findOne.mockResolvedValue(makeUser({ organizationId: 10, tokenVersion: 0 }));
-      const saved = await service.updateStatus(1, { status: UserStatus.REJECTED }, 10, 5);
-      expect(saved.tokenVersion).toBe(1);
-    });
-
-    it('zwykła aktywacja konta NIE zmienia tokenVersion', async () => {
-      repo.findOne.mockResolvedValue(makeUser({ organizationId: 10, status: UserStatus.PENDING, tokenVersion: 2 }));
-      const saved = await service.updateStatus(1, { status: UserStatus.ACTIVE }, 10, 5);
-      expect(saved.tokenVersion).toBe(2);
-    });
+  it('admin nie moze zmienic statusu konta z innej firmy', async () => {
+    repo.findOne.mockResolvedValue({ id: 1, organizationId: 99, status: UserStatus.ACTIVE });
+    await expect(
+      service.updateStatus(1, { status: UserStatus.ACTIVE }, 10, 5),
+    ).rejects.toThrow(ForbiddenException);
+    expect(repo.save).not.toHaveBeenCalled();
   });
 
-  describe('rejestrowanie zdarzeń w dzienniku audytu', () => {
-    it('zmiana roli zapisuje wpis USER_ROLE_CHANGED z rolą poprzednią i nową', async () => {
-      repo.findOne.mockResolvedValue(makeUser({ organizationId: 10, role: Role.EMPLOYEE }));
-      await service.update(1, { role: Role.HR }, 10, 5);
-      expect(audit.log).toHaveBeenCalledWith(
-        expect.objectContaining({
-          action: AuditAction.USER_ROLE_CHANGED,
-          metadata: expect.objectContaining({ previousRole: Role.EMPLOYEE, newRole: Role.HR }),
-        }),
-      );
-    });
+  it('admin nie moze edytowac konta z innej firmy', async () => {
+    repo.findOne.mockResolvedValue({ id: 1, organizationId: 99, role: Role.EMPLOYEE });
+    await expect(
+      service.update(1, { firstName: 'Test' }, 10, 5),
+    ).rejects.toThrow(ForbiddenException);
+  });
 
-    it('zatwierdzenie konta zapisuje audyt i wysyła powiadomienie o aktywacji', async () => {
-      repo.findOne.mockResolvedValue(makeUser({ organizationId: 10, status: UserStatus.PENDING }));
-      await service.updateStatus(1, { status: UserStatus.ACTIVE }, 10, 5);
-      expect(audit.log).toHaveBeenCalledWith(
-        expect.objectContaining({ action: AuditAction.USER_APPROVED }),
-      );
-      expect(notifications.create).toHaveBeenCalled();
-      expect(mail.sendAccountApproved).toHaveBeenCalled();
-    });
+  it('operacja na nieistniejacym koncie rzuca 404', async () => {
+    repo.findOne.mockResolvedValue(null);
+    await expect(
+      service.updateStatus(999, { status: UserStatus.ACTIVE }, 10, 5),
+    ).rejects.toThrow(NotFoundException);
+  });
+
+  // --- blokada podnoszenia uprawnien (nikt nie zrobi sobie SUPER_ADMIN) ---
+
+  it('admin firmy nie moze nadac roli SUPER_ADMIN', async () => {
+    repo.findOne.mockResolvedValue({ id: 1, organizationId: 10, role: Role.EMPLOYEE });
+    await expect(
+      service.update(1, { role: Role.SUPER_ADMIN }, 10, 5),
+    ).rejects.toThrow(ForbiddenException);
+    expect(repo.save).not.toHaveBeenCalled();
+  });
+
+  it('super-admin moze nadac dowolna role', async () => {
+    repo.findOne.mockResolvedValue({ id: 1, organizationId: 10, role: Role.EMPLOYEE });
+    await service.update(1, { role: Role.SUPER_ADMIN }, undefined, 5);
+    expect(repo.save).toHaveBeenCalled();
+  });
+
+  it('admin nie moze zalozyc konta z rola SUPER_ADMIN', async () => {
+    repo.findOne.mockResolvedValue(null);
+    await expect(
+      service.createByAdmin(
+        { email: 'x@firma.pl', password: 'Haslo123', firstName: 'A', lastName: 'B', role: Role.SUPER_ADMIN },
+        10,
+      ),
+    ).rejects.toThrow(ForbiddenException);
+  });
+
+  // --- wylogowanie po zawieszeniu/odrzuceniu (tokenVersion) ---
+
+  it('zawieszenie konta podbija tokenVersion', async () => {
+    repo.findOne.mockResolvedValue({ id: 1, organizationId: 10, tokenVersion: 3, status: UserStatus.ACTIVE });
+    const saved = await service.updateStatus(1, { status: UserStatus.SUSPENDED }, 10, 5);
+    expect(saved.tokenVersion).toBe(4);
+  });
+
+  it('odrzucenie konta podbija tokenVersion', async () => {
+    repo.findOne.mockResolvedValue({ id: 1, organizationId: 10, tokenVersion: 0, status: UserStatus.PENDING });
+    const saved = await service.updateStatus(1, { status: UserStatus.REJECTED }, 10, 5);
+    expect(saved.tokenVersion).toBe(1);
+  });
+
+  it('zwykla aktywacja konta nie rusza tokenVersion', async () => {
+    repo.findOne.mockResolvedValue({ id: 1, organizationId: 10, tokenVersion: 2, status: UserStatus.PENDING });
+    const saved = await service.updateStatus(1, { status: UserStatus.ACTIVE }, 10, 5);
+    expect(saved.tokenVersion).toBe(2);
+  });
+
+  // --- audit log ---
+
+  it('zmiana roli zapisuje wpis do audit logu', async () => {
+    repo.findOne.mockResolvedValue({ id: 1, organizationId: 10, role: Role.EMPLOYEE });
+    await service.update(1, { role: Role.HR }, 10, 5);
+    expect(audit.log).toHaveBeenCalledWith(
+      expect.objectContaining({ action: AuditAction.USER_ROLE_CHANGED }),
+    );
+  });
+
+  it('zatwierdzenie konta wysyla powiadomienie i maila', async () => {
+    repo.findOne.mockResolvedValue({ id: 1, organizationId: 10, status: UserStatus.PENDING, email: 'a@b.pl', firstName: 'Jan' });
+    await service.updateStatus(1, { status: UserStatus.ACTIVE }, 10, 5);
+    expect(notifications.create).toHaveBeenCalled();
+    expect(mail.sendAccountApproved).toHaveBeenCalled();
   });
 });

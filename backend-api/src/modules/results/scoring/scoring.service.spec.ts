@@ -8,7 +8,7 @@ interface QuestionDef {
   reverseScored?: boolean;
 }
 
-// id = order + 100, żeby testy wykryły pomylenie id pytania z jego kolejnością
+// id pytania ustawiamy inne niz order (order + 100), zeby nie pomylic jednego z drugim
 function makeAssessment(
   code: string,
   questionDefs: QuestionDef[],

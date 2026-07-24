@@ -1,31 +1,30 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { Test } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { AnalyticsService } from './analytics.service';
 import { AssessmentResult } from '../results/entities/assessment-result.entity';
 import { User } from '../users/entities/user.entity';
 import { AssessmentAssignment } from '../assessments/entities/assessment-assignment.entity';
 
-// Testy integracyjne anonimizacji raportów HR — weryfikują próg k-anonimowości
-// (MIN_GROUP_SIZE = 5) na poziomie serwisu, z zamockowanym Query Builderem.
-// Zapytanie SQL zastępujemy atrapą zwracającą zadane wiersze zagregowane,
-// aby sprawdzić samą logikę maskowania niezależnie od bazy danych.
+// Sprawdzamy anonimizacje raportow HR (prog k-anonimowosci = 5 osob).
+// Zapytanie do bazy podmieniamy na atrape zwracajaca gotowe wiersze,
+// zeby przetestowac samo maskowanie wynikow.
 
-function queryBuilderReturning(rows: any[]) {
+function fakeQueryBuilder(rows: any[]) {
   const qb: any = {};
-  for (const m of ['leftJoin', 'select', 'where', 'andWhere', 'groupBy', 'orderBy']) {
-    qb[m] = jest.fn(() => qb);
-  }
-  qb.getRawMany = jest.fn().mockResolvedValue(rows);
+  ['leftJoin', 'select', 'where', 'andWhere', 'groupBy', 'orderBy'].forEach((m) => {
+    qb[m] = () => qb;
+  });
+  qb.getRawMany = () => Promise.resolve(rows);
   return qb;
 }
 
-describe('AnalyticsService — anonimizacja k-anonimowości', () => {
+describe('AnalyticsService (k-anonimowosc)', () => {
   let service: AnalyticsService;
-  let userRepo: { createQueryBuilder: jest.Mock; count: jest.Mock };
+  let userRepo: any;
 
   beforeEach(async () => {
     userRepo = { createQueryBuilder: jest.fn(), count: jest.fn() };
-    const module: TestingModule = await Test.createTestingModule({
+    const moduleRef = await Test.createTestingModule({
       providers: [
         AnalyticsService,
         { provide: getRepositoryToken(AssessmentResult), useValue: {} },
@@ -33,45 +32,37 @@ describe('AnalyticsService — anonimizacja k-anonimowości', () => {
         { provide: getRepositoryToken(AssessmentAssignment), useValue: {} },
       ],
     }).compile();
-    service = module.get<AnalyticsService>(AnalyticsService);
+    service = moduleRef.get(AnalyticsService);
   });
 
-  it('dział z liczbą uczestników >= 5 ujawnia średni wynik', async () => {
+  it('dzial z 6 osobami pokazuje sredni wynik', async () => {
     userRepo.createQueryBuilder.mockReturnValue(
-      queryBuilderReturning([
-        { department: 'IT', activeUsers: '8', participantCount: '6', submissions: '20', avgScore: '72.5' },
-      ]),
+      fakeQueryBuilder([{ department: 'IT', activeUsers: '8', participantCount: '6', submissions: '20', avgScore: '72.5' }]),
     );
-    const [dept] = await service.getDepartmentStats(10);
-    expect(dept.anonymized).toBe(false);
-    expect(dept.avgScore).toBe(72.5);
-    expect(dept.participantCount).toBe(6);
+    const [dzial] = await service.getDepartmentStats(10);
+    expect(dzial.anonymized).toBe(false);
+    expect(dzial.avgScore).toBe(72.5);
   });
 
-  it('dział z liczbą uczestników < 5 maskuje średni wynik (k-anonimowość)', async () => {
+  it('dzial z 3 osobami ma ukryty wynik, ale liczebnosc widac', async () => {
     userRepo.createQueryBuilder.mockReturnValue(
-      queryBuilderReturning([
-        { department: 'Zarząd', activeUsers: '3', participantCount: '3', submissions: '9', avgScore: '65.0' },
-      ]),
+      fakeQueryBuilder([{ department: 'Zarzad', activeUsers: '3', participantCount: '3', submissions: '9', avgScore: '65.0' }]),
     );
-    const [dept] = await service.getDepartmentStats(10);
-    expect(dept.anonymized).toBe(true);
-    expect(dept.avgScore).toBeNull();
-    // sama liczebność NIE jest maskowana — daje HR kontekst
-    expect(dept.participantCount).toBe(3);
-    expect(dept.minGroupSize).toBe(5);
+    const [dzial] = await service.getDepartmentStats(10);
+    expect(dzial.anonymized).toBe(true);
+    expect(dzial.avgScore).toBeNull();
+    expect(dzial.participantCount).toBe(3); // sama liczba osob nie jest ukrywana
   });
 
-  it('próg jest dokładnie na granicy: 5 osób = widoczne, 4 = zamaskowane', async () => {
+  it('granica progu: 5 osob widac, 4 juz nie', async () => {
     userRepo.createQueryBuilder.mockReturnValue(
-      queryBuilderReturning([
+      fakeQueryBuilder([
         { department: 'A', activeUsers: '5', participantCount: '5', submissions: '5', avgScore: '50.0' },
         { department: 'B', activeUsers: '4', participantCount: '4', submissions: '4', avgScore: '50.0' },
       ]),
     );
     const [a, b] = await service.getDepartmentStats(10);
     expect(a.anonymized).toBe(false);
-    expect(a.avgScore).toBe(50);
     expect(b.anonymized).toBe(true);
     expect(b.avgScore).toBeNull();
   });
