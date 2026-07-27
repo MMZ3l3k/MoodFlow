@@ -83,9 +83,10 @@ export default function AssessmentsManagePage() {
   const [form, setForm] = useState({
     assessmentId: '',
     targetType: 'ALL' as 'ALL' | 'DEPARTMENT' | 'USER',
-    targetDepartment: '',
+    targetDepartments: [] as string[],
     targetUserId: '',
     durationHours: 24,
+    availableFrom: '',
   });
 
   useEffect(() => { setMounted(true); fetchData(); }, []);
@@ -135,7 +136,7 @@ export default function AssessmentsManagePage() {
     setError(null); setSuccess(null);
 
     if (!form.assessmentId) { setError('Wybierz test'); return; }
-    if (form.targetType === 'DEPARTMENT' && !form.targetDepartment) { setError('Wybierz dział'); return; }
+    if (form.targetType === 'DEPARTMENT' && form.targetDepartments.length === 0) { setError('Wybierz co najmniej jeden dział'); return; }
     if (form.targetType === 'USER' && !form.targetUserId) { setError('Wybierz pracownika'); return; }
 
     setSubmitting(true);
@@ -145,14 +146,16 @@ export default function AssessmentsManagePage() {
         targetType: form.targetType,
         durationHours: form.durationHours,
       };
-      if (form.targetType === 'DEPARTMENT') payload.targetDepartment = form.targetDepartment;
+      if (form.targetType === 'DEPARTMENT') payload.targetDepartments = form.targetDepartments;
       if (form.targetType === 'USER') payload.targetUserId = Number(form.targetUserId);
+      // PU-16, krok 4: opcjonalne zaplanowanie startu w przyszłości
+      if (form.availableFrom) payload.availableFrom = new Date(form.availableFrom).toISOString();
 
       await axiosClient.post('/assessments/assignments', payload);
       const hrs = form.durationHours;
       const durLabel = hrs < 24 ? `${hrs}h` : hrs === 24 ? '24h' : hrs < 168 ? `${hrs / 24} dni` : '7 dni';
       setSuccess(`Test został zaplanowany — pracownicy mają ${durLabel} na jego wykonanie.`);
-      setForm({ assessmentId: '', targetType: 'ALL', targetDepartment: '', targetUserId: '', durationHours: 24 });
+      setForm({ assessmentId: '', targetType: 'ALL', targetDepartments: [], targetUserId: '', durationHours: 24, availableFrom: '' });
       setEmpSearch('');
       await fetchData();
     } catch (err: any) {
@@ -244,7 +247,7 @@ export default function AssessmentsManagePage() {
                 <button
                   key={opt.value}
                   type="button"
-                  onClick={() => { setField('targetType', opt.value); setField('targetDepartment', ''); setField('targetUserId', ''); setEmpSearch(''); }}
+                  onClick={() => { setField('targetType', opt.value); setField('targetDepartments', []); setField('targetUserId', ''); setEmpSearch(''); }}
                   className={`flex items-center gap-3 px-4 py-3 rounded-xl border text-sm font-medium transition ${
                     form.targetType === opt.value
                       ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
@@ -271,9 +274,9 @@ export default function AssessmentsManagePage() {
                       <button
                         key={d}
                         type="button"
-                        onClick={() => setField('targetDepartment', form.targetDepartment === d ? '' : d)}
+                        onClick={() => setField('targetDepartments', form.targetDepartments.includes(d) ? form.targetDepartments.filter((x) => x !== d) : [...form.targetDepartments, d])}
                         className={`px-4 py-2 rounded-xl border text-sm font-medium transition ${
-                          form.targetDepartment === d
+                          form.targetDepartments.includes(d)
                             ? 'bg-indigo-600 text-white border-indigo-600'
                             : 'bg-white text-gray-600 border-gray-200 hover:border-indigo-300'
                         }`}
@@ -286,9 +289,10 @@ export default function AssessmentsManagePage() {
                     ))}
                   </div>
                 )}
-                {form.targetDepartment && (
+                {form.targetDepartments.length > 0 && (
                   <p className="mt-2 text-xs text-indigo-600">
-                    ✓ Wybrany dział: <b>{form.targetDepartment}</b> ({employees.filter((e) => e.department === form.targetDepartment).length} pracowników)
+                    ✓ Wybrane działy: <b>{form.targetDepartments.join(', ')}</b>{' '}
+                    ({employees.filter((e) => form.targetDepartments.includes(e.department ?? '')).length} pracowników)
                   </p>
                 )}
               </div>
@@ -367,7 +371,7 @@ export default function AssessmentsManagePage() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-600 text-xs font-bold flex items-center justify-center">3</span>
-              <span className="text-sm font-semibold text-gray-700">Czas trwania</span>
+              <span className="text-sm font-semibold text-gray-700">Termin i czas trwania</span>
             </div>
             <div className="flex flex-wrap gap-2">
               {DURATION_OPTIONS.map((opt) => (
@@ -385,6 +389,18 @@ export default function AssessmentsManagePage() {
                 </button>
               ))}
             </div>
+            <div className="mt-4">
+              <label className="block text-xs font-medium text-gray-500 mb-1">
+                Rozpoczęcie (pozostaw puste, aby test wystartował natychmiast)
+              </label>
+              <input
+                type="datetime-local"
+                value={form.availableFrom}
+                onChange={(e) => setField('availableFrom', e.target.value)}
+                min={new Date().toISOString().slice(0, 16)}
+                className="rounded-xl border border-gray-200 px-4 py-2 text-sm text-gray-700 bg-white"
+              />
+            </div>
           </div>
 
           {/* Summary preview */}
@@ -393,11 +409,11 @@ export default function AssessmentsManagePage() {
               <span className="font-medium text-gray-800">Podsumowanie: </span>
               Test <b>{selectedAssessment?.name}</b> zostanie przypisany{' '}
               {form.targetType === 'ALL' && <b>wszystkim aktywnym pracownikom</b>}
-              {form.targetType === 'DEPARTMENT' && form.targetDepartment && <>działowi <b>{form.targetDepartment}</b></>}
-              {form.targetType === 'DEPARTMENT' && !form.targetDepartment && <span className="text-amber-600">— wybierz dział</span>}
+              {form.targetType === 'DEPARTMENT' && form.targetDepartments.length > 0 && <>działom: <b>{form.targetDepartments.join(', ')}</b></>}
+              {form.targetType === 'DEPARTMENT' && form.targetDepartments.length === 0 && <span className="text-amber-600">— wybierz dział</span>}
               {form.targetType === 'USER' && selectedEmployee && <><b>{selectedEmployee.firstName} {selectedEmployee.lastName}</b></>}
               {form.targetType === 'USER' && !selectedEmployee && <span className="text-amber-600">— wybierz pracownika</span>}
-              . Dostępny przez <b>{DURATION_OPTIONS.find((o) => o.value === form.durationHours)?.label}</b>.
+              . {form.availableFrom ? <>Start: <b>{new Date(form.availableFrom).toLocaleString('pl-PL')}</b>, dostępny</> : 'Dostępny'} przez <b>{DURATION_OPTIONS.find((o) => o.value === form.durationHours)?.label}</b>.
             </div>
           )}
 

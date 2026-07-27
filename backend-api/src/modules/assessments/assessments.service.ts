@@ -105,6 +105,25 @@ export class AssessmentsService {
     }).sort((a, b) => new Date(a.availableTo).getTime() - new Date(b.availableTo).getTime());
   }
 
+  /**
+   * PU-17: przypisanie do wielu działów tworzy osobne przypisanie dla każdego z nich.
+   * Zwraca utworzone przypisania (jedno lub więcej).
+   */
+  async createAssignments(dto: CreateAssignmentDto, assignedByUserId: number, organizationId: number): Promise<AssessmentAssignment[]> {
+    const departments = (dto.targetDepartments ?? []).map((d) => d.trim()).filter(Boolean);
+    if (dto.targetType === AssignmentTargetType.DEPARTMENT && departments.length > 1) {
+      const created: AssessmentAssignment[] = [];
+      for (const department of departments) {
+        created.push(await this.createAssignment({ ...dto, targetDepartment: department, targetDepartments: undefined }, assignedByUserId, organizationId));
+      }
+      return created;
+    }
+    if (departments.length === 1 && !dto.targetDepartment) {
+      dto = { ...dto, targetDepartment: departments[0] };
+    }
+    return [await this.createAssignment(dto, assignedByUserId, organizationId)];
+  }
+
   async createAssignment(dto: CreateAssignmentDto, assignedByUserId: number, organizationId: number): Promise<AssessmentAssignment> {
     const assessment = await this.assessmentRepo.findOne({ where: { id: dto.assessmentId } });
     if (!assessment) throw new NotFoundException('Test nie znaleziony');
@@ -129,13 +148,18 @@ export class AssessmentsService {
       }
     }
 
+    // PU-16, krok 4: test może wystartować natychmiast albo w zaplanowanym terminie
+    const availableFrom = dto.availableFrom ? new Date(dto.availableFrom) : new Date();
+    if (Number.isNaN(availableFrom.getTime())) {
+      throw new BadRequestException('Nieprawidłowa data rozpoczęcia');
+    }
     const assignment = this.assignmentRepo.create({
       assessmentId: dto.assessmentId,
       targetType,
       targetUserId: dto.targetUserId ?? null,
       targetDepartment: dto.targetDepartment ?? null,
-      availableFrom: new Date(),
-      availableTo: new Date(Date.now() + (dto.durationHours ?? 24) * 60 * 60 * 1000),
+      availableFrom,
+      availableTo: new Date(availableFrom.getTime() + (dto.durationHours ?? 24) * 60 * 60 * 1000),
       assignedByUserId,
       organizationId,
     });
@@ -178,7 +202,8 @@ export class AssessmentsService {
         type: NotificationType.ASSIGNMENT_NEW,
         title: 'Nowy test do wypełnienia',
         message: `Przypisano Ci test "${assessmentName}". Dostępny do: ${deadline}.`,
-        link: '/app/tests',
+        // PU-5, krok 3: głęboki link prowadzi bezpośrednio do wypełnienia testu
+        link: `/app/take/${assignment.assessmentId}?assignmentId=${assignment.id}`,
         metadata: {
           assignmentId: assignment.id,
           assessmentId: assignment.assessmentId,

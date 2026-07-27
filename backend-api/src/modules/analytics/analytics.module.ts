@@ -10,5 +10,6 @@ import { AssessmentAssignment } from '../assessments/entities/assessment-assignm
   imports: [TypeOrmModule.forFeature([AssessmentResult, User, AssessmentAssignment])],
   controllers: [AnalyticsController],
   providers: [AnalyticsService],
+  exports: [AnalyticsService],
 })
 export class AnalyticsModule {}

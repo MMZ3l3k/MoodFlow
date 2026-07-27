@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import axiosClient from '../api/axiosClient';
 import type { AssessmentResult } from '../types/assessment.types';
 import SeverityBadge from '../components/SeverityBadge';
@@ -336,7 +337,11 @@ export default function ResultsPage() {
             </svg>
           </div>
           <p className="text-raisin font-semibold text-sm">Brak wyników</p>
-          <p className="text-raisin/45 text-xs mt-1">Wypełnij pierwszy test, aby zobaczyć wyniki</p>
+          <p className="text-raisin/45 text-xs mt-1">Nie wypełniono jeszcze żadnego testu</p>
+          {/* PU-4, ścieżka 2a: pusty stan proponuje przejście do widoku „Testy" */}
+          <Link to="/app/tests" className="btn-client-primary inline-flex mt-4 text-sm">
+            Przejdź do testów
+          </Link>
         </div>
       )}
 

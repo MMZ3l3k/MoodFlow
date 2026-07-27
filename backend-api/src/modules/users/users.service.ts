@@ -191,14 +191,31 @@ export class UsersService {
     return saved;
   }
 
-  async updateProfile(id: number, dto: UpdateProfileDto, callerOrganizationId?: number): Promise<User> {
+  async updateProfile(id: number, dto: UpdateProfileDto, callerOrganizationId?: number, actorUserId?: number): Promise<User> {
     const user = await this.findById(id);
     if (!user) throw new NotFoundException('Użytkownik nie znaleziony');
     if (callerOrganizationId && user.organizationId !== callerOrganizationId) {
       throw new ForbiddenException('Brak dostępu do tego użytkownika');
     }
+    const changedFields = Object.keys(dto).filter((k) => (dto as any)[k] !== undefined && (dto as any)[k] !== (user as any)[k]);
     Object.assign(user, dto);
-    return this.usersRepository.save(user);
+    const saved = await this.usersRepository.save(user);
+    if (changedFields.length > 0) {
+      await this.auditService.log({
+        action: AuditAction.PROFILE_UPDATED,
+        actorUserId: actorUserId ?? id,
+        organizationId: user.organizationId,
+        entityType: 'user',
+        entityId: user.id,
+        metadata: { changedFields },
+      });
+    }
+    return saved;
+  }
+
+  // PU-6: pracownik edytuje własne dane; zmiana jest odnotowywana w dzienniku audytu
+  async updateOwnProfile(userId: number, dto: { firstName?: string; lastName?: string }): Promise<User> {
+    return this.updateProfile(userId, dto, undefined, userId);
   }
 
   async setOnline(id: number, isOnline: boolean): Promise<void> {

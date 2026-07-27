@@ -14,6 +14,7 @@ export default function RegisterPage() {
   const [emp, setEmp] = useState({
     firstName: '', lastName: '', email: '',
     password: '', confirmPassword: '', inviteCode: '',
+    acceptedTerms: false, acceptedPrivacy: false,
   });
 
   // Company form
@@ -26,6 +27,7 @@ export default function RegisterPage() {
     e.preventDefault();
     setError('');
     if (emp.password !== emp.confirmPassword) { setError('Hasła nie są identyczne'); return; }
+    if (!emp.acceptedTerms || !emp.acceptedPrivacy) { setError('Rejestracja wymaga akceptacji regulaminu i zgody na przetwarzanie danych'); return; }
     setLoading(true);
     try {
       await axiosClient.post('/auth/register-employee', {
@@ -34,6 +36,8 @@ export default function RegisterPage() {
         email: emp.email,
         password: emp.password,
         inviteCode: emp.inviteCode,
+        acceptedTerms: emp.acceptedTerms,
+        acceptedPrivacy: emp.acceptedPrivacy,
       });
       setSuccess('employee');
     } catch (err: any) {
@@ -219,6 +223,33 @@ export default function RegisterPage() {
               <div>
                 <label className="block text-sm font-semibold text-raisin/70 mb-1.5">Powtórz hasło</label>
                 <input type="password" required minLength={8} value={emp.confirmPassword} onChange={(e) => setEmp({ ...emp, confirmPassword: e.target.value })} className="input-field" placeholder="Powtórz hasło" />
+              </div>
+
+              {/* PU-2, krok 3: wymagane zgody — regulamin i przetwarzanie danych (RODO) */}
+              <div className="space-y-2 pt-1">
+                <label className="flex items-start gap-2 text-xs text-raisin/60 leading-relaxed cursor-pointer">
+                  <input
+                    type="checkbox"
+                    required
+                    checked={emp.acceptedTerms}
+                    onChange={(e) => setEmp({ ...emp, acceptedTerms: e.target.checked })}
+                    className="mt-0.5"
+                  />
+                  <span>Akceptuję regulamin serwisu MoodFlow.</span>
+                </label>
+                <label className="flex items-start gap-2 text-xs text-raisin/60 leading-relaxed cursor-pointer">
+                  <input
+                    type="checkbox"
+                    required
+                    checked={emp.acceptedPrivacy}
+                    onChange={(e) => setEmp({ ...emp, acceptedPrivacy: e.target.checked })}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    Wyrażam zgodę na przetwarzanie moich danych osobowych, w tym danych o samopoczuciu,
+                    w celu korzystania z platformy (zgodnie z RODO). Wyniki indywidualne nie są udostępniane pracodawcy.
+                  </span>
+                </label>
               </div>
 
               <button type="submit" disabled={loading} className="btn-primary w-full mt-2 ripple">

@@ -24,6 +24,7 @@ interface DeptLoad {
   load: 'stable' | 'moderate' | 'high' | 'no_data';
   trend: 'improving' | 'worsening' | 'stable' | 'no_data';
   color: string;
+  anonymized?: boolean;
 }
 interface RiskItem {
   key: string; label: string; icon: string; assessmentCode: string;
@@ -679,6 +680,7 @@ export default function HrGeneratePage() {
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const [generating, setGenerating] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!getAccessToken()) { router.push('/login'); return; }
@@ -739,11 +741,51 @@ export default function HrGeneratePage() {
   async function handleExportPdf() {
     if (!reportData) return;
     setExporting(true);
+    setExportError(null);
     try {
       const doc = buildReportPdf(reportData);
       doc.save(`raport-moodflow-${new Date().toISOString().slice(0, 10)}.pdf`);
+      // PU-12, krok 5: eksport raportu jest odnotowywany w dzienniku audytu
+      axiosClient.post('/analytics/report-exported', { format: 'pdf', scope: form.department || 'cała firma' }).catch(() => {});
+    } catch {
+      setExportError('Błąd generowania pliku. Spróbuj ponownie.');
     } finally {
       setExporting(false);
+    }
+  }
+
+  // PU-12: eksport danych raportu do pliku CSV (agregaty działów — dane już zanonimizowane)
+  function handleExportCsv() {
+    if (!reportData) return;
+    setExportError(null);
+    try {
+      const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+      const rows: string[] = [];
+      rows.push(['Dział', 'Liczba pracowników', 'Uczestnicy', 'Indeks dobrostanu (0-100)', 'Obciążenie', 'Trend', 'Anonimizacja'].map(esc).join(';'));
+      for (const d of reportData.deptLoad) {
+        rows.push([
+          d.department, d.deptSize, d.participants,
+          d.anonymized ? 'utajnione (k<5)' : d.wellbeingIndex ?? '—',
+          d.anonymized ? '—' : d.load,
+          d.anonymized ? '—' : d.trend,
+          d.anonymized ? 'tak' : 'nie',
+        ].map(esc).join(';'));
+      }
+      rows.push('');
+      rows.push(['Tydzień/Data', 'Średni wynik znormalizowany'].map(esc).join(';'));
+      for (const t of reportData.trends) {
+        rows.push([t.week ?? '', t.avgScore ?? ''].map(esc).join(';'));
+      }
+      const blob = new Blob(['\ufeff' + rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `raport-moodflow-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      axiosClient.post('/analytics/report-exported', { format: 'csv', scope: form.department || 'cała firma' }).catch(() => {});
+    } catch {
+      setExportError('Błąd generowania pliku. Spróbuj ponownie.');
     }
   }
 
@@ -867,7 +909,18 @@ export default function HrGeneratePage() {
                 </>
               )}
             </button>
+            <button
+              onClick={handleExportCsv}
+              className="flex items-center gap-2 bg-white hover:bg-gray-50 border border-gray-300 text-gray-700 font-semibold py-2.5 px-5 rounded-xl text-sm transition"
+            >
+              Pobierz CSV
+            </button>
           </div>
+          {exportError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
+              {exportError}
+            </div>
+          )}
 
           <div className="overflow-x-auto rounded-2xl shadow-sm border border-gray-200 bg-[#f8fafc]">
             <div>

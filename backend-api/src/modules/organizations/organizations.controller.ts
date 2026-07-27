@@ -66,11 +66,19 @@ export class OrganizationsController {
     return this.organizationsService.reject(id, req.user.id, dto.reason);
   }
 
-  // Super Admin — blokuje firmę
+  // Super Admin — blokuje firmę (PU-22; opcjonalne uzasadnienie trafia do dziennika audytu)
   @Post(':id/block')
   @Roles(Role.SUPER_ADMIN)
   @HttpCode(HttpStatus.OK)
-  block(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
-    return this.organizationsService.block(id, req.user.id);
+  block(@Param('id', ParseIntPipe) id: number, @Request() req: any, @Body() dto: RejectOrganizationDto) {
+    return this.organizationsService.block(id, req.user.id, dto?.reason);
+  }
+
+  // Super Admin — odblokowuje firmę (PU-22, ścieżka 2a: status wraca do active)
+  @Post(':id/unblock')
+  @Roles(Role.SUPER_ADMIN)
+  @HttpCode(HttpStatus.OK)
+  unblock(@Param('id', ParseIntPipe) id: number, @Request() req: any) {
+    return this.organizationsService.unblock(id, req.user.id);
   }
 }

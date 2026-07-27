@@ -3,13 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import type { AppDispatch } from '../store/store';
 import { useAuth } from '../hooks/useAuth';
-import { logout } from '../store/slices/authSlice';
+import { logout, logoutThunk, fetchMe } from '../store/slices/authSlice';
 import axiosClient from '../api/axiosClient';
 
 export default function SettingsPage() {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  // PU-6: edycja danych profilu
+  const [profileForm, setProfileForm] = useState({ firstName: user?.firstName ?? '', lastName: user?.lastName ?? '' });
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [profileSuccess, setProfileSuccess] = useState(false);
 
   const [pwForm, setPwForm] = useState({ current: '', next: '', confirm: '' });
   const [pwLoading, setPwLoading] = useState(false);
@@ -63,9 +69,37 @@ export default function SettingsPage() {
     }
   }
 
-  function handleLogout() {
-    dispatch(logout());
-    navigate('/login');
+  // PU-6: zapis zmian profilu z komunikatem potwierdzenia
+  async function handleSaveProfile(e: React.FormEvent) {
+    e.preventDefault();
+    setProfileError(null);
+    setProfileSuccess(false);
+    if (!profileForm.firstName.trim() || !profileForm.lastName.trim()) {
+      setProfileError('Imię i nazwisko nie mogą być puste.');
+      return;
+    }
+    setProfileLoading(true);
+    try {
+      await axiosClient.patch('/users/me', {
+        firstName: profileForm.firstName.trim(),
+        lastName: profileForm.lastName.trim(),
+      });
+      setProfileSuccess(true);
+      dispatch(fetchMe());
+    } catch (err: any) {
+      setProfileError(err.response?.data?.message ?? 'Błąd zapisu zmian.');
+    } finally {
+      setProfileLoading(false);
+    }
+  }
+
+  // PU-8: wylogowanie zawsze przez backend (czyści ciasteczka HttpOnly), nie tylko lokalnie
+  async function handleLogout() {
+    try {
+      await dispatch(logoutThunk());
+    } finally {
+      navigate('/login');
+    }
   }
 
   return (
@@ -106,6 +140,37 @@ export default function SettingsPage() {
               </div>
             </div>
           )}
+
+          {/* PU-6: formularz edycji imienia i nazwiska */}
+          <form onSubmit={handleSaveProfile} className="mt-5 space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-raisin/55 mb-1">Imię</label>
+                <input
+                  type="text"
+                  value={profileForm.firstName}
+                  onChange={(e) => setProfileForm((f) => ({ ...f, firstName: e.target.value }))}
+                  className="client-input w-full"
+                  maxLength={100}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-raisin/55 mb-1">Nazwisko</label>
+                <input
+                  type="text"
+                  value={profileForm.lastName}
+                  onChange={(e) => setProfileForm((f) => ({ ...f, lastName: e.target.value }))}
+                  className="client-input w-full"
+                  maxLength={100}
+                />
+              </div>
+            </div>
+            {profileError && <p className="text-xs text-red-600">{profileError}</p>}
+            {profileSuccess && <p className="text-xs text-emerald-600">Zmiany zostały zapisane.</p>}
+            <button type="submit" disabled={profileLoading} className="btn-client-primary text-sm disabled:opacity-50">
+              {profileLoading ? 'Zapisywanie…' : 'Zapisz zmiany'}
+            </button>
+          </form>
         </section>
 
         {/* Session */}

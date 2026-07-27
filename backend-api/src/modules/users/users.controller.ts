@@ -20,6 +20,7 @@ import { Role } from '../../common/enums/role.enum';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { ApproveUserDto } from './dto/approve-user.dto';
 import { UpdateProfileDto } from './dto/update-profile.dto';
+import { UpdateOwnProfileDto } from './dto/update-own-profile.dto';
 import { CreateUserAdminDto } from './dto/create-user-admin.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 
@@ -31,6 +32,12 @@ export class UsersController {
   @Get('me')
   getProfile(@Request() req: any) {
     return this.usersService.getProfile(req.user);
+  }
+
+  // PU-6: samodzielna edycja danych profilu (imię, nazwisko)
+  @Patch('me')
+  updateOwnProfile(@Request() req: any, @Body() dto: UpdateOwnProfileDto) {
+    return this.usersService.updateOwnProfile(req.user.id, dto);
   }
 
   @Post('me/change-password')
@@ -113,6 +120,6 @@ export class UsersController {
   @Roles(Role.ADMIN, Role.HR)
   updateProfile(@Param('id', ParseIntPipe) id: number, @Body() dto: UpdateProfileDto, @Request() req: any) {
     const isSuperAdmin = req.user.role === Role.SUPER_ADMIN;
-    return this.usersService.updateProfile(id, dto, isSuperAdmin ? undefined : req.user.organizationId);
+    return this.usersService.updateProfile(id, dto, isSuperAdmin ? undefined : req.user.organizationId, req.user.id);
   }
 }

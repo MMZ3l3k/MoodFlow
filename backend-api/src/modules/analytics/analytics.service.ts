@@ -99,11 +99,26 @@ export class AnalyticsService {
       ? Math.round((participantsCount / totalActive) * 100)
       : 0;
 
+    // k-anonimowość obowiązuje także na poziomie całej organizacji: przy mniej niż
+    // MIN_GROUP_SIZE respondentach agregaty mogłyby ujawnić wyniki indywidualne.
+    if (!meetsThreshold(participantsCount)) {
+      return {
+        totalActiveUsers: totalActive,
+        totalResultsSubmitted: null,
+        avgNormalizedScore: null,
+        participationRate: null,
+        anonymized: true,
+        minGroupSize: MIN_GROUP_SIZE,
+      };
+    }
+
     return {
       totalActiveUsers: totalActive,
       totalResultsSubmitted: totalResults,
       avgNormalizedScore,
       participationRate,
+      anonymized: false,
+      minGroupSize: MIN_GROUP_SIZE,
     };
   }
 
@@ -661,6 +676,8 @@ export class AnalyticsService {
           userCount: userCounts.get(week) ?? 0,
         };
       })
-      .filter((p) => p.index !== null);
+      // k-anonimowość: tygodnie z mniejszą niż MIN_GROUP_SIZE liczbą respondentów
+      // nie są ujawniane nawet w agregacie organizacji.
+      .filter((p) => p.index !== null && meetsThreshold(p.userCount));
   }
 }

@@ -1,15 +1,43 @@
-import { Controller, Get, Query, UseGuards, Request } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Query, UseGuards, Request } from '@nestjs/common';
+import { IsIn, IsOptional, IsString, MaxLength } from 'class-validator';
 import { AnalyticsService } from './analytics.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '../../common/enums/role.enum';
+import { AuditService } from '../audit/audit.service';
+import { AuditAction } from '../audit/entities/audit-log.entity';
+
+export class ReportExportedDto {
+  @IsIn(['pdf', 'csv'])
+  format: 'pdf' | 'csv';
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  scope?: string;
+}
 
 @Controller('analytics')
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Roles(Role.HR, Role.ADMIN)
 export class AnalyticsController {
-  constructor(private analyticsService: AnalyticsService) {}
+  constructor(
+    private analyticsService: AnalyticsService,
+    private auditService: AuditService,
+  ) {}
+
+  // PU-12, krok 5: każdy eksport raportu zostawia ślad w dzienniku audytu
+  @Post('report-exported')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async reportExported(@Request() req: any, @Body() dto: ReportExportedDto) {
+    await this.auditService.log({
+      action: AuditAction.REPORT_EXPORTED,
+      actorUserId: req.user.id,
+      organizationId: req.user.organizationId,
+      metadata: { format: dto.format, scope: dto.scope ?? null },
+    });
+  }
 
   @Get('summary')
   getSummary(@Request() req: any) {

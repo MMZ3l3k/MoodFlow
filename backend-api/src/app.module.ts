@@ -13,6 +13,8 @@ import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { DepartmentsModule } from './modules/departments/departments.module';
+import { AlertsModule } from './modules/alerts/alerts.module';
+import { WellbeingAlert } from './modules/alerts/entities/wellbeing-alert.entity';
 import { Department } from './modules/departments/entities/department.entity';
 import { User } from './modules/users/entities/user.entity';
 import { Organization } from './modules/organizations/entities/organization.entity';
@@ -67,7 +69,7 @@ import { Notification } from './modules/notifications/entities/notification.enti
         username: config.get<string>('DB_USER'),
         password: config.get<string>('DB_PASSWORD'),
         database: config.get<string>('DB_NAME'),
-        entities: [User, Organization, Department, Assessment, Question, AnswerOption, AssessmentResult, UserResponse, AssessmentAssignment, AuditLog, Notification],
+        entities: [User, Organization, Department, Assessment, Question, AnswerOption, AssessmentResult, UserResponse, AssessmentAssignment, AuditLog, Notification, WellbeingAlert],
         // synchronize: true generuje schemat z entiti przy starcie aplikacji.
         // Dla MVP / projektu inżynierskiego jest akceptowalne — eliminuje
         // problem ze stanem migrations w nowo utworzonych bazach na chmurze.
@@ -85,6 +87,7 @@ import { Notification } from './modules/notifications/entities/notification.enti
     AdminModule,
     NotificationsModule,
     DepartmentsModule,
+    AlertsModule,
     AuditModule,
     HealthModule,
   ],

@@ -36,7 +36,7 @@ export class AssessmentsController {
   @UseGuards(RolesGuard)
   @Roles(Role.ADMIN, Role.HR)
   createAssignment(@Body() dto: CreateAssignmentDto, @Request() req: any) {
-    return this.assessmentsService.createAssignment(dto, req.user.id, req.user.organizationId);
+    return this.assessmentsService.createAssignments(dto, req.user.id, req.user.organizationId);
   }
 
   @Delete('assignments/:id')

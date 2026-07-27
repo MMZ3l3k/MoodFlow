@@ -88,7 +88,7 @@ export class MailService {
     );
   }
 
-  // PU-22: decyzja właściciela platformy w sprawie rejestracji firmy
+  // PU-21: decyzja właściciela platformy w sprawie rejestracji firmy
   async sendOrganizationDecision(
     toEmail: string,
     toName: string,

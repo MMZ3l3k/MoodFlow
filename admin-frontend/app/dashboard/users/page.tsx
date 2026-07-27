@@ -62,6 +62,10 @@ export default function UsersPage() {
 
   // ── Department management
   const [deptRename, setDeptRename]   = useState<{ old: string; newName: string } | null>(null);
+  // PU-18: słownik działów (moduł departments) — tworzenie i usuwanie rekordów
+  const [entityDepts, setEntityDepts] = useState<{ id: number; name: string }[]>([]);
+  const [newDeptName, setNewDeptName] = useState('');
+  const [deptError, setDeptError]     = useState<string | null>(null);
   const [deptSaving, setDeptSaving]   = useState(false);
 
   // ── Notifications
@@ -76,12 +80,14 @@ export default function UsersPage() {
   const fetchAll = useCallback(async () => {
     if (!getAccessToken()) { router.push('/login'); return; }
     try {
-      const [usersRes, deptsRes] = await Promise.all([
+      const [usersRes, deptsRes, entityRes] = await Promise.all([
         axiosClient.get<User[]>('/users'),
         axiosClient.get<string[]>('/users/departments'),
+        axiosClient.get<{ id: number; name: string }[]>('/departments').catch(() => ({ data: [] as { id: number; name: string }[] })),
       ]);
       setUsers(usersRes.data);
       setDepartments(deptsRes.data);
+      setEntityDepts(entityRes.data);
     } catch {
       router.push('/login');
     } finally {
@@ -117,13 +123,15 @@ export default function UsersPage() {
     statusFilter !== 'all' && STATUS_LABELS[statusFilter],
   ].filter(Boolean);
 
-  const deptStats = useMemo(() =>
-    departments.map((d) => ({
+  const deptStats = useMemo(() => {
+    const names = Array.from(new Set([...departments, ...entityDepts.map((d) => d.name)])).sort();
+    return names.map((d) => ({
       name: d,
       count: users.filter((u) => u.department === d && u.status === 'active').length,
       total: users.filter((u) => u.department === d).length,
-    })),
-  [departments, users]);
+      deptId: entityDepts.find((e) => e.name === d)?.id ?? null,
+    }));
+  }, [departments, entityDepts, users]);
 
   const formatLastSeen = (iso?: string) => {
     if (!iso || !mounted) return '—';
@@ -177,6 +185,13 @@ export default function UsersPage() {
   // ── Save edit
   async function handleSave() {
     if (!editUser) return;
+    // PU-15, ścieżka 3b: zmiana roli wymaga dodatkowego potwierdzenia
+    if (editForm.role !== editUser.role) {
+      const ok = window.confirm(
+        `Zmienić rolę użytkownika ${editUser.firstName} ${editUser.lastName} z „${editUser.role}” na „${editForm.role}”?\n\nZmiana uprawnień zostanie odnotowana w dzienniku audytu.`,
+      );
+      if (!ok) return;
+    }
     setSaving(true); setEditError(null);
     try {
       await axiosClient.patch(`/users/${editUser.id}`, {
@@ -221,6 +236,34 @@ export default function UsersPage() {
       showToast('Błąd zmiany nazwy działu');
     } finally {
       setDeptSaving(false);
+    }
+  }
+
+  // PU-18, krok 3: dodanie nowego działu do słownika organizacji
+  async function handleCreateDept() {
+    const name = newDeptName.trim();
+    if (!name) return;
+    setDeptError(null);
+    try {
+      await axiosClient.post('/departments', { name });
+      setNewDeptName('');
+      showToast(`Dział "${name}" został utworzony`);
+      await fetchAll();
+    } catch (err: any) {
+      setDeptError(err.response?.data?.message ?? 'Błąd tworzenia działu');
+    }
+  }
+
+  // PU-18, ścieżka 3b: usunięcie działu (blokowane, gdy ma przypisanych pracowników)
+  async function handleDeleteDept(deptId: number, name: string) {
+    if (!window.confirm(`Usunąć dział "${name}"?`)) return;
+    setDeptError(null);
+    try {
+      await axiosClient.delete(`/departments/${deptId}`);
+      showToast(`Dział "${name}" został usunięty`);
+      await fetchAll();
+    } catch (err: any) {
+      setDeptError(err.response?.data?.message ?? 'Błąd usuwania działu');
     }
   }
 
@@ -453,6 +496,28 @@ export default function UsersPage() {
         <div className="space-y-4">
           <p className="text-sm text-gray-500">Działy są przypisywane do użytkowników. Możesz zmienić nazwę działu — zostanie ona zaktualizowana u wszystkich przypisanych pracowników.</p>
 
+          {/* PU-18: dodawanie działu do słownika */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex flex-wrap items-center gap-2">
+            <input
+              type="text"
+              value={newDeptName}
+              onChange={(e) => setNewDeptName(e.target.value)}
+              placeholder="Nazwa nowego działu…"
+              maxLength={200}
+              className="flex-1 min-w-[220px] border border-gray-200 rounded-xl px-3 py-2 text-sm"
+            />
+            <button
+              onClick={handleCreateDept}
+              disabled={!newDeptName.trim()}
+              className="text-sm bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 disabled:opacity-50 font-medium"
+            >
+              Dodaj dział
+            </button>
+          </div>
+          {deptError && (
+            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">{deptError}</div>
+          )}
+
           {departments.length === 0 ? (
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
               <p className="text-gray-400 text-sm">Brak zdefiniowanych działów. Przypisz pracowników do działów przez edycję ich kont.</p>
@@ -505,6 +570,14 @@ export default function UsersPage() {
                         >
                           Zmień nazwę
                         </button>
+                        {d.deptId !== null && (
+                          <button
+                            onClick={() => handleDeleteDept(d.deptId!, d.name)}
+                            className="ml-3 text-xs text-red-500 hover:text-red-700 font-medium"
+                          >
+                            Usuń
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}

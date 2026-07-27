@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import {
   LayoutDashboard, Clock, Users, Settings, TrendingUp,
   FileBarChart, Download, UserCircle, ClipboardList, LogOut,
+  AlertTriangle, ScrollText,
 } from 'lucide-react';
 import { clearTokens, getRole } from '../lib/auth';
 import axiosClient from '../lib/axiosClient';
@@ -16,11 +17,13 @@ const adminItems = [
   { href: '/dashboard', label: 'Przegląd', exact: true, icon: LayoutDashboard },
   { href: '/dashboard/pending', label: 'Oczekujące', icon: Clock },
   { href: '/dashboard/users', label: 'Użytkownicy', icon: Users },
+  { href: '/dashboard/audit', label: 'Dziennik audytu', icon: ScrollText },
   { href: '/dashboard/settings', label: 'Ustawienia', icon: Settings },
 ];
 
 const hrItems = [
   { href: '/dashboard/hr', label: 'Dashboard HR', exact: true, icon: TrendingUp },
+  { href: '/dashboard/hr/alerts', label: 'Alerty', icon: AlertTriangle },
   { href: '/dashboard/hr/reports', label: 'Raporty', icon: FileBarChart },
   { href: '/dashboard/hr/generate', label: 'Wygeneruj raport', icon: Download },
   { href: '/dashboard/hr/employees', label: 'Pracownicy', icon: UserCircle },

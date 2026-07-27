@@ -214,8 +214,16 @@ export default function AnalyticsPage() {
         <p className="text-sm text-gray-400 mt-1">Zagregowane dane anonimowe — widok HR/Admin</p>
       </div>
 
+      {/* k-anonimowość na poziomie organizacji: poniżej progu agregaty są utajnione */}
+      {summary && (summary as any).anonymized && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-700 text-sm rounded-xl px-4 py-3">
+          Zbyt mało danych, aby zachować anonimowość — agregaty organizacji zostaną wyświetlone,
+          gdy testy wypełni co najmniej {(summary as any).minGroupSize ?? 5} pracowników.
+        </div>
+      )}
+
       {/* KPI Cards */}
-      {summary && (
+      {summary && !(summary as any).anonymized && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard label="Aktywni użytkownicy" value={summary.totalActiveUsers} color="border-indigo-500" />
           <KpiCard label="Wypełnione testy" value={summary.totalResultsSubmitted} color="border-emerald-500" />

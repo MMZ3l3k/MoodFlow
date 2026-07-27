@@ -45,9 +45,15 @@ export class DepartmentsService {
     if (dept.organizationId !== organizationId) {
       throw new ForbiddenException('Brak dostępu do tego działu');
     }
-    // PU-19: nie można usunąć działu z przypisanymi pracownikami —
+    // PU-18, ścieżka 3b: nie można usunąć działu z przypisanymi pracownikami —
     // najpierw trzeba ich przenieść (ochrona przed „osieroceniem" kont).
-    const assignedUsers = await this.usersRepository.count({ where: { departmentId: id } });
+    // Sprawdzane są oba modele przypisania: relacja departmentId oraz nazwa działu
+    // w polu tekstowym używanym przez analitykę i przypisania testów.
+    const assignedUsers = await this.usersRepository
+      .createQueryBuilder('u')
+      .where('u."organizationId" = :organizationId', { organizationId })
+      .andWhere('(u."departmentId" = :id OR u.department = :name)', { id, name: dept.name })
+      .getCount();
     if (assignedUsers > 0) {
       throw new ConflictException(
         `Nie można usunąć działu — przypisanych jest do niego ${assignedUsers} pracowników. Najpierw przenieś ich do innego działu.`,

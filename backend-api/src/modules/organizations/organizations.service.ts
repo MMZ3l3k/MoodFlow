@@ -74,7 +74,7 @@ export class OrganizationsService {
       metadata: { name: org.name, nip: org.nip },
     });
 
-    // PU-22: e-mail do administratora firmy o zatwierdzeniu rejestracji
+    // PU-21: e-mail do administratora firmy o zatwierdzeniu rejestracji
     if (org.adminUserId) {
       const admin = await this.usersRepository.findOne({ where: { id: org.adminUserId } });
       if (admin) {
@@ -104,7 +104,7 @@ export class OrganizationsService {
       metadata: { name: org.name, reason: reason ?? null },
     });
 
-    // PU-22: e-mail do administratora firmy o odrzuceniu (z uzasadnieniem)
+    // PU-21: e-mail do administratora firmy o odrzuceniu (z uzasadnieniem)
     if (org.adminUserId) {
       const admin = await this.usersRepository.findOne({ where: { id: org.adminUserId } });
       if (admin) {
@@ -116,17 +116,35 @@ export class OrganizationsService {
   }
 
   // Właściciel platformy blokuje firmę
-  async block(id: number, actorUserId?: number): Promise<Organization> {
+  async block(id: number, actorUserId?: number, reason?: string): Promise<Organization> {
     const org = await this.findById(id);
     org.status = OrganizationStatus.BLOCKED;
     await this.organizationsRepository.save(org);
 
-    // PU-23: blokada firmy natychmiast unieważnia sesje wszystkich jej użytkowników
+    // PU-22: blokada firmy natychmiast unieważnia sesje wszystkich jej użytkowników
     // (podbicie tokenVersion odrzuca wydane tokeny przy najbliższej walidacji).
     await this.usersRepository.increment({ organizationId: id }, 'tokenVersion', 1);
 
     await this.auditService.log({
       action: AuditAction.ORGANIZATION_SUSPENDED,
+      actorUserId: actorUserId ?? null,
+      organizationId: org.id,
+      entityType: 'organization',
+      entityId: org.id,
+      metadata: { name: org.name, reason: reason?.trim() || null },
+    });
+
+    return org;
+  }
+
+  // PU-22, ścieżka 2a: przywrócenie zablokowanej firmy bez ponownej korespondencji rejestracyjnej
+  async unblock(id: number, actorUserId?: number): Promise<Organization> {
+    const org = await this.findById(id);
+    org.status = OrganizationStatus.ACTIVE;
+    await this.organizationsRepository.save(org);
+
+    await this.auditService.log({
+      action: AuditAction.ORGANIZATION_UNBLOCKED,
       actorUserId: actorUserId ?? null,
       organizationId: org.id,
       entityType: 'organization',
