@@ -44,6 +44,10 @@ export class OrganizationsService {
     return this.organizationsRepository.findOne({ where: { nip } });
   }
 
+  async findByName(name: string): Promise<Organization | null> {
+    return this.organizationsRepository.findOne({ where: { name } });
+  }
+
   async findByInviteCode(inviteCode: string): Promise<Organization | null> {
     return this.organizationsRepository.findOne({ where: { inviteCode } });
   }

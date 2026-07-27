@@ -397,7 +397,7 @@ export default function SuperAdminDashboardPage() {
                         {org.status === 'pending' && (
                           <>
                             <button
-                              onClick={() => action(org.id, 'approve')}
+                              onClick={() => { if (window.confirm(`Zatwierdzić rejestrację firmy „${org.name}”? Konto administratora zostanie aktywowane.`)) action(org.id, 'approve'); }}
                               disabled={actionLoading === org.id}
                               style={btn('#22c55e', actionLoading === org.id)}
                             >Zatwierdź</button>

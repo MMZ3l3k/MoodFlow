@@ -61,6 +61,10 @@ export class AuthService {
     const nipTaken = await this.organizationsService.findByNip(dto.nip);
     if (nipTaken) throw new ConflictException('Nie można utworzyć konta z tymi danymi. Sprawdź wpisane informacje lub spróbuj się zalogować.');
 
+    // TC-01: duplikat nazwy firmy ma kończyć się czytelnym komunikatem, nie surowym błędem bazy
+    const nameTaken = await this.organizationsService.findByName(dto.companyName);
+    if (nameTaken) throw new ConflictException('Firma o tej nazwie jest już zarejestrowana w systemie.');
+
     const inviteCode = 'MOOD-' + randomBytes(4).toString('hex').toUpperCase();
 
     const organization = await this.organizationsService.create({

@@ -109,6 +109,12 @@ export default function TakeAssessmentPage() {
             </div>
           </div>
 
+          {/* TC-05: nota o prywatności także na ekranie wyniku */}
+          <p className="text-xs text-gray-400 mb-6 leading-relaxed">
+            🔒 Twój indywidualny wynik jest widoczny tylko dla Ciebie. Dział HR otrzymuje wyłącznie
+            zagregowane, anonimowe statystyki.
+          </p>
+
           {result.riskFlags?.selfHarmRiskFlag && (
             <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-left">
               <div className="flex items-start gap-3 mb-3">

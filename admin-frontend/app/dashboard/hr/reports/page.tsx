@@ -453,7 +453,7 @@ export default function HrReportsPage() {
         <div className="space-y-6">
           <SectionInfo>
             <span>
-              <strong>Indeks dobrostanu działu (0–100)</strong> to ważona średnia z pięciu testów (WHO-5 30%, PSS-10 20%, PHQ-9 20%, GAD-7 15%, MOOD-10 15%).
+              <strong>Indeks dobrostanu działu (0–100)</strong> to ważona średnia z pięciu testów (WHO-5 30%, PSS-10 20%, PHQ-9 20%, GAD-7 15%, MOOD-10 15%). Działy z mniej niż 5 respondentami mają wyniki utajnione (próg k-anonimowości).
               Obliczany z wyników złożonych w ostatnich 30 dniach. <strong>Trend</strong> porównuje indeks z poprzednimi 14 dniami — zmiana &gt;5 pkt = poprawa/pogorszenie.
             </span>
           </SectionInfo>
