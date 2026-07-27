@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<title>Metodyka specyfikacji wymagań</title>
+<style>
+  @page { size: A4; margin: 2.5cm 2.5cm 2.5cm 3cm; }
+  body {
+    font-family: Verdana, sans-serif;
+    font-size: 10pt;
+    line-height: 1.15;
+    text-align: justify;
+    color: #000;
+  }
+  p { margin: 0 0 6pt 0; text-indent: 1.25cm; }
+</style>
+</head>
+<body>
+
+<p>Specyfikację wymagań przeprowadziliśmy zgodnie z dobrymi praktykami opisanymi w przewodniku BABOK&reg; Guide v3.0 [10], według którego wymaganie stanowi &bdquo;użyteczną reprezentację potrzeby oraz skupia się na wartości, jaką można dostarczyć, gdy wymaganie zostanie spełnione&rdquo;. Wymagania podzieliliśmy zgodnie z klasyfikacją BABOK na cztery poziomy: biznesowe (cel projektu), interesariuszy (oczekiwania ról), systemowe (funkcjonalne i niefunkcjonalne) oraz przejściowe (związane z wdrożeniem), przy czym niniejsza praca koncentruje się na poziomie systemowym &mdash; wymagania biznesowe i kontekst interesariuszy opisaliśmy w rozdziale pierwszym.</p>
+
+<p>Wymagania wywodziliśmy z potrzeb interesariuszy, stosując user stories (&bdquo;Jako [rola], chciałbym [czynność], aby [cel]&rdquo;) jako technikę analityczną na etapie ich identyfikacji. W specyfikacji (rozdział 2.2) zapisaliśmy wymagania w formie deklaratywnej &mdash; każde z unikalnym identyfikatorem, opisem oczekiwanego zachowania systemu oraz uzasadnieniem jego roli w realizacji celów projektu. Wymagania formułowaliśmy zgodnie z zasadami SMART, z naciskiem na konkretność (Specific), mierzalność (Measurable), osiągalność (Achievable) i istotność (Relevant); wymiar czasowy (Time-bound) realizowaliśmy na poziomie harmonogramu projektu, przypisując wymagania do priorytetów MoSCoW determinujących kolejność implementacji.</p>
+
+<p>Do priorytetyzacji wymagań zastosowaliśmy metodę MoSCoW, opisaną szczegółowo w rozdziale 2.1. Pozwoliła nam ona na jednoznaczne rozdzielenie funkcjonalności krytycznych (Must Have) od pomocniczych (Should Have, Could Have) oraz świadomie wykluczonych (Won&rsquo;t Have).</p>
+
+<p>Najbardziej krytyczne przepływy interakcji opisaliśmy w postaci przypadków użycia (Use Case) w formie tabelarycznej, zawierającej pola: identyfikator i nazwę przypadku użycia, opis, aktorów, warunki początkowe (preconditions), wyzwalacz (trigger), główny przepływ zdarzeń (main flow), przepływy alternatywne (alternative flows), wyjątki (exceptions), warunki końcowe (postconditions) oraz powiązane wymagania.</p>
+
+</body>
+</html>
